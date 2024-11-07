@@ -97,7 +97,7 @@ void irs_phase2_done(void);
 void build_payload(uint8_t* payload);
 
 
-volatile static AppEvent event = EVENT_NONE;
+volatile static AppEvent event = EVENT_NONE;	// changes value during ISRs
 static AppState state = STATE_IDLE;
 static AppError app_status = ERROR_NONE;
 
@@ -159,6 +159,7 @@ AppState handle_state_phase1(volatile AppEvent* event)
 {
 	if (*event != EVENT_PHASE1_DONE)
 		return STATE_PHASE1;
+	*event = EVENT_NONE; 	// clear event flag
 
 	nrf24_status = nrf24l01p_power_up(&nrf24_device);
 	if (nrf24_status != NRF24L01P_SUCCESS)
@@ -166,7 +167,6 @@ AppState handle_state_phase1(volatile AppEvent* event)
 
 	TIMx_schedule_interrupt(TIM21, PHASE2_LENGTH, &irs_phase2_done);
 
-	*event = EVENT_NONE; 	// clear event flag
 	return STATE_PHASE2;
 }
 
@@ -174,6 +174,8 @@ AppState handle_state_phase2(volatile AppEvent* event)
 {
 	if (*event != EVENT_PHASE2_DONE)
 		return STATE_PHASE2;
+
+	*event = EVENT_NONE; 	// clear event flag
 
 	sht4x_status = sht4x_read_and_check_measurement(&sht4x, &sht4x_data);
 	if (sht4x_status != SHT4X_SUCCESS)
@@ -185,7 +187,6 @@ AppState handle_state_phase2(volatile AppEvent* event)
 	TIMx_delay_us(TIM2, NRF24L01P_PTX_MIN_CE_PULSE_US);	// min 10 us CE pulse according to nRF24 datasheet
 	nrf24l01p_set_ce(0);
 
-	*event = EVENT_NONE; 	// clear event flag
 	return STATE_AWAITING_ACK;
 }
 
@@ -193,6 +194,8 @@ AppState handle_state_awaiting_ack(volatile AppEvent* event)
 {
 	if (*event != EVENT_RADIO_IRQ)
 		return STATE_AWAITING_ACK;
+
+	*event = EVENT_NONE; // clear event flag
 
 	nrf24_status = nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources);
 	if (nrf24_status != NRF24L01P_SUCCESS)
@@ -208,17 +211,35 @@ AppState handle_state_awaiting_ack(volatile AppEvent* event)
 	if (nrf24_status != NRF24L01P_SUCCESS)
 		return STATE_ERROR;
 
-	*event = EVENT_NONE; // clear event flag
 	return STATE_SLEEP;
 }
 
 AppState handle_state_sleep(volatile AppEvent* event)
 {
+	/*set_pins_to_analog_mode(I2C_SCL_GPIO_Port, I2C_SCL_Pin | I2C_SDA_Pin);
+	set_pins_to_analog_mode(SPI_SCK_GPIO_Port, SPI_SCK_Pin);
+	set_pins_to_analog_mode(SPI_MOSI_GPIO_Port, SPI_MOSI_Pin | SPI_MISO_Pin);*/
 
-	LL_IOP_GRP1_DisableClock(LL_IOP_GRP1_PERIPH_GPIOA |
-	                           LL_IOP_GRP1_PERIPH_GPIOB |
-	                           LL_IOP_GRP1_PERIPH_GPIOC |
-	                           LL_IOP_GRP1_PERIPH_GPIOH);
+	// TODO: refactor this function
+	LL_GPIO_InitTypeDef gpio_initstruct = {LED_Pin, LL_GPIO_MODE_ANALOG,
+	                                       LL_GPIO_SPEED_FREQ_HIGH, LL_GPIO_OUTPUT_PUSHPULL,
+	                                       LL_GPIO_PULL_NO, LL_GPIO_AF_0};
+
+	//LL_GPIO_Init(GPIOA, &gpio_initstruct);
+	LL_GPIO_Init(GPIOB, &gpio_initstruct);
+	//LL_GPIO_Init(GPIOC, &gpio_initstruct);
+
+
+	LL_IOP_GRP1_DisableClock(LL_IOP_GRP1_PERIPH_GPIOA | LL_IOP_GRP1_PERIPH_GPIOB | LL_IOP_GRP1_PERIPH_GPIOC);
+
+	/*LL_I2C_Disable(I2C1);
+	LL_TIM_DisableCounter(TIM2);
+	LL_TIM_DisableCounter(TIM21);*/
+	//LL_SPI_Disable(SPI1);
+
+	/*LL_APB1_GRP1_DisableClock(LL_APB1_GRP1_PERIPH_I2C1 | LL_APB1_GRP1_PERIPH_TIM2);
+	LL_APB2_GRP1_DisableClock(LL_APB2_GRP1_PERIPH_SPI1 | LL_APB2_GRP1_PERIPH_TIM21);
+	LL_AHB1_GRP1_DisableClock(LL_AHB1_GRP1_PERIPH_CRC);*/
 
 	/** Request to enter STOP mode
 	* Following procedure describe in STM32L0xx Reference Manual
@@ -231,8 +252,6 @@ AppState handle_state_sleep(volatile AppEvent* event)
 	* If the regulator remains in "main mode",
 	* it consumes more power without providing any additional feature. */
 	LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_LOW_POWER);
-
-	LL_SYSTICK_DisableIT();
 
 	/* Set STOP mode when CPU enters deepsleep */
 	LL_PWR_SetPowerMode(LL_PWR_MODE_STOP);
@@ -247,8 +266,6 @@ AppState handle_state_sleep(volatile AppEvent* event)
 
 	SystemClock_Config();	// first action after wake up
 
-	LL_SYSTICK_EnableIT();
-
 	MX_GPIO_Init();
 	MX_CRC_Init();
 	MX_I2C1_Init();
@@ -256,13 +273,16 @@ AppState handle_state_sleep(volatile AppEvent* event)
 	MX_SPI1_Init();
 	MX_TIM21_Init();
 
+	// TODO: check this flag is actually set
+	LL_PWR_ClearFlag_WU();
+
 	state = STATE_IDLE;
 }
 
 AppState handle_state_error(volatile AppEvent* event)
 {
 	// TODO: error handling
-	return STATE_IDLE;
+	return STATE_SLEEP;
 }
 
 AppState dispatch_states(AppState state, volatile AppEvent* event)
@@ -281,7 +301,7 @@ AppState dispatch_states(AppState state, volatile AppEvent* event)
 		case STATE_ERROR:
 			return handle_state_error(event);
 		default:
-			return STATE_ERROR; // Unknown state, go to error state
+			return STATE_IDLE; 	// TODO: test whether state still ends up in weird state "0d120"
 	}
 }
 

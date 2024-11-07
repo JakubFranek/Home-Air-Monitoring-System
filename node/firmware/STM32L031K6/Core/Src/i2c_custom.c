@@ -16,7 +16,8 @@ int8_t I2C1_transmit_byte(uint8_t address, uint8_t payload)
 
 	while (!LL_I2C_IsActiveFlag_TXIS(I2C1))
 	{
-		if (TIMx_get_count(I2C_TIMEOUT_TIMER, &count) > I2C_TIMEOUT_US)
+		TIMx_get_count(I2C_TIMEOUT_TIMER, &count);
+		if (count > I2C_TIMEOUT_US)
 			return -1;
 	}
 
@@ -25,8 +26,9 @@ int8_t I2C1_transmit_byte(uint8_t address, uint8_t payload)
 	TIMx_restart(I2C_TIMEOUT_TIMER);
 	while (!LL_I2C_IsActiveFlag_STOP(I2C1))
 	{
-		if (TIMx_get_count(I2C_TIMEOUT_TIMER, &count) > I2C_TIMEOUT_US)
-			return -1;
+		TIMx_get_count(I2C_TIMEOUT_TIMER, &count);
+			if (count > I2C_TIMEOUT_US)
+				return -1;
 	}
 
 	LL_I2C_ClearFlag_STOP(I2C1);
@@ -48,16 +50,18 @@ int8_t I2C1_receive(uint8_t address, uint8_t *payload, uint8_t bytes)
 		TIMx_restart(I2C_TIMEOUT_TIMER);
 		while (!LL_I2C_IsActiveFlag_RXNE(I2C1))
 		{
-			if (TIMx_get_count(I2C_TIMEOUT_TIMER, &count) > I2C_TIMEOUT_US)
-				return -1;
+			TIMx_get_count(I2C_TIMEOUT_TIMER, &count);
+				if (count > I2C_TIMEOUT_US)
+					return -1;
 		}
 		data[i] = LL_I2C_ReceiveData8(I2C1);
 	}
 
 	while (!LL_I2C_IsActiveFlag_STOP(I2C1))
 	{
-		if (TIMx_get_count(I2C_TIMEOUT_TIMER, &count) > I2C_TIMEOUT_US)
-			return -1;
+		TIMx_get_count(I2C_TIMEOUT_TIMER, &count);
+			if (count > I2C_TIMEOUT_US)
+				return -1;
 	}
 
 	LL_I2C_ClearFlag_STOP(I2C1);

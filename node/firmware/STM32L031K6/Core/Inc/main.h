@@ -77,15 +77,29 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LSE_IN_Pin LL_GPIO_PIN_14
+#define LSE_IN_GPIO_Port GPIOC
+#define LSE_OUT_Pin LL_GPIO_PIN_15
+#define LSE_OUT_GPIO_Port GPIOC
 #define nRF24_CSN_Pin LL_GPIO_PIN_4
 #define nRF24_CSN_GPIO_Port GPIOA
+#define SPI_SCK_Pin LL_GPIO_PIN_5
+#define SPI_SCK_GPIO_Port GPIOA
 #define nRF24_IRQ_Pin LL_GPIO_PIN_1
 #define nRF24_IRQ_GPIO_Port GPIOB
 #define nRF24_IRQ_EXTI_IRQn EXTI0_1_IRQn
 #define nRF24_CE_Pin LL_GPIO_PIN_8
 #define nRF24_CE_GPIO_Port GPIOA
+#define I2C_SCL_Pin LL_GPIO_PIN_9
+#define I2C_SCL_GPIO_Port GPIOA
+#define I2C_SDA_Pin LL_GPIO_PIN_10
+#define I2C_SDA_GPIO_Port GPIOA
 #define LED_Pin LL_GPIO_PIN_3
 #define LED_GPIO_Port GPIOB
+#define SPI_MISO_Pin LL_GPIO_PIN_4
+#define SPI_MISO_GPIO_Port GPIOB
+#define SPI_MOSI_Pin LL_GPIO_PIN_5
+#define SPI_MOSI_GPIO_Port GPIOB
 #ifndef NVIC_PRIORITYGROUP_0
 #define NVIC_PRIORITYGROUP_0         ((uint32_t)0x00000007) /*!< 0 bit  for pre-emption priority,
                                                                  4 bits for subpriority */
