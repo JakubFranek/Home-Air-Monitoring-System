@@ -1,0 +1,54 @@
+# STM32CubeIDE specific files
+**/.project
+**/.cproject
+**/.settings/
+**/bin/
+**/Debug/
+**/Release/
+**/Drivers/**/License.md
+**/*.o
+**/*.d
+**/*.elf
+**/*.hex
+**/*.bin
+**/*.s
+**/*.lst
+**/*.map
+
+# Other IDE specific files
+**/.metadata
+**/.local/
+**/*.launch
+
+# Build directories
+**/build/
+**/*.dep
+**/.sconsign.dblite
+
+# OS generated files
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+*.temp
+*~
+*.log
+*.bak
+
+# User-specific files
+**/*.user
+**/*.sublime-workspace
+
+# Exclude any external libraries that might be versioned separately
+**/lib/
+
+# CMake and other build artifacts
+**/CMakeFiles/
+**/CMakeCache.txt
+**/Makefile
+
+# Other folders
+Firmware repository
+
+# VS Code files
+.vscode
