@@ -14,8 +14,9 @@ int8_t TIMx_delay_us(TIM_TypeDef *TIMx, uint16_t us)
 	LL_TIM_DisableCounter(TIMx);
 	LL_TIM_SetCounter(TIMx, 0);
 	LL_TIM_EnableCounter(TIMx);
-	while (LL_TIM_GetCounter(TIMx) < ticks)
-		;
+
+	while (LL_TIM_GetCounter(TIMx) < ticks);
+
 	LL_TIM_DisableCounter(TIMx);
 
 	return 0;
@@ -91,6 +92,7 @@ void TIM_IRQ_callback(TIM_TypeDef *TIMx)
 		tim21_callback();
 	else if (TIMx == TIM22 && tim22_callback != NULL)
 		tim22_callback();
+	// else... is redundant here since this is an IRQ callback - nowhere to return to
 
 	TIMx_disable_scheduled_interrupt(TIMx);
 }

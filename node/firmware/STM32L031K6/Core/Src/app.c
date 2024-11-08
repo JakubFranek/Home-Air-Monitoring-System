@@ -9,6 +9,47 @@
 #include "gpio_custom.h"
 #include "crc_custom.h"
 
+#define NRF24_CHECK_ERROR_RETURN(expr)         	\
+    do {                                       	\
+        nrf24_status = (expr);                 	\
+        if (nrf24_status != NRF24L01P_SUCCESS) 	\
+            return STATE_ERROR;                	\
+    } while(0)
+
+#define NRF24_CHECK_ERROR_SET_STATE(expr)     	\
+    do {                                       	\
+        nrf24_status = (expr);                 	\
+        if (nrf24_status != NRF24L01P_SUCCESS) 	\
+            state = STATE_ERROR;               	\
+    } while(0)
+
+#define SHT4X_CHECK_ERROR_RETURN(expr)         	\
+    do {                                       	\
+        sht4x_status = (expr);                 	\
+        if (sht4x_status != SHT4X_SUCCESS) 		\
+            return STATE_ERROR;                	\
+    } while(0)
+
+#define SHT4X_CHECK_ERROR_SET_STATE(expr)      	\
+    do {                                       	\
+        sht4x_status = (expr);                 	\
+        if (sht4x_status != SHT4X_SUCCESS) 		\
+            state = STATE_ERROR;               	\
+    } while(0)
+
+#define CHECK_ERROR_SET_STATE(expr)      		\
+    do {                    					\
+        if (expr != 0) 							\
+            state = STATE_ERROR;               	\
+    } while(0)
+
+#define CHECK_ERROR_RETURN(expr)    	  		\
+    do {                    					\
+        if (expr != 0) 							\
+            return STATE_ERROR;               	\
+    } while(0)
+
+
 #define PHASE1_LENGTH SHT4X_MEAS_HIGH_PREC_PERIOD_US - NRF24L01P_POWER_UP_DELAY_US
 #define PHASE2_LENGTH NRF24L01P_POWER_UP_DELAY_US
 
@@ -127,9 +168,9 @@ void app_setup(void)
 	LL_RTC_ClearFlag_WUT(RTC);
 	LL_RTC_EnableWriteProtection(RTC);
 
-	nrf24_status = nrf24l01p_init_ptx(&nrf24_device); 	// TODO: error checking
-	nrf24_status = nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources);
-	nrf24_status = nrf24l01p_set_ptx_mode(&nrf24_device);
+	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_init_ptx(&nrf24_device));
+	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources));
+	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_set_ptx_mode(&nrf24_device));
 }
 
 /**
@@ -145,13 +186,11 @@ void app_loop(void)
 	state = dispatch_states(state, &event);
 }
 
+
 AppState handle_state_idle(volatile AppEvent* event)
 {
-	sht4x_status = sht4x_send_command(&sht4x, SHT4X_I2C_CMD_MEAS_HIGH_PREC);
-	if (sht4x_status != SHT4X_SUCCESS)
-		return STATE_ERROR;
-
-	TIMx_schedule_interrupt(TIM21, PHASE1_LENGTH, &irs_phase1_done);
+	SHT4X_CHECK_ERROR_RETURN(sht4x_send_command(&sht4x, SHT4X_I2C_CMD_MEAS_HIGH_PREC));
+	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, PHASE1_LENGTH, &irs_phase1_done));
 	return STATE_PHASE1;
 }
 
@@ -161,11 +200,9 @@ AppState handle_state_phase1(volatile AppEvent* event)
 		return STATE_PHASE1;
 	*event = EVENT_NONE; 	// clear event flag
 
-	nrf24_status = nrf24l01p_power_up(&nrf24_device);
-	if (nrf24_status != NRF24L01P_SUCCESS)
-		return STATE_ERROR;
+	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_up(&nrf24_device));
 
-	TIMx_schedule_interrupt(TIM21, PHASE2_LENGTH, &irs_phase2_done);
+	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, PHASE2_LENGTH, &irs_phase2_done));
 
 	return STATE_PHASE2;
 }
@@ -177,14 +214,16 @@ AppState handle_state_phase2(volatile AppEvent* event)
 
 	*event = EVENT_NONE; 	// clear event flag
 
-	sht4x_status = sht4x_read_and_check_measurement(&sht4x, &sht4x_data);
-	if (sht4x_status != SHT4X_SUCCESS)
-		return STATE_ERROR;
+	SHT4X_CHECK_ERROR_RETURN(sht4x_read_and_check_measurement(&sht4x, &sht4x_data));
 
 	build_payload(tx_payload);
-	nrf24_status = nrf24l01p_write_tx_fifo(&nrf24_device, tx_payload, NRF24_DATA_LENGTH); // TX data can be written any time, nRF24L01+ will send it when ready¨
+
+	// TX data can be written any time, nRF24L01+ will send it when ready¨
+	NRF24_CHECK_ERROR_RETURN(nrf24l01p_write_tx_fifo(&nrf24_device, tx_payload, NRF24_DATA_LENGTH));
+
+	// min 10 us CE pulse according to nRF24 datasheet
 	nrf24l01p_set_ce(1);
-	TIMx_delay_us(TIM2, NRF24L01P_PTX_MIN_CE_PULSE_US);	// min 10 us CE pulse according to nRF24 datasheet
+	CHECK_ERROR_RETURN(TIMx_delay_us(TIM2, NRF24L01P_PTX_MIN_CE_PULSE_US));
 	nrf24l01p_set_ce(0);
 
 	return STATE_AWAITING_ACK;
@@ -197,72 +236,30 @@ AppState handle_state_awaiting_ack(volatile AppEvent* event)
 
 	*event = EVENT_NONE; // clear event flag
 
-	nrf24_status = nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources);
-	if (nrf24_status != NRF24L01P_SUCCESS)
+	NRF24_CHECK_ERROR_RETURN(nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources));
+
+	if (nrf24_irq_sources.max_rt)
 		return STATE_ERROR;
 
-	if (nrf24_irq_sources.tx_ds)
-		LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-	else if (nrf24_irq_sources.max_rt)
-		LL_GPIO_ResetOutputPin(LED_GPIO_Port, LED_Pin);
-
-	nrf24_status = nrf24l01p_power_down(&nrf24_device);
-
-	if (nrf24_status != NRF24L01P_SUCCESS)
-		return STATE_ERROR;
+	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device));
 
 	return STATE_SLEEP;
 }
 
 AppState handle_state_sleep(volatile AppEvent* event)
 {
-	/*set_pins_to_analog_mode(I2C_SCL_GPIO_Port, I2C_SCL_Pin | I2C_SDA_Pin);
-	set_pins_to_analog_mode(SPI_SCK_GPIO_Port, SPI_SCK_Pin);
-	set_pins_to_analog_mode(SPI_MOSI_GPIO_Port, SPI_MOSI_Pin | SPI_MISO_Pin);*/
+	// for some reason turning SPI MISO hi-Z really lowers the IDD
+	set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL);
+	set_pins_to_analog_mode(GPIOB, LL_GPIO_PIN_ALL);
+	set_pins_to_analog_mode(GPIOC, LL_GPIO_PIN_ALL);
 
-	// TODO: refactor this function
-	LL_GPIO_InitTypeDef gpio_initstruct = {LED_Pin, LL_GPIO_MODE_ANALOG,
-	                                       LL_GPIO_SPEED_FREQ_HIGH, LL_GPIO_OUTPUT_PUSHPULL,
-	                                       LL_GPIO_PULL_NO, LL_GPIO_AF_0};
-
-	//LL_GPIO_Init(GPIOA, &gpio_initstruct);
-	LL_GPIO_Init(GPIOB, &gpio_initstruct);
-	//LL_GPIO_Init(GPIOC, &gpio_initstruct);
-
-
-	LL_IOP_GRP1_DisableClock(LL_IOP_GRP1_PERIPH_GPIOA | LL_IOP_GRP1_PERIPH_GPIOB | LL_IOP_GRP1_PERIPH_GPIOC);
-
-	/*LL_I2C_Disable(I2C1);
-	LL_TIM_DisableCounter(TIM2);
-	LL_TIM_DisableCounter(TIM21);*/
-	//LL_SPI_Disable(SPI1);
-
-	/*LL_APB1_GRP1_DisableClock(LL_APB1_GRP1_PERIPH_I2C1 | LL_APB1_GRP1_PERIPH_TIM2);
-	LL_APB2_GRP1_DisableClock(LL_APB2_GRP1_PERIPH_SPI1 | LL_APB2_GRP1_PERIPH_TIM21);
-	LL_AHB1_GRP1_DisableClock(LL_AHB1_GRP1_PERIPH_CRC);*/
-
-	/** Request to enter STOP mode
-	* Following procedure describe in STM32L0xx Reference Manual
-	* See PWR part, section Low-power modes, STOP mode
-	*/
-	/* Enable ultra low power mode */
 	LL_PWR_EnableUltraLowPower();
-
-	/** Set the regulator to low power before setting MODE_STOP.
-	* If the regulator remains in "main mode",
-	* it consumes more power without providing any additional feature. */
 	LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_LOW_POWER);
-
-	/* Set STOP mode when CPU enters deepsleep */
 	LL_PWR_SetPowerMode(LL_PWR_MODE_STOP);
-
-	/* Set SLEEPDEEP bit of Cortex System Control Register */
 	LL_LPM_EnableDeepSleep();
-
-	/* Request Wait For Interrupt */
 	__WFI();
 
-	/* --------- We are asleep here --------------*/
+	/* --------- Stop mode here --------------*/
 
 	SystemClock_Config();	// first action after wake up
 
@@ -273,10 +270,10 @@ AppState handle_state_sleep(volatile AppEvent* event)
 	MX_SPI1_Init();
 	MX_TIM21_Init();
 
-	// TODO: check this flag is actually set
-	LL_PWR_ClearFlag_WU();
+	if (LL_PWR_IsActiveFlag_WU())
+		LL_PWR_ClearFlag_WU();
 
-	state = STATE_IDLE;
+	return STATE_IDLE;
 }
 
 AppState handle_state_error(volatile AppEvent* event)
@@ -301,16 +298,10 @@ AppState dispatch_states(AppState state, volatile AppEvent* event)
 		case STATE_ERROR:
 			return handle_state_error(event);
 		default:
-			return STATE_IDLE; 	// TODO: test whether state still ends up in weird state "0d120"
+			return STATE_ERROR;
 	}
 }
 
-/**
- * @brief This function handles EXTI line 1 interrupts (the nRF24 IRQ).
- *
- * @param None
- * @retval None
- */
 void GPIO_EXTI1_IRQ_callback(void)
 {
 	event = EVENT_RADIO_IRQ;
@@ -319,14 +310,10 @@ void GPIO_EXTI1_IRQ_callback(void)
 void RTC_WAKEUP_IRQ_callback(void)
 {
 	if (LL_RTC_IsActiveFlag_WUT(RTC) != 0)
-	{
-		// Clear the wakeup timer interrupt flag
-		LL_RTC_ClearFlag_WUT(RTC);
-	}
+		LL_RTC_ClearFlag_WUT(RTC); 	// Clear the wakeup timer interrupt flag
 
-	// Clear the EXTI line 20 pending flag (RTC wakeup interrupt)
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_20))
-		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_20);
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_20);	// Clear the EXTI line 20 pending flag (RTC wakeup interrupt)
 }
 
 void irs_phase1_done(void)
@@ -354,7 +341,7 @@ void build_payload(uint8_t* payload)
 	payload[5] = (temperature & 0x00FF);
 	payload[6] = (humidity & 0xFF00) >> 8;
 	payload[7] = (humidity & 0x00FF);
-	payload[8] = 0x00;	// reserved
-	payload[9] = 0x00;	// reserved
+	payload[8] = 0x00;			// reserved
+	payload[9] = 0x00;			// reserved
 
 }

@@ -52,6 +52,12 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include "app.h"
 #include "tim_custom.h"
+#include "crc.h"
+#include "i2c.h"
+#include "rtc.h"
+#include "spi.h"
+#include "tim.h"
+#include "gpio.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -73,7 +79,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void SystemClock_Config(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -94,8 +100,6 @@ void Error_Handler(void);
 #define I2C_SCL_GPIO_Port GPIOA
 #define I2C_SDA_Pin LL_GPIO_PIN_10
 #define I2C_SDA_GPIO_Port GPIOA
-#define LED_Pin LL_GPIO_PIN_3
-#define LED_GPIO_Port GPIOB
 #define SPI_MISO_Pin LL_GPIO_PIN_4
 #define SPI_MISO_GPIO_Port GPIOB
 #define SPI_MOSI_Pin LL_GPIO_PIN_5
