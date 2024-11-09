@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
 #include "crc.h"
 #include "i2c.h"
 #include "rtc.h"
@@ -103,6 +104,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM21_Init();
   MX_RTC_Init();
+  MX_ADC_Init();
   /* USER CODE BEGIN 2 */
   app_setup();		// see app.h/c
   /* USER CODE END 2 */

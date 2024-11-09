@@ -1,7 +1,7 @@
 #ifndef INC_APP_H_
 #define INC_APP_H_
 
-#define NRF24_DATA_LENGTH 8			// bytes
+#define NRF24_DATA_LENGTH 10		// bytes
 #define NODE_ID 0
 #define RTC_WAKE_UP_PERIOD_S 3		// min. 1 second
 
