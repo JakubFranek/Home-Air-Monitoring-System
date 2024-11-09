@@ -15,7 +15,7 @@
 
 Sht4xStatus sht4x_send_command(Sht4xDevice *device, uint8_t command)
 {
-	if (device->i2c_write(device->i2c_address, command) != 0)
+	if (device->i2c_write(device->i2c_address, &command, 1) != 0)
 		return SHT4X_I2C_ERROR;
 	return SHT4X_SUCCESS;
 }

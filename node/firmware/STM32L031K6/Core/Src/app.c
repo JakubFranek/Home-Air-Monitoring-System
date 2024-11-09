@@ -60,7 +60,7 @@ static Sht4xData sht4x_data = {
 };
 static Sht4xDevice sht4x = {
 	.i2c_address = SHT4X_I2C_ADDR_A,
-	.i2c_write = &I2C1_transmit_byte,
+	.i2c_write = &I2C1_transmit,
 	.i2c_read = &I2C1_receive,
 	.calculate_crc = &calculate_CRC8
 };
@@ -75,9 +75,9 @@ static Nrf24l01pDevice nrf24_device = {
 	.interface = {
 		.set_cs = &nrf24l01p_set_cs,
 		.set_ce = &nrf24l01p_set_ce,
-		.spi_tx = &SPI1_Transmit_Multi,
-		.spi_rx = &SPI1_Receive,
-		.spi_tx_rx = &SPI1_TransmitReceive
+		.spi_tx = &SPI1_transmit,
+		.spi_rx = &SPI1_receive,
+		.spi_tx_rx = &SPI1_transmit_receive
 	},
 	.config = {
 			.channel_MHz = 2500,
@@ -155,7 +155,6 @@ void app_setup(void)
 	LL_I2C_Enable(I2C1);
 	LL_SPI_Enable(SPI1);
 
-
 	// TODO: clean this up
 	// RTC wake up timer setup
 	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_20);  			// Enable interrupt for EXTI line 20 (RTC)
@@ -186,7 +185,6 @@ void app_setup(void)
 void app_loop(void)
 {
 	// TODO: add ADC supply voltage measurement
-	// TODO: use internal HSI with lower frequency, higher frequency I2C/SPI
 	state = dispatch_states(state, &event);
 }
 
@@ -242,7 +240,7 @@ AppState handle_state_phase2(volatile AppEvent* event)
 
 	// min 10 us CE pulse according to nRF24 datasheet
 	nrf24l01p_set_ce(1);
-	CHECK_ERROR_RETURN(TIMx_delay_us(TIM2, NRF24L01P_PTX_MIN_CE_PULSE_US));
+	TIMx_delay_us(TIM2, NRF24L01P_PTX_MIN_CE_PULSE_US);
 	nrf24l01p_set_ce(0);
 
 	return STATE_AWAITING_ACK;
@@ -292,8 +290,8 @@ AppState handle_state_sleep(volatile AppEvent* event)
 	MX_GPIO_Init();
 	MX_CRC_Init();
 	MX_I2C1_Init();
-	MX_TIM2_Init();
 	MX_SPI1_Init();
+	MX_TIM2_Init();
 	MX_TIM21_Init();
 
 	if (LL_PWR_IsActiveFlag_WU())

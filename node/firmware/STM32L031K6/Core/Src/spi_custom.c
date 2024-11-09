@@ -5,45 +5,18 @@
 #define SPI_TIMEOUT_US 1000
 #define SPI_TIMEOUT_TIMER TIM2
 
-static uint8_t transmit_done()
-{
-	uint8_t done = LL_SPI_IsActiveFlag_TXE(SPI1) && !LL_SPI_IsActiveFlag_BSY(SPI1);
-	return done;
-}
-
-static uint8_t receive_done()
-{
-	uint8_t done = LL_SPI_IsActiveFlag_RXNE(SPI1) && !LL_SPI_IsActiveFlag_BSY(SPI1);
-	return done;
-}
-
-// TODO: get rid of this function
-int8_t SPI1_Transmit(uint8_t tx_data)
+int8_t SPI1_transmit(const uint8_t* tx_data, uint8_t length)
 {
 	uint16_t count;
 
-	TIMx_restart(SPI_TIMEOUT_TIMER);
-
-	LL_SPI_TransmitData8(SPI1, tx_data);
-
-	while (!transmit_done())
-	{
-		TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
-			if (count > SPI_TIMEOUT_US)
-				return -1;
-	}
-
-	return 0;
-}
-
-int8_t SPI1_Transmit_Multi(uint8_t* tx_data, uint8_t length)
-{
-	uint16_t count;
+	// Make sure RX buffer is empty before SPI transaction
+	(void) LL_SPI_ReceiveData8(SPI1);
 
 	for (int i = 0; i < length; i++)
 	{
 		TIMx_restart(SPI_TIMEOUT_TIMER);
 		LL_SPI_TransmitData8(SPI1, tx_data[i]);
+
 		while (!LL_SPI_IsActiveFlag_TXE(SPI1))
 		{
 			TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
@@ -63,41 +36,79 @@ int8_t SPI1_Transmit_Multi(uint8_t* tx_data, uint8_t length)
 	return 0;
 }
 
-// TODO: add multibyte support
-int8_t SPI1_Receive(uint8_t *rx_data)
+int8_t SPI1_receive(uint8_t *rx_data, uint8_t length)
 {
 	uint16_t count;
 
-	TIMx_restart(SPI_TIMEOUT_TIMER);
+	// Make sure RX buffer is empty before SPI transaction
+	(void) LL_SPI_ReceiveData8(SPI1);
 
-	while (!receive_done())
+	for(int i = 0; i < length; i++)
 	{
-		TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
+		TIMx_restart(SPI_TIMEOUT_TIMER);
+		while (!LL_SPI_IsActiveFlag_RXNE(SPI1))
+		{
+			TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
 			if (count > SPI_TIMEOUT_US)
 				return -1;
+		}
+		rx_data[i] = LL_SPI_ReceiveData8(SPI1);
 	}
 
-	*rx_data = LL_SPI_ReceiveData8(SPI1);
-	return 0;
-}
-
-// TODO: add multibyte support
-uint8_t SPI1_TransmitReceive(uint8_t tx_data, uint8_t *rx_data)
-{
-	uint16_t count;
-
 	TIMx_restart(SPI_TIMEOUT_TIMER);
-
-	LL_SPI_TransmitData8(SPI1, tx_data);
-
-	while (!transmit_done() || !receive_done())
+	while (LL_SPI_IsActiveFlag_BSY(SPI1))
 	{
 		TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
 		if (count > SPI_TIMEOUT_US)
 			return -1;
 	}
 
-	*rx_data = LL_SPI_ReceiveData8(SPI1);
+	return 0;
+}
+
+uint8_t SPI1_transmit_receive(const uint8_t* tx_data, uint8_t *rx_data, uint8_t length)
+{
+	uint16_t count;
+
+	uint8_t tx_i = 0;
+	uint8_t rx_i = 0;
+
+	// Make sure RX buffer is empty before SPI transaction
+	(void) LL_SPI_ReceiveData8(SPI1);
+
+	TIMx_restart(SPI_TIMEOUT_TIMER);
+	while(rx_i < length)
+	{
+		// If TX buffer is empty, load more data
+		if(LL_SPI_IsActiveFlag_TXE(SPI1) && tx_i < length)
+		{
+			LL_SPI_TransmitData8(SPI1, tx_data[tx_i]);
+			tx_i++;
+			while(LL_SPI_IsActiveFlag_TXE(SPI1))
+			{
+				TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
+				if (count > SPI_TIMEOUT_US)
+					return -1;
+			}
+		}
+
+		// If RX buffer is not empty, read data
+		if(LL_SPI_IsActiveFlag_RXNE(SPI1))
+		{
+			rx_data[rx_i] = LL_SPI_ReceiveData8(SPI1);
+			rx_i++;
+			while(LL_SPI_IsActiveFlag_RXNE(SPI1))
+			{
+				TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
+				if (count > SPI_TIMEOUT_US)
+					return -1;
+			}
+		}
+
+		TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
+		if (count > SPI_TIMEOUT_US)
+			return -1;
+	}
 
 	return 0;
 }

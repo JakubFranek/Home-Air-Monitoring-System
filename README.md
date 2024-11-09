@@ -11,8 +11,8 @@ The system consists of a **central hub** and **six wireless sensor nodes** to me
 - Atmospheric Pressure
 - Particulate Matter
 - Volatile Organic Compounds (VOCs)
-- CO₂ Levels
-- NOₓ Levels
+- CO₂
+- NOₓ
 
 ### Components
 

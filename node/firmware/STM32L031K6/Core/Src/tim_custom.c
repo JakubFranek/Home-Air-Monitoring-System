@@ -7,41 +7,32 @@ static VoidCallback tim2_callback = NULL;
 static VoidCallback tim21_callback = NULL;
 static VoidCallback tim22_callback = NULL;
 
-int8_t TIMx_delay_us(TIM_TypeDef *TIMx, uint16_t us)
-{
-	uint16_t ticks = us;
-
-	LL_TIM_DisableCounter(TIMx);
-	LL_TIM_SetCounter(TIMx, 0);
-	LL_TIM_EnableCounter(TIMx);
-
-	while (LL_TIM_GetCounter(TIMx) < ticks);
-
-	LL_TIM_DisableCounter(TIMx);
-
-	return 0;
-}
-
-int8_t TIMx_restart(TIM_TypeDef *TIMx)
+void TIMx_delay_us(TIM_TypeDef *TIMx, uint16_t us)
 {
 	LL_TIM_DisableCounter(TIMx);
 	LL_TIM_SetCounter(TIMx, 0);
 	LL_TIM_EnableCounter(TIMx);
 
-	return 0;
+	while (LL_TIM_GetCounter(TIMx) < us);
+
+	LL_TIM_DisableCounter(TIMx);
 }
 
-int8_t TIMx_stop(TIM_TypeDef *TIMx)
+void TIMx_restart(TIM_TypeDef *TIMx)
 {
 	LL_TIM_DisableCounter(TIMx);
-
-	return 0;
+	LL_TIM_SetCounter(TIMx, 0);
+	LL_TIM_EnableCounter(TIMx);
 }
 
-int8_t TIMx_get_count(TIM_TypeDef *TIMx, uint16_t* count)
+void TIMx_stop(TIM_TypeDef *TIMx)
+{
+	LL_TIM_DisableCounter(TIMx);
+}
+
+void TIMx_get_count(TIM_TypeDef *TIMx, uint16_t* count)
 {
 	*count = LL_TIM_GetCounter(TIMx);
-	return 0;
 }
 
 int8_t TIMx_schedule_interrupt(TIM_TypeDef *TIMx, uint16_t us, VoidCallback callback)

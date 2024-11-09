@@ -81,92 +81,88 @@ Nrf24l01p40bitRegRstVals reg_rst_vals_40bit[] = {
 static Nrf24l01pStatus read_register(Nrf24l01pDevice *device, uint8_t address, uint8_t *value)
 {
 	uint8_t command = NRF24L01P_CMD_R_REGISTER | address;
-	uint8_t status;
+	uint8_t tx_data[2] = {command, 0x00};
+	uint8_t rx_data[2];
+	int8_t spi_status;
 
 	device->interface.set_cs(0);
-
-	if (device->interface.spi_tx_rx(command, &status) != 0)
-		return NRF24L01P_SPI_ERROR;
-	if (device->interface.spi_tx_rx(0xFF, value) != 0)
-		return NRF24L01P_SPI_ERROR;
-
+	spi_status = device->interface.spi_tx_rx(tx_data, rx_data, 2);
 	device->interface.set_cs(1);
+
+	if(spi_status != 0)
+		return NRF24L01P_SPI_ERROR;
+
+	*value = rx_data[1];
 
 	return NRF24L01P_SUCCESS;
 }
 
-static Nrf24l01pStatus read_register_multibyte(Nrf24l01pDevice *device, uint8_t address, uint64_t *value, uint8_t num_bytes)
+static Nrf24l01pStatus read_register_multibyte(Nrf24l01pDevice *device, uint8_t address, uint64_t *value, uint8_t length)
 {
-	uint8_t command = NRF24L01P_CMD_R_REGISTER | address;
-	uint8_t read_byte, status;
-	*value = 0;
+	uint8_t rx_data[length+1];
+	uint8_t tx_data[length+1];
+	int8_t spi_status;
+
+	tx_data[0] = NRF24L01P_CMD_R_REGISTER | address;
 
 	device->interface.set_cs(0);
+	spi_status = device->interface.spi_tx_rx(tx_data, rx_data, length);
+	device->interface.set_cs(1);
 
-	if (device->interface.spi_tx_rx(command, &status) != 0)
+	if (spi_status != 0)
 		return NRF24L01P_SPI_ERROR;
 
-	for (int i = 0; i < num_bytes; i++)
-	{
-		if (device->interface.spi_tx_rx(0xFF, &read_byte) != 0)
-			return NRF24L01P_SPI_ERROR;
-		*value |= ((uint64_t)read_byte << (i * 8));
-	}
-
-	device->interface.set_cs(1);
+	*value = 0;	// reset output value to zeros
+	for(int i = 0; i < length; i++)
+		*value |= ((uint64_t)rx_data[i] << (i * 8));
 
 	return NRF24L01P_SUCCESS;
 }
 
 static Nrf24l01pStatus write_register(Nrf24l01pDevice *device, uint8_t address, uint8_t payload)
 {
-	uint8_t command = NRF24L01P_CMD_W_REGISTER | address;
-	uint8_t status;
+	uint8_t tx_data[2] = {NRF24L01P_CMD_W_REGISTER | address, payload};
+	uint8_t rx_data[2];
+	int8_t spi_status;
 
 	device->interface.set_cs(0);
-
-	if (device->interface.spi_tx_rx(command, &status) != 0)
-		return NRF24L01P_SPI_ERROR;
-
-	if (device->interface.spi_tx(&payload, 1) != 0)
-		return NRF24L01P_SPI_ERROR;
-
+	spi_status = device->interface.spi_tx_rx(tx_data, rx_data, 2);
 	device->interface.set_cs(1);
 
+	if (spi_status != 0)
+		return NRF24L01P_SPI_ERROR;
 	return NRF24L01P_SUCCESS;
 }
 
-static Nrf24l01pStatus write_register_multibyte(Nrf24l01pDevice *device, uint8_t address, uint64_t payload, uint8_t num_bytes)
+static Nrf24l01pStatus write_register_multibyte(Nrf24l01pDevice *device, uint8_t address, uint64_t payload, uint8_t length)
 {
-	uint8_t command = NRF24L01P_CMD_W_REGISTER | address;
-	uint8_t payload_bytes[num_bytes];
-	uint8_t status;
+	uint8_t tx_data[length+1];
+	uint8_t rx_data[length];
+	int8_t spi_status;
 
-	for (int i = 0; i < num_bytes; i++)
-		payload_bytes[i] = (uint8_t)((payload >> (i * 8)) & 0xFF);
+	tx_data[0] = NRF24L01P_CMD_W_REGISTER | address;
+	for (int i = 0; i < length; i++)
+		tx_data[i+1] = (uint8_t)((payload >> (i * 8)) & 0xFF);
 
 	device->interface.set_cs(0);
-
-	if (device->interface.spi_tx_rx(command, &status) != 0)
-		return NRF24L01P_SPI_ERROR;
-
-	if (device->interface.spi_tx(payload_bytes, num_bytes))
-		return NRF24L01P_SPI_ERROR;
-
+	spi_status = device->interface.spi_tx_rx(tx_data, rx_data, length);
 	device->interface.set_cs(1);
 
+	if(spi_status != 0)
+		return NRF24L01P_SPI_ERROR;
 	return NRF24L01P_SUCCESS;
 }
 
 static Nrf24l01pStatus send_command(Nrf24l01pDevice *device, uint8_t command, uint8_t *status)
 {
+	int8_t spi_status;
+
 	device->interface.set_cs(0);
-
-	if (device->interface.spi_tx_rx(command, status) != 0)
-		return NRF24L01P_SPI_ERROR;
-
+	spi_status = device->interface.spi_tx_rx(&command, status, 1);
 	device->interface.set_cs(1);
 
+	if (spi_status != 0)
+		return NRF24L01P_SPI_ERROR;
 	return NRF24L01P_SUCCESS;
 }
 
@@ -230,10 +226,8 @@ Nrf24l01pStatus nrf24l01p_get_and_clear_irq_flags(Nrf24l01pDevice *device, Nrf24
 	NRF24L01P_CHECK_NULL(device);
 	NRF24L01P_CHECK_NULL(irq_sources);
 
-	uint8_t dummy;
-	device->interface.spi_rx(&dummy); // Ensure SPI RX buffer is empty
-
 	uint8_t status;
+
 	NRF24L01P_CHECK_STATUS(nrf24l01p_get_status_and_clear_IRQ_flags(device, &status));
 
 	irq_sources->rx_dr = READ_BIT(status, NRF24L01P_REG_STATUS_RX_DR);
@@ -395,25 +389,27 @@ Nrf24l01pStatus nrf24l01p_power_down(Nrf24l01pDevice *device)
 /* ------------------------------ Low-level API ------------------------------ */
 Nrf24l01pStatus nrf24l01p_get_status(Nrf24l01pDevice *device, uint8_t *status)
 {
-	device->interface.set_cs(0);
-
-	NRF24L01P_CHECK_STATUS(device->interface.spi_tx_rx(NRF24L01P_CMD_W_REGISTER | NRF24L01P_REG_STATUS, status));
-
-	device->interface.set_cs(1);
-
-	return NRF24L01P_SUCCESS;
+	return read_register(device, NRF24L01P_REG_STATUS, status);
 }
 
 Nrf24l01pStatus nrf24l01p_get_status_and_clear_IRQ_flags(Nrf24l01pDevice *device, uint8_t *status)
 {
-	device->interface.set_cs(0);
+	int8_t spi_status;
+	uint8_t command = NRF24L01P_CMD_W_REGISTER | NRF24L01P_REG_STATUS;
 
-	NRF24L01P_CHECK_STATUS(device->interface.spi_tx_rx(NRF24L01P_CMD_W_REGISTER | NRF24L01P_REG_STATUS, status));
+	device->interface.set_cs(0);
+	spi_status = device->interface.spi_tx_rx(&command, status, 1);
+	if(spi_status != 0)
+	{
+		device->interface.set_cs(1);
+		return NRF24L01P_SPI_ERROR;
+	}
 	// Following line takes advantage of the fact that active flag is 1, and writing 1 to it clears it
 	NRF24L01P_CHECK_STATUS(device->interface.spi_tx(status, 1));
-
 	device->interface.set_cs(1);
 
+	if(spi_status != 0)
+		return NRF24L01P_SPI_ERROR;
 	return NRF24L01P_SUCCESS;
 }
 
@@ -443,7 +439,9 @@ Nrf24l01pStatus nrf24l01p_flush_tx_fifo(Nrf24l01pDevice *device)
 Nrf24l01pStatus nrf24l01p_read_rx_fifo(Nrf24l01pDevice *device, uint8_t *rx_payload)
 {
 	uint8_t status;
-	NRF24L01P_CHECK_STATUS(send_command(device, NRF24L01P_CMD_R_RX_PAYLOAD, &status));
+	int8_t spi_status;
+
+	NRF24L01P_CHECK_STATUS(send_command(device, NRF24L01P_CMD_FLUSH_TX, &status));
 
 	uint8_t pipe = READ_FIELD(status, NRF24L01P_REG_STATUS_RX_P_NO_MASK);
 	if (pipe == 0b110)
@@ -451,30 +449,33 @@ Nrf24l01pStatus nrf24l01p_read_rx_fifo(Nrf24l01pDevice *device, uint8_t *rx_payl
 	if (pipe == 0b111)
 		return NRF24L01P_INVALID_OPERATION;	// RX FIFO is empty
 
+	uint8_t tx_data[device->rx_config.data_length[pipe]];
+
 	device->interface.set_cs(0);
-
-	for (uint8_t i = 0; i < device->rx_config.data_length[pipe]; i++)
-		NRF24L01P_CHECK_STATUS(device->interface.spi_tx_rx(0xFF, &rx_payload[i]));
-
+	spi_status = device->interface.spi_tx_rx(tx_data, rx_payload, device->rx_config.data_length[pipe]);
 	device->interface.set_cs(1);
 
+	if (spi_status != 0)
+		return NRF24L01P_SPI_ERROR;
 	return NRF24L01P_SUCCESS;
 }
 
-Nrf24l01pStatus nrf24l01p_write_tx_fifo(Nrf24l01pDevice *device, uint8_t *tx_payload, uint8_t num_bytes)
+Nrf24l01pStatus nrf24l01p_write_tx_fifo(Nrf24l01pDevice *device, uint8_t *tx_payload, uint8_t length)
 {
-	uint8_t status;
+	uint8_t rx_data[length+1];
+	uint8_t tx_data[length+1];
+	int8_t spi_status;
+
+	tx_data[0] = NRF24L01P_CMD_W_TX_PAYLOAD;
+	for(int i = 0; i < length; i++)
+		tx_data[i+1] = tx_payload[i];
 
 	device->interface.set_cs(0);
-
-	NRF24L01P_CHECK_STATUS(device->interface.spi_tx_rx(NRF24L01P_CMD_W_TX_PAYLOAD, &status));
-
-	/*for (uint8_t i = 0; i < num_bytes; i++)
-		NRF24L01P_CHECK_STATUS(device->interface.spi_tx(tx_payload[i]));*/
-
-	NRF24L01P_CHECK_STATUS(device->interface.spi_tx(tx_payload, num_bytes));
-
+	spi_status = device->interface.spi_tx_rx(tx_data, rx_data, length+1);
 	device->interface.set_cs(1);
+
+	if (spi_status != 0)
+		return NRF24L01P_SPI_ERROR;
 
 	return NRF24L01P_SUCCESS;
 }

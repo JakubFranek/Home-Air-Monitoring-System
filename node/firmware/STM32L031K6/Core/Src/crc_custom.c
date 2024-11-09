@@ -1,6 +1,6 @@
 #include "main.h"
 
-int8_t calculate_CRC8(uint8_t *data, uint8_t length, uint8_t polynomial, uint8_t* result )
+int8_t calculate_CRC8(const uint8_t *data, uint8_t length, uint8_t polynomial, uint8_t* result )
 {
 	// Reset the CRC calculation unit
 	LL_CRC_ResetCRCCalculationUnit(CRC);

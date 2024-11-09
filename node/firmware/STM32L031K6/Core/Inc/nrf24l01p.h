@@ -230,9 +230,9 @@ typedef void (*nrf24l01p_set_cs_t)(uint8_t state);
 typedef void (*nrf24l01p_set_ce_t)(uint8_t state);
 
 // Return value of following functions is error code, 0 is only accepted success value
-typedef int8_t (*nrf24l01p_spi_tx_t)(uint8_t* tx_data, uint8_t length);
-typedef int8_t (*nrf24l01p_spi_rx_t)(uint8_t* rx_data);
-typedef int8_t (*nrf24l01p_spi_tx_rx_t)(uint8_t tx_data, uint8_t *register_value);
+typedef int8_t (*nrf24l01p_spi_tx_t)(const uint8_t* tx_data, uint8_t length);
+typedef int8_t (*nrf24l01p_spi_rx_t)(uint8_t* rx_data, uint8_t length);
+typedef int8_t (*nrf24l01p_spi_tx_rx_t)(const uint8_t* tx_data, uint8_t *rx_data, uint8_t length);
 
 typedef struct Nrf24l01pInterface
 {
