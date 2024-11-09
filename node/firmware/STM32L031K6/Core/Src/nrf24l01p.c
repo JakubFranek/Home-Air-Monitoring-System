@@ -128,7 +128,7 @@ static Nrf24l01pStatus write_register(Nrf24l01pDevice *device, uint8_t address, 
 	if (device->interface.spi_tx_rx(command, &status) != 0)
 		return NRF24L01P_SPI_ERROR;
 
-	if (device->interface.spi_tx(payload) != 0)
+	if (device->interface.spi_tx(&payload, 1) != 0)
 		return NRF24L01P_SPI_ERROR;
 
 	device->interface.set_cs(1);
@@ -139,20 +139,19 @@ static Nrf24l01pStatus write_register(Nrf24l01pDevice *device, uint8_t address, 
 static Nrf24l01pStatus write_register_multibyte(Nrf24l01pDevice *device, uint8_t address, uint64_t payload, uint8_t num_bytes)
 {
 	uint8_t command = NRF24L01P_CMD_W_REGISTER | address;
-	uint8_t payload_byte;
+	uint8_t payload_bytes[num_bytes];
 	uint8_t status;
+
+	for (int i = 0; i < num_bytes; i++)
+		payload_bytes[i] = (uint8_t)((payload >> (i * 8)) & 0xFF);
 
 	device->interface.set_cs(0);
 
 	if (device->interface.spi_tx_rx(command, &status) != 0)
 		return NRF24L01P_SPI_ERROR;
 
-	for (int i = 0; i < num_bytes; i++)
-	{
-		payload_byte = (uint8_t)((payload >> (i * 8)) & 0xFF); // Extract byte from payload (LSB first)
-		if (device->interface.spi_tx(payload_byte))
-			return NRF24L01P_SPI_ERROR;
-	}
+	if (device->interface.spi_tx(payload_bytes, num_bytes))
+		return NRF24L01P_SPI_ERROR;
 
 	device->interface.set_cs(1);
 
@@ -411,7 +410,7 @@ Nrf24l01pStatus nrf24l01p_get_status_and_clear_IRQ_flags(Nrf24l01pDevice *device
 
 	NRF24L01P_CHECK_STATUS(device->interface.spi_tx_rx(NRF24L01P_CMD_W_REGISTER | NRF24L01P_REG_STATUS, status));
 	// Following line takes advantage of the fact that active flag is 1, and writing 1 to it clears it
-	NRF24L01P_CHECK_STATUS(device->interface.spi_tx(*status));
+	NRF24L01P_CHECK_STATUS(device->interface.spi_tx(status, 1));
 
 	device->interface.set_cs(1);
 
@@ -470,8 +469,10 @@ Nrf24l01pStatus nrf24l01p_write_tx_fifo(Nrf24l01pDevice *device, uint8_t *tx_pay
 
 	NRF24L01P_CHECK_STATUS(device->interface.spi_tx_rx(NRF24L01P_CMD_W_TX_PAYLOAD, &status));
 
-	for (uint8_t i = 0; i < num_bytes; i++)
-		NRF24L01P_CHECK_STATUS(device->interface.spi_tx(tx_payload[i]));
+	/*for (uint8_t i = 0; i < num_bytes; i++)
+		NRF24L01P_CHECK_STATUS(device->interface.spi_tx(tx_payload[i]));*/
+
+	NRF24L01P_CHECK_STATUS(device->interface.spi_tx(tx_payload, num_bytes));
 
 	device->interface.set_cs(1);
 

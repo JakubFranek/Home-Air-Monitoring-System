@@ -125,14 +125,15 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  LL_FLASH_SetLatency(LL_FLASH_LATENCY_1);
-  while(LL_FLASH_GetLatency()!= LL_FLASH_LATENCY_1)
+  LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
+  while(LL_FLASH_GetLatency()!= LL_FLASH_LATENCY_0)
   {
   }
   LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE1);
   while (LL_PWR_IsActiveFlag_VOS() != 0)
   {
   }
+  LL_RCC_HSI_EnableDivider();
   LL_RCC_HSI_Enable();
 
    /* Wait till HSI is ready */
@@ -179,9 +180,9 @@ void SystemClock_Config(void)
 
   }
 
-  LL_Init1msTick(32000000);
+  LL_Init1msTick(8000000);
 
-  LL_SetSystemCoreClock(32000000);
+  LL_SetSystemCoreClock(8000000);
   LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_PCLK1);
 }
 

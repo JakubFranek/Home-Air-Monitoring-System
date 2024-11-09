@@ -75,7 +75,7 @@ static Nrf24l01pDevice nrf24_device = {
 	.interface = {
 		.set_cs = &nrf24l01p_set_cs,
 		.set_ce = &nrf24l01p_set_ce,
-		.spi_tx = &SPI1_Transmit,
+		.spi_tx = &SPI1_Transmit_Multi,
 		.spi_rx = &SPI1_Receive,
 		.spi_tx_rx = &SPI1_TransmitReceive
 	},
@@ -155,6 +155,8 @@ void app_setup(void)
 	LL_I2C_Enable(I2C1);
 	LL_SPI_Enable(SPI1);
 
+
+	// TODO: clean this up
 	// RTC wake up timer setup
 	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_20);  			// Enable interrupt for EXTI line 20 (RTC)
 	LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_20);  	// Trigger on rising edge for line 20 (RTC)
@@ -183,6 +185,8 @@ void app_setup(void)
  */
 void app_loop(void)
 {
+	// TODO: add ADC supply voltage measurement
+	// TODO: use internal HSI with lower frequency, higher frequency I2C/SPI
 	state = dispatch_states(state, &event);
 }
 
@@ -197,7 +201,15 @@ AppState handle_state_idle(volatile AppEvent* event)
 AppState handle_state_phase1(volatile AppEvent* event)
 {
 	if (*event != EVENT_PHASE1_DONE)
+	{
+		LL_PWR_DisableUltraLowPower();
+		LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_MAIN);
+		CLEAR_BIT(SCB->SCR, SCB_SCR_SLEEPDEEP_Msk);
+		__WFI();
+		/* --- Sleep mode --- */
 		return STATE_PHASE1;
+	}
+
 	*event = EVENT_NONE; 	// clear event flag
 
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_up(&nrf24_device));
@@ -210,7 +222,14 @@ AppState handle_state_phase1(volatile AppEvent* event)
 AppState handle_state_phase2(volatile AppEvent* event)
 {
 	if (*event != EVENT_PHASE2_DONE)
+	{
+		LL_PWR_DisableUltraLowPower();
+		LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_MAIN);
+		CLEAR_BIT(SCB->SCR, SCB_SCR_SLEEPDEEP_Msk);
+		__WFI();
+		/* --- Sleep mode --- */
 		return STATE_PHASE2;
+	}
 
 	*event = EVENT_NONE; 	// clear event flag
 
@@ -232,7 +251,14 @@ AppState handle_state_phase2(volatile AppEvent* event)
 AppState handle_state_awaiting_ack(volatile AppEvent* event)
 {
 	if (*event != EVENT_RADIO_IRQ)
+	{
+		LL_PWR_DisableUltraLowPower();
+		LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_MAIN);
+		CLEAR_BIT(SCB->SCR, SCB_SCR_SLEEPDEEP_Msk);
+		__WFI();
+		/* --- Sleep mode --- */
 		return STATE_AWAITING_ACK;
+	}
 
 	*event = EVENT_NONE; // clear event flag
 
@@ -249,7 +275,7 @@ AppState handle_state_awaiting_ack(volatile AppEvent* event)
 AppState handle_state_sleep(volatile AppEvent* event)
 {
 	// for some reason turning SPI MISO hi-Z really lowers the IDD
-	set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL);
+	set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL & ~nRF24_CE_Pin);
 	set_pins_to_analog_mode(GPIOB, LL_GPIO_PIN_ALL);
 	set_pins_to_analog_mode(GPIOC, LL_GPIO_PIN_ALL);
 
@@ -343,5 +369,4 @@ void build_payload(uint8_t* payload)
 	payload[7] = (humidity & 0x00FF);
 	payload[8] = 0x00;			// reserved
 	payload[9] = 0x00;			// reserved
-
 }

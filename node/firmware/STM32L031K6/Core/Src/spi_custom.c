@@ -17,7 +17,8 @@ static uint8_t receive_done()
 	return done;
 }
 
-uint8_t SPI1_Transmit(uint8_t tx_data)
+// TODO: get rid of this function
+int8_t SPI1_Transmit(uint8_t tx_data)
 {
 	uint16_t count;
 
@@ -35,7 +36,35 @@ uint8_t SPI1_Transmit(uint8_t tx_data)
 	return 0;
 }
 
-uint8_t SPI1_Receive(uint8_t *rx_data)
+int8_t SPI1_Transmit_Multi(uint8_t* tx_data, uint8_t length)
+{
+	uint16_t count;
+
+	for (int i = 0; i < length; i++)
+	{
+		TIMx_restart(SPI_TIMEOUT_TIMER);
+		LL_SPI_TransmitData8(SPI1, tx_data[i]);
+		while (!LL_SPI_IsActiveFlag_TXE(SPI1))
+		{
+			TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
+			if (count > SPI_TIMEOUT_US)
+				return -1;
+		}
+	}
+
+	TIMx_restart(SPI_TIMEOUT_TIMER);
+	while (LL_SPI_IsActiveFlag_BSY(SPI1))
+	{
+		TIMx_get_count(SPI_TIMEOUT_TIMER, &count);
+		if (count > SPI_TIMEOUT_US)
+			return -1;
+	}
+
+	return 0;
+}
+
+// TODO: add multibyte support
+int8_t SPI1_Receive(uint8_t *rx_data)
 {
 	uint16_t count;
 
@@ -52,6 +81,7 @@ uint8_t SPI1_Receive(uint8_t *rx_data)
 	return 0;
 }
 
+// TODO: add multibyte support
 uint8_t SPI1_TransmitReceive(uint8_t tx_data, uint8_t *rx_data)
 {
 	uint16_t count;
