@@ -10,63 +10,69 @@
 #include "adc_custom.h"
 
 /* ---------------- Macros --------------------*/
-#define NRF24_CHECK_ERROR_RETURN(expr, error)  	\
-    do {                                       	\
-        nrf24_status = (expr);                 	\
-        if (nrf24_status != NRF24L01P_SUCCESS) 	\
-		{										\
-			app_error = error;					\
-			return STATE_ERROR;               	\
-		}	              						\
-    } while(0)
+#define NRF24_CHECK_ERROR_RETURN(expr, error)  \
+	do                                         \
+	{                                          \
+		nrf24_status = (expr);                 \
+		if (nrf24_status != NRF24L01P_SUCCESS) \
+		{                                      \
+			app_error = error;                 \
+			return STATE_ERROR;                \
+		}                                      \
+	} while (0)
 
-#define NRF24_CHECK_ERROR_SET_STATE(expr, error)\
-    do {                                       	\
-        nrf24_status = (expr);                 	\
-        if (nrf24_status != NRF24L01P_SUCCESS) 	\
-		{										\
-			state = STATE_ERROR;               	\
-			app_error = error;					\
-		}										\
-    } while(0)
+#define NRF24_CHECK_ERROR_SET_STATE(expr, error) \
+	do                                           \
+	{                                            \
+		nrf24_status = (expr);                   \
+		if (nrf24_status != NRF24L01P_SUCCESS)   \
+		{                                        \
+			state = STATE_ERROR;                 \
+			app_error = error;                   \
+		}                                        \
+	} while (0)
 
-#define SHT4X_CHECK_ERROR_RETURN(expr, error)	\
-    do {                                       	\
-        sht4x_status = (expr);                 	\
-        if (sht4x_status != SHT4X_SUCCESS) 		\
-		{										\
-			app_error = error;					\
-			return STATE_ERROR;               	\
-		}	              						\
-    } while(0)
+#define SHT4X_CHECK_ERROR_RETURN(expr, error) \
+	do                                        \
+	{                                         \
+		sht4x_status = (expr);                \
+		if (sht4x_status != SHT4X_SUCCESS)    \
+		{                                     \
+			app_error = error;                \
+			return STATE_ERROR;               \
+		}                                     \
+	} while (0)
 
-#define SHT4X_CHECK_ERROR_SET_STATE(expr, error)\
-    do {                                       	\
-        sht4x_status = (expr);                 	\
-        if (sht4x_status != SHT4X_SUCCESS) 		\
-		{										\
-			state = STATE_ERROR;               	\
-			app_error = error;					\
-		}										\
-    } while(0)
+#define SHT4X_CHECK_ERROR_SET_STATE(expr, error) \
+	do                                           \
+	{                                            \
+		sht4x_status = (expr);                   \
+		if (sht4x_status != SHT4X_SUCCESS)       \
+		{                                        \
+			state = STATE_ERROR;                 \
+			app_error = error;                   \
+		}                                        \
+	} while (0)
 
-#define CHECK_ERROR_SET_STATE(expr, error)		\
-    do {                    					\
-        if (expr != 0) 							\
-		{										\
-			state = STATE_ERROR;               	\
-			app_error = error;					\
-		}										\
-    } while(0)
+#define CHECK_ERROR_SET_STATE(expr, error) \
+	do                                     \
+	{                                      \
+		if (expr != 0)                     \
+		{                                  \
+			state = STATE_ERROR;           \
+			app_error = error;             \
+		}                                  \
+	} while (0)
 
-#define CHECK_ERROR_RETURN(expr, error)    	  	\
-    do {                    					\
-        if (expr != 0) 							\
-		{										\
-			app_error = error;					\
-			return STATE_ERROR;               	\
-		}										\
-    } while(0)
+#define CHECK_ERROR_RETURN(expr, error) \
+	do                                  \
+	{                                   \
+		if (expr != 0)                  \
+		{                               \
+			app_error = error;          \
+			return STATE_ERROR;         \
+		}                               \
+	} while (0)
 
 #define PHASE1_LENGTH SHT4X_MEAS_HIGH_PREC_PERIOD_US - NRF24L01P_POWER_UP_DELAY_US
 #define PHASE2_LENGTH NRF24L01P_POWER_UP_DELAY_US
@@ -108,22 +114,22 @@ static uint16_t vdda_mv;
 /* ---------------- SHT4x variables --------------------*/
 static Sht4xStatus sht4x_status = SHT4X_SUCCESS;
 static Sht4xData sht4x_data = {
-		.humidity = 0xFFFFFFFF,
-		.temperature = 0xFFFFFFFF
+	.humidity = 0xFFFFFFFF,
+	.temperature = 0xFFFFFFFF,
 };
 static Sht4xDevice sht4x = {
 	.i2c_address = SHT4X_I2C_ADDR_A,
 	.i2c_write = &I2C1_transmit,
 	.i2c_read = &I2C1_receive,
-	.calculate_crc = &calculate_CRC8
+	.calculate_crc = &calculate_CRC8,
 };
 
 /* ---------------- nRF24 variable --------------------*/
 static Nrf24l01pStatus nrf24_status = NRF24L01P_SUCCESS;
 static Nrf24l01pIrq nrf24_irq_sources = {
-		.max_rt = false,
-		.rx_dr = false,
-		.tx_ds = false
+	.max_rt = false,
+	.rx_dr = false,
+	.tx_ds = false,
 };
 static Nrf24l01pDevice nrf24_device = {
 	.interface = {
@@ -131,45 +137,43 @@ static Nrf24l01pDevice nrf24_device = {
 		.set_ce = &nrf24l01p_set_ce,
 		.spi_tx = &SPI1_transmit,
 		.spi_rx = &SPI1_receive,
-		.spi_tx_rx = &SPI1_transmit_receive
+		.spi_tx_rx = &SPI1_transmit_receive,
 	},
 	.config = {
-			.channel_MHz = 2500,
-			.address_width = 5,
-			.data_rate = NRF24L01P_1MBPS,
-			.crc_length = NRF24L01P_CRC_1BYTE
+		.channel_MHz = 2500,
+		.address_width = 5,
+		.data_rate = NRF24L01P_1MBPS,
+		.crc_length = NRF24L01P_CRC_1BYTE,
 	},
 	.tx_config = {
-			.output_power = NRF24L01P_0DBM,
-			.auto_retransmit_count = 3,
-			.auto_retransmit_delay_250us = 1,
-			.address = NRF24L01P_REG_TX_ADDR_RSTVAL
+		.output_power = NRF24L01P_0DBM,
+		.auto_retransmit_count = 3,
+		.auto_retransmit_delay_250us = 1,
+		.address = NRF24L01P_REG_TX_ADDR_RSTVAL,
 	},
 	.rx_config = {
-			.enable_pipes = 0b00000001,
-			.auto_ack_pipes = 0b00000001,
-			.address_p0 = NRF24L01P_REG_RX_ADDR_P0_RSTVAL,
-			.address_p1 = NRF24L01P_REG_RX_ADDR_P1_RSTVAL,
-			.address_p2 = NRF24L01P_REG_RX_ADDR_P2_RSTVAL,
-			.address_p3 = NRF24L01P_REG_RX_ADDR_P3_RSTVAL,
-			.address_p4 = NRF24L01P_REG_RX_ADDR_P4_RSTVAL,
-			.address_p5 = NRF24L01P_REG_RX_ADDR_P5_RSTVAL,
-			.data_length = {8}
-	}
-};
-static uint8_t tx_payload[NRF24_DATA_LENGTH] = {0, 1, 2, 3, 4, 5, 6, 7};
+		.enable_pipes = 0b00000001,
+		.auto_ack_pipes = 0b00000001,
+		.address_p0 = NRF24L01P_REG_RX_ADDR_P0_RSTVAL,
+		.address_p1 = NRF24L01P_REG_RX_ADDR_P1_RSTVAL,
+		.address_p2 = NRF24L01P_REG_RX_ADDR_P2_RSTVAL,
+		.address_p3 = NRF24L01P_REG_RX_ADDR_P3_RSTVAL,
+		.address_p4 = NRF24L01P_REG_RX_ADDR_P4_RSTVAL,
+		.address_p5 = NRF24L01P_REG_RX_ADDR_P5_RSTVAL,
+		.data_length = {8},
+	}};
+static uint8_t tx_payload[NRF24_DATA_LENGTH] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-volatile static AppEvent event = EVENT_NONE;	// changes value during ISRs
+volatile static AppEvent event = EVENT_NONE; // changes value during ISRs
 static AppState state = STATE_IDLE;
 static AppError app_error = ERROR_NONE;
 
 /* ---------------- Prototypes --------------------*/
-AppState dispatch_states(AppState state, volatile AppEvent* event);
+AppState dispatch_states(AppState state, volatile AppEvent *event);
 void GPIO_EXTI1_IRQ_callback(void);
 void irs_phase1_done(void);
 void irs_phase2_done(void);
-void build_payload(uint8_t* payload);
-
+void build_payload(uint8_t *payload);
 
 /**
  * @brief Application setup function
@@ -187,11 +191,12 @@ void app_setup(void)
 	CHECK_ERROR_SET_STATE(ADC_setup(), ERROR_SETUP);
 
 	/* --- RTC wake up timer setup --- */
-	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_20);  			// Enable interrupt for EXTI line 20 (RTC)
-	LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_20);  	// Trigger on rising edge for line 20 (RTC)
+	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_20);			// Enable interrupt for EXTI line 20 (RTC)
+	LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_20); // Trigger on rising edge for line 20 (RTC)
 	LL_RTC_DisableWriteProtection(RTC);
 	LL_RTC_WAKEUP_Disable(RTC);
-	while(!LL_RTC_IsActiveFlag_WUTW(RTC));
+	while (!LL_RTC_IsActiveFlag_WUTW(RTC))
+		;
 	LL_RTC_WAKEUP_SetAutoReload(RTC, RTC_WAKE_UP_PERIOD_S - 1);
 	LL_RTC_WAKEUP_SetClock(RTC, LL_RTC_WAKEUPCLOCK_CKSPRE);
 	LL_RTC_EnableIT_WUT(RTC);
@@ -201,7 +206,6 @@ void app_setup(void)
 
 	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_init_ptx(&nrf24_device), ERROR_SETUP);
 	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources), ERROR_SETUP);
-	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_set_ptx_mode(&nrf24_device), ERROR_SETUP);
 }
 
 /**
@@ -217,8 +221,7 @@ void app_loop(void)
 	state = dispatch_states(state, &event);
 }
 
-
-AppState handle_state_idle(volatile AppEvent* event)
+AppState handle_state_idle(volatile AppEvent *event)
 {
 	SHT4X_CHECK_ERROR_RETURN(sht4x_send_command(&sht4x, SHT4X_I2C_CMD_MEAS_HIGH_PREC), ERROR_IDLE);
 	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, PHASE1_LENGTH, &irs_phase1_done), ERROR_IDLE);
@@ -226,7 +229,7 @@ AppState handle_state_idle(volatile AppEvent* event)
 	return STATE_PHASE1;
 }
 
-AppState handle_state_phase1(volatile AppEvent* event)
+AppState handle_state_phase1(volatile AppEvent *event)
 {
 	if (*event != EVENT_PHASE1_DONE)
 	{
@@ -238,7 +241,7 @@ AppState handle_state_phase1(volatile AppEvent* event)
 		return STATE_PHASE1;
 	}
 
-	*event = EVENT_NONE; 	// clear event flag
+	*event = EVENT_NONE; // clear event flag
 
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_up(&nrf24_device), ERROR_PHASE1);
 
@@ -247,7 +250,7 @@ AppState handle_state_phase1(volatile AppEvent* event)
 	return STATE_PHASE2;
 }
 
-AppState handle_state_phase2(volatile AppEvent* event)
+AppState handle_state_phase2(volatile AppEvent *event)
 {
 	if (*event != EVENT_PHASE2_DONE)
 	{
@@ -259,7 +262,7 @@ AppState handle_state_phase2(volatile AppEvent* event)
 		return STATE_PHASE2;
 	}
 
-	*event = EVENT_NONE; 	// clear event flag
+	*event = EVENT_NONE; // clear event flag
 
 	SHT4X_CHECK_ERROR_RETURN(sht4x_read_and_check_measurement(&sht4x, &sht4x_data), ERROR_PHASE2);
 
@@ -276,7 +279,7 @@ AppState handle_state_phase2(volatile AppEvent* event)
 	return STATE_AWAITING_ACK;
 }
 
-AppState handle_state_awaiting_ack(volatile AppEvent* event)
+AppState handle_state_awaiting_ack(volatile AppEvent *event)
 {
 	if (*event != EVENT_RADIO_IRQ)
 	{
@@ -300,7 +303,7 @@ AppState handle_state_awaiting_ack(volatile AppEvent* event)
 	return STATE_SLEEP;
 }
 
-AppState handle_state_sleep(volatile AppEvent* event)
+AppState handle_state_sleep(volatile AppEvent *event)
 {
 	// for some reason turning SPI MISO hi-Z really lowers the IDD
 	set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL & ~nRF24_CE_Pin);
@@ -315,7 +318,7 @@ AppState handle_state_sleep(volatile AppEvent* event)
 
 	/* --------- Stop mode here --------------*/
 
-	SystemClock_Config();	// first action after wake up
+	SystemClock_Config(); // first action after wake up
 
 	MX_GPIO_Init();
 	MX_CRC_Init();
@@ -330,30 +333,31 @@ AppState handle_state_sleep(volatile AppEvent* event)
 	return STATE_IDLE;
 }
 
-AppState handle_state_error(volatile AppEvent* event)
+AppState handle_state_error(volatile AppEvent *event)
 {
 	// TODO: error handling
 	return STATE_SLEEP;
 }
 
-AppState dispatch_states(AppState state, volatile AppEvent* event)
+AppState dispatch_states(AppState state, volatile AppEvent *event)
 {
-	switch (state) {
-		case STATE_IDLE:
-			return handle_state_idle(event);
-		case STATE_PHASE1:
-			return handle_state_phase1(event);
-		case STATE_PHASE2:
-			return handle_state_phase2(event);
-		case STATE_AWAITING_ACK:
-			return handle_state_awaiting_ack(event);
-		case STATE_SLEEP:
-			return handle_state_sleep(event);
-		case STATE_ERROR:
-			return handle_state_error(event);
-		default:
-			app_error = ERROR_DISPATCHER;
-			return STATE_ERROR;
+	switch (state)
+	{
+	case STATE_IDLE:
+		return handle_state_idle(event);
+	case STATE_PHASE1:
+		return handle_state_phase1(event);
+	case STATE_PHASE2:
+		return handle_state_phase2(event);
+	case STATE_AWAITING_ACK:
+		return handle_state_awaiting_ack(event);
+	case STATE_SLEEP:
+		return handle_state_sleep(event);
+	case STATE_ERROR:
+		return handle_state_error(event);
+	default:
+		app_error = ERROR_DISPATCHER;
+		return STATE_ERROR;
 	}
 }
 
@@ -365,10 +369,10 @@ void GPIO_EXTI1_IRQ_callback(void)
 void RTC_WAKEUP_IRQ_callback(void)
 {
 	if (LL_RTC_IsActiveFlag_WUT(RTC) != 0)
-		LL_RTC_ClearFlag_WUT(RTC); 	// Clear the wakeup timer interrupt flag
+		LL_RTC_ClearFlag_WUT(RTC); // Clear the wakeup timer interrupt flag
 
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_20))
-		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_20);	// Clear the EXTI line 20 pending flag (RTC wakeup interrupt)
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_20); // Clear the EXTI line 20 pending flag (RTC wakeup interrupt)
 }
 
 void irs_phase1_done(void)
@@ -381,17 +385,17 @@ void irs_phase2_done(void)
 	event = EVENT_PHASE2_DONE;
 }
 
-void build_payload(uint8_t* payload)
+void build_payload(uint8_t *payload)
 {
 	int16_t temperature, humidity;
 
-	temperature = sht4x_data.temperature / 10;	// limit data to 16 bits (losing 3rd decimal point precision)
-	humidity = sht4x_data.humidity / 10;		// limit data to 16 bits (losing 3rd decimal point precision)
+	temperature = sht4x_data.temperature / 10; // limit data to 16 bits (losing 3rd decimal point precision)
+	humidity = sht4x_data.humidity / 10;	   // limit data to 16 bits (losing 3rd decimal point precision)
 
 	payload[0] = NODE_ID;
-	payload[1] = app_error;		// to be interpreted as signed at receiver
-	payload[2] = sht4x_status;	// to be interpreted as signed at receiver
-	payload[3] = nrf24_status;	// to be interpreted as signed at receiver
+	payload[1] = app_error;	   // to be interpreted as signed at receiver
+	payload[2] = sht4x_status; // to be interpreted as signed at receiver
+	payload[3] = nrf24_status; // to be interpreted as signed at receiver
 	payload[4] = (temperature & 0xFF00) >> 8;
 	payload[5] = (temperature & 0x00FF);
 	payload[6] = (humidity & 0xFF00) >> 8;
@@ -399,5 +403,5 @@ void build_payload(uint8_t* payload)
 	payload[8] = (vdda_mv & 0xFF00) >> 8;
 	payload[9] = (vdda_mv & 0x00FF);
 
-	app_error = ERROR_NONE; 	// clear eror
+	app_error = ERROR_NONE; // clear eror
 }

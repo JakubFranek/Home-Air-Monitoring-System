@@ -1,12 +1,12 @@
 #ifndef INC_SHT4X_H_
 #define INC_SHT4X_H_
 
-#include <stdint.h>	// definition of uint8_t etc
+#include <stdint.h> // definition of uint8_t etc
 
-#define SHT4X_CRC8_POLYNOMIAL 0x31 	// x^8 + x^5 + x^4 + 1, initialization to 0xFF
-#define SHT4X_MEAS_HIGH_PREC_PERIOD_US 	8200
-#define SHT4X_MEAS_MED_PREC_PERIOD_US 	4500
-#define SHT4X_MEAS_LOW_PREC_PERIOD_US 	1700
+#define SHT4X_CRC8_POLYNOMIAL 0x31 // x^8 + x^5 + x^4 + 1, initialization to 0xFF
+#define SHT4X_MEAS_HIGH_PREC_PERIOD_US 8200
+#define SHT4X_MEAS_MED_PREC_PERIOD_US 4500
+#define SHT4X_MEAS_LOW_PREC_PERIOD_US 1700
 
 typedef enum Sht4xI2cAddress
 {
@@ -29,7 +29,7 @@ typedef enum Sht4xCommand
 	SHT4X_I2C_CMD_HEAT_20MW_0P1S = 0x15	  // automatically starts high precision measurement
 } Sht4xCommand;
 
-typedef enum Sht4xError
+typedef enum Sht4xStatus
 {
 	SHT4X_SUCCESS = 0,
 	SHT4X_I2C_ERROR = -1,
@@ -58,13 +58,13 @@ typedef struct Sht4xSerialNumber
 typedef struct Sht4xData
 {
 	int32_t temperature; // convert to degrees Celsius via division by 1000
-	int32_t humidity;	  // convert to % RH via division by 1000
+	int32_t humidity;	 // convert to % RH via division by 1000
 } Sht4xData;
 
 // Return value of following functions is error code, 0 is only accepted success value
-typedef int8_t (*sht4x_i2c_write_t)(uint8_t address, const uint8_t* payload, uint8_t length);
-typedef int8_t (*sht4x_i2c_read_t)(uint8_t address, uint8_t* payload, uint8_t length);
-typedef int8_t (*sht4x_calculate_crc_t)(const uint8_t *data, uint8_t length, uint8_t polynomial, uint8_t* result);
+typedef int8_t (*sht4x_i2c_write_t)(uint8_t address, const uint8_t *payload, uint8_t length);
+typedef int8_t (*sht4x_i2c_read_t)(uint8_t address, uint8_t *payload, uint8_t length);
+typedef int8_t (*sht4x_calculate_crc_t)(const uint8_t *data, uint8_t length, uint8_t polynomial, uint8_t *result);
 
 typedef struct Sht4xDevice
 {

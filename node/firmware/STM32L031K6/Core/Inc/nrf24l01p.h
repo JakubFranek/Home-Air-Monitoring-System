@@ -4,6 +4,8 @@
 #include <stdint.h>	 // definition of uint8_t etc
 #include <stdbool.h> // definition of bool
 
+// TODO: double check whether _POS values are correct
+
 /*----------- nRF24L01+ Commands -----------*/
 // TODO: this could be enum
 #define NRF24L01P_CMD_R_REGISTER 0b00000000
@@ -165,8 +167,8 @@
 #define NRF24L01P_REG_FEATURE_EN_DYN_ACK (1U << 0)
 
 /*----------- nRF24L01+ Other defines -----------*/
-#define NRF24L01P_POWER_UP_DELAY_US 1500	// time between power up command and arrival at Standby-I mode
-#define NRF24L01P_PTX_MIN_CE_PULSE_US 10	// minimum CE = '1' pulse to start transmitting in PTX mode
+#define NRF24L01P_POWER_UP_DELAY_US 1500 // time between power up command and arrival at Standby-I mode
+#define NRF24L01P_PTX_MIN_CE_PULSE_US 10 // minimum CE = '1' pulse to start transmitting in PTX mode
 
 /*----------- nRF24L01+ Enums, Structs and Function Pointers -----------*/
 typedef enum Nrf24l01pError
@@ -230,9 +232,9 @@ typedef void (*nrf24l01p_set_cs_t)(uint8_t state);
 typedef void (*nrf24l01p_set_ce_t)(uint8_t state);
 
 // Return value of following functions is error code, 0 is only accepted success value
-typedef int8_t (*nrf24l01p_spi_tx_t)(const uint8_t* tx_data, uint8_t length);
-typedef int8_t (*nrf24l01p_spi_rx_t)(uint8_t* rx_data, uint8_t length);
-typedef int8_t (*nrf24l01p_spi_tx_rx_t)(const uint8_t* tx_data, uint8_t *rx_data, uint8_t length);
+typedef int8_t (*nrf24l01p_spi_tx_t)(const uint8_t *tx_data, uint8_t length);
+typedef int8_t (*nrf24l01p_spi_rx_t)(uint8_t *rx_data, uint8_t length);
+typedef int8_t (*nrf24l01p_spi_tx_rx_t)(const uint8_t *tx_data, uint8_t *rx_data, uint8_t length);
 
 typedef struct Nrf24l01pInterface
 {
