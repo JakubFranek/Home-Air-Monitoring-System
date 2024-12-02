@@ -6,19 +6,19 @@ This is a task list for HAMS project.
 
 - [ ] Hub firmware v0.1
     - [ ] Test firmware components in separate projects
-        - [x] Create and test SGP41 driver
-        - [x] Create and test SPS30 driver
-        - [x] Test nRF24L01+ driver, incl. IRQ handling
-        - [x] Test SHT40 driver
-        - [ ] Create and test SCD41 driver (driver created, waiting for sensor)
-        - [x] Create and test BME280 driver
-        - [x] Test 5 Volt fan control via GPIO
-        - [x] Test WiFi connection
-        - [x] Test RTC time synchronization using SNTP
-        - [x] Combine WiFi connection and SNTP time sync into one code
+        - [x] [Create and test SGP41 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SGP41)
+        - [x] [Create and test SPS30 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SPS30)
+        - [x] [Test nRF24L01+ driver (RX mode), incl. IRQ handling](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/nRF24L01p_RX)
+        - [x] [Test SHT40 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SHT40)
+        - [ ] [Create and test SCD41 driver (driver created, waiting for sensor)](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SCD41)
+        - [x] [Create and test BME280 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_BME280)
+        - [x] [Test 5 Volt fan control via GPIO](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Fan_Switch)
+        - [x] [Test WiFi connection](https://github.com/JakubFranek/ESP32/tree/master/Examples/station)
+        - [x] [Test RTC time synchronization using SNTP](https://github.com/JakubFranek/ESP32/tree/master/Examples/sntp)
+        - [x] [Combine WiFi connection and SNTP time sync into one code](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/WIFI_SNTP)
         - [ ] Create e-ink display driver
             - [x] Determine best graphical library to use (Adafruit_GFX)
-            - [x] Determine best driver to use (custom GxEPD2 & CalEPD hybrid)
+            - [x] [Determine best driver to use (custom GxEPD2 & CalEPD hybrid)](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY029T94_CalEPD_Demo)
             - [ ] Create and test GDEY075T7 driver (waiting for display to arrive)    
         - [ ] Get and parse current name day using HTTPS API
         - [ ] Get and parse weather forecast using HTTPS API (likely from openweathermap)
@@ -28,7 +28,9 @@ This is a task list for HAMS project.
 
 ## To do
 
-
+- [ ] Burn-in SHT40 sensors to remove VOC contaminants
+- [ ] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
+  
 - [ ] Node hardware
     - [ ] Node schematic
         - [ ] QFP32 breakout board test
@@ -56,8 +58,7 @@ This is a task list for HAMS project.
     - [ ] Flash nodes
     - [ ] Test nodes
     - [ ] Cover exterior nodes in protective plastic coating
-- [ ] Burn-in SHT40 sensors to remove VOC contaminants
-- [ ] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
+
 - [ ] Hub hardware
     - [ ] Decide which connector to use to provide 5 Volt power to ESPink, SPS30 and fan
     - [ ] Create hub connector board (perfboard?)
@@ -66,7 +67,7 @@ This is a task list for HAMS project.
         - [ ] determine debug display button location
         - [ ] design
         - [ ] print
-- [ ] Documentation
+- [ ] Create documentation
     - [ ] Document node software incl. flowchart
     - [ ] Document hub software incl. FreeRTOS tasks and flowchart
     - [ ] Take photos of assembled nodes and hub incl. display interface
@@ -79,9 +80,9 @@ This is a task list for HAMS project.
 
 - [x] Node firmware v0.1
     - [x] Test firmware components in separate projects
-        - [x] Create and test nRF24L01+ driver
-        - [x] Create and test SHT40 driver, incl. utilizing dedicated HW for CRC verification
-        - [x] Test stop mode (incl. current consumption measurement)
-        - [x] Test ADC usage for supply voltage measurement
-        - [x] Test scheduled wake-up from stop mode using RTC
-    - [x] Assemble all firmware components into one codebase
+        - [x] [Create and test nRF24L01+ driver](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/nRF24L01p_TX_RX_L031K6_LL)
+        - [x] [Create and test SHT40 driver, incl. utilizing dedicated HW for CRC verification](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/SHT40_L031K6_LL) 
+        - [x] [Test stop mode (incl. current consumption measurement)](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/Stop_mode_L031K6_LL)
+        - [x] [Test ADC usage for supply voltage measurement](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/ADC_LL_L031K6)
+        - [x] [Test scheduled wake-up from low power mode using RTC](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/RTC_wakeup_L031K6_LL)
+    - [x] [Assemble all firmware components into one codebase](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/node/firmware/STM32L031K6)
