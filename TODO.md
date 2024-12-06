@@ -10,15 +10,15 @@ This is a task list for HAMS project.
         - [x] [Create and test SPS30 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SPS30)
         - [x] [Test nRF24L01+ driver (RX mode), incl. IRQ handling](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/nRF24L01p_RX)
         - [x] [Test SHT40 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SHT40)
-        - [ ] [Create and test SCD41 driver (driver created, waiting for sensor)](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SCD41)
+        - [x] [Create and test SCD41 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SCD41)
         - [x] [Create and test BME280 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_BME280)
         - [x] [Test 5 Volt fan control via GPIO](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Fan_Switch)
         - [x] [Test WiFi connection](https://github.com/JakubFranek/ESP32/tree/master/Examples/station)
         - [x] [Test RTC time synchronization using SNTP](https://github.com/JakubFranek/ESP32/tree/master/Examples/sntp)
         - [x] [Combine WiFi connection and SNTP time sync into one code](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/WIFI_SNTP)
         - [ ] Create e-ink display driver
-            - [x] Determine best graphical library to use (Adafruit_GFX)
-            - [x] [Determine best driver to use (custom GxEPD2 & CalEPD hybrid)](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY029T94_CalEPD_Demo)
+            - [ ] Determine best graphical library to use (Adafruit_GFX/minigrafx/custom graphics library)
+            - [ ] Determine best driver to use ([custom GxEPD2 & CalEPD hybrid](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY029T94_CalEPD_Demo)/fully custom solution)
             - [ ] Create and test GDEY075T7 driver (waiting for display to arrive)    
         - [ ] Get and parse current name day using HTTPS API
         - [ ] Get and parse weather forecast using HTTPS API (likely from openweathermap)
@@ -67,6 +67,7 @@ This is a task list for HAMS project.
         - [ ] determine debug display button location
         - [ ] design
         - [ ] print
+    - [ ] Assemble hub
 - [ ] Create documentation
     - [ ] Document node software incl. flowchart
     - [ ] Document hub software incl. FreeRTOS tasks and flowchart
