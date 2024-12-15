@@ -22,8 +22,8 @@ This is a task list for HAMS project.
             - [x] [Create and test GDEY075T7 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo)
                 - [x] Add support for full partial display refresh
                 - [x] Test drawing a bitmap image
-        - [ ] Get and parse current name day using HTTPS API
-        - [ ] Get and parse weather forecast using HTTPS API (openweathermap)
+        - [x] [Get and parse current name day using HTTPS API](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/API_svatkyapicz)
+        - [x] [Get and parse openweathermap.org weather forecast using HTTPS API](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/API_openweathermap)
     - [ ] Create display interface layout
     - [ ] Prepare a set of weather icon byte arrays
     - [ ] Assemble all firmware components together into one codebase
