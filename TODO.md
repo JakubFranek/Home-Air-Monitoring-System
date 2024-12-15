@@ -16,13 +16,16 @@ This is a task list for HAMS project.
         - [x] [Test WiFi connection](https://github.com/JakubFranek/ESP32/tree/master/Examples/station)
         - [x] [Test RTC time synchronization using SNTP](https://github.com/JakubFranek/ESP32/tree/master/Examples/sntp)
         - [x] [Combine WiFi connection and SNTP time sync into one code](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/WIFI_SNTP)
-        - [ ] Create e-ink display driver
-            - [ ] Determine best graphical library to use (Adafruit_GFX/minigrafx/custom graphics library)
-            - [ ] Determine best driver to use ([custom GxEPD2 & CalEPD hybrid](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY029T94_CalEPD_Demo)/fully custom solution)
-            - [ ] Create and test GDEY075T7 driver (waiting for display to arrive)    
+        - [x] Create e-ink display driver
+            - [x] Determine best graphical library to use (Adafruit_GFX)
+            - [x] Determine best driver to use ([customized CalEPD](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY029T94_CalEPD_Demo))
+            - [x] [Create and test GDEY075T7 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo)
+                - [x] Add support for full partial display refresh
+                - [x] Test drawing a bitmap image
         - [ ] Get and parse current name day using HTTPS API
-        - [ ] Get and parse weather forecast using HTTPS API (likely from openweathermap)
+        - [ ] Get and parse weather forecast using HTTPS API (openweathermap)
     - [ ] Create display interface layout
+    - [ ] Prepare a set of weather icon byte arrays
     - [ ] Assemble all firmware components together into one codebase
     - [ ] Implement debug display view based on GPIO button toggle
 
@@ -76,6 +79,7 @@ This is a task list for HAMS project.
 ## Backlog
 
 - [ ] Hub firmware: Upload data from hub to Google Sheets or elsewhere online
+- [ ] Hub firmware: Replace Adafruit_GFX with C-based graphical library to remove C++ altogether
 
 ## Done
 
