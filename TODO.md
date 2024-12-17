@@ -5,7 +5,7 @@ This is a task list for HAMS project.
 ## Work in progress
 
 - [ ] Hub firmware v0.1
-    - [ ] Test firmware components in separate projects
+    - [x] Test firmware components in separate projects
         - [x] [Create and test SGP41 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SGP41)
         - [x] [Create and test SPS30 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SPS30)
         - [x] [Test nRF24L01+ driver (RX mode), incl. IRQ handling](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/nRF24L01p_RX)
@@ -24,8 +24,10 @@ This is a task list for HAMS project.
                 - [x] Test drawing a bitmap image
         - [x] [Get and parse current name day using HTTPS API](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/API_svatkyapicz)
         - [x] [Get and parse openweathermap.org weather forecast using HTTPS API](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/API_openweathermap)
-    - [ ] Create display interface layout
-    - [ ] Prepare a set of weather icon byte arrays
+    - [x] Design display interface
+        - [x] Create display interface layout ([implemented in GDEY075T7 test project](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo))
+        - [x] [Prepare a set of weather icon byte arrays for openweatherapi weather codes](https://github.com/JakubFranek/ESP32/blob/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo/main/weather_icons.h)
+        - [x] [Prepare a set of small morning / day / eve / night icons for temperatures](https://github.com/JakubFranek/ESP32/blob/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo/main/time_of_day_icons.h)
     - [ ] Assemble all firmware components together into one codebase
     - [ ] Implement debug display view based on GPIO button toggle
 
