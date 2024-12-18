@@ -49,6 +49,15 @@ Thumbs.db
 
 # Other folders
 Firmware repository
+.hidden_code
 
 # VS Code files
 .vscode
+
+# ESP-IDF specific files
+sdkconfig
+sdkconfig.old
+.devcontainer
+
+# Secret files
+secrets.h
