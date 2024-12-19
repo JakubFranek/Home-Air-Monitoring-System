@@ -8,6 +8,8 @@ extern "C"
     void measure_sht4x(void);
     void setup_sgp41(void);
     void measure_sgp41(void);
+    void setup_bme280(void);
+    void measure_bme280(void);
 
 #ifdef __cplusplus
 }

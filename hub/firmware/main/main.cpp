@@ -34,6 +34,7 @@ void app_main(void)
     setup_i2c_bus();
     setup_sht4x();
     setup_sgp41();
+    setup_bme280();
 
     while (true)
     {
@@ -43,6 +44,7 @@ void app_main(void)
         if (seconds_counter == 0)
         {
             measure_sht4x();
+            measure_bme280();
             update_display();
         }
 
