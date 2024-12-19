@@ -26,6 +26,7 @@
 typedef int8_t (*sgp41_i2c_write_t)(uint8_t address, const uint8_t *payload, uint8_t length);
 typedef int8_t (*sgp41_i2c_read_t)(uint8_t address, uint8_t *payload, uint8_t length);
 typedef int8_t (*sgp41_calculate_crc_t)(const uint8_t *data, uint8_t length, uint8_t polynomial, uint8_t *result);
+typedef int8_t (*sgp41_delay_ms_t)(uint16_t ms);
 
 /* --- Types --- */
 
@@ -51,6 +52,7 @@ typedef struct Sgp41Device
 {
     sgp41_i2c_write_t i2c_write;
     sgp41_i2c_read_t i2c_read;
+    sgp41_delay_ms_t delay_ms;
     float sampling_period_s;             // Sampling period in seconds (Sensirion uses 1 second by default)
     sgp41_calculate_crc_t calculate_crc; // Optional: If `NULL`, internal SW CRC algorithm will be used
     GasIndexAlgorithmParams gia_voc;     // Do not initialize, leave as `NULL`
@@ -66,6 +68,5 @@ Sgp41Status sgp41_read_gas_indices(Sgp41Device *device, Sgp41Data *data);
 Sgp41Status sgp41_get_serial_number(Sgp41Device *device, uint64_t *serial_number);
 Sgp41Status sgp41_turn_heater_off(Sgp41Device *device);
 Sgp41Status sgp41_execute_self_test(Sgp41Device *device);
-Sgp41Status sgp41_evaluate_self_test(Sgp41Device *device);
 
 #endif /* INC_SGP41_H_ */

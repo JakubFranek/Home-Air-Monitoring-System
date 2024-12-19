@@ -126,6 +126,8 @@ Sgp41Status sgp41_read_gas_indices(Sgp41Device *device, Sgp41Data *data)
 /**
  * @brief Retrieves the serial number from the SGP41 sensor.
  *
+ * @warning This function includes a delay of 1 ms.
+ *
  * @param[in] device Pointer to the `Sgp41Device` structure.
  * @param[out] serial_number Pointer to the `uint64_t` variable to store the 48-bit serial number in.
  *
@@ -141,8 +143,9 @@ Sgp41Status sgp41_get_serial_number(Sgp41Device *device, uint64_t *serial_number
     if (device->i2c_write(SGP41_I2C_ADDRESS, (uint8_t[]){SGP41_CMD_SERIAL_NO}, SGP41_CMD_LEN) != 0)
         return SGP41_I2C_ERROR;
 
-    uint8_t rx_data[9];
+    device->delay_ms(1);
 
+    uint8_t rx_data[9];
     if (device->i2c_read(SGP41_I2C_ADDRESS, rx_data, SGP41_RSP_LEN_SERIAL_NO) != 0)
         return SGP41_I2C_ERROR;
 
@@ -168,7 +171,7 @@ Sgp41Status sgp41_get_serial_number(Sgp41Device *device, uint64_t *serial_number
 /**
  * @brief Executes the conditioning command on the SGP41 sensor.
  *
- * WARNING: This function must be followed up by a measurement command or heater off command
+ * @warning This function must be followed up by a measurement command or heater off command
  * within 10 seconds to prevent damage to the sensor.
  *
  * @param[in] device Pointer to the `Sgp41Device` structure.
@@ -260,16 +263,20 @@ Sgp41Status sgp41_turn_heater_off(Sgp41Device *device)
 }
 
 /**
- * @brief Executes the self-test command on the SGP41 sensor.
+ * @brief Executes and evaluates the self-test command on the SGP41 sensor.
  *
- * This function sends the self-test command to the SGP41 sensor. The result
- * of the self-test can be evaluated using the `sgp41_evaluate_self_test
- * function`, after a minimum interval of 320 ms.
+ * This function sends the self-test command to the SGP41 sensor, reads the
+ * self-test result from the SGP41 sensor and verifies the integrity of
+ * the data using CRC.
+ *
+ * @warning This function includes a delay of 320 ms.
  *
  * @param[in] device Pointer to the Sgp41Device structure.
  *
- * @retval `SGP41_SUCCESS` Command successful.
- * @retval `SGP41_I2C_ERROR` I2C error occured.
+ * @retval `SGP41_SUCCESS` Self-test completed successfully.
+ * @retval `SGP41_I2C_ERROR` I2C communication error occurred.
+ * @retval `SGP41_CRC_FAILURE` CRC verification of the received data failed.
+ * @retval `SGP41_SELF_TEST_FAILURE` The self-test indicated a sensor failure.
  */
 Sgp41Status sgp41_execute_self_test(Sgp41Device *device)
 {
@@ -277,27 +284,8 @@ Sgp41Status sgp41_execute_self_test(Sgp41Device *device)
 
     if (device->i2c_write(SGP41_I2C_ADDRESS, (uint8_t[]){SGP41_CMD_SELF_TEST}, SGP41_CMD_LEN) != 0)
         return SGP41_I2C_ERROR;
-    return SGP41_SUCCESS;
-}
 
-/**
- * @brief Evaluate the result of the SGP41 sensor's self-test.
- *
- * Reads the self-test result from the SGP41 sensor and verifies the integrity of
- * the data using CRC.
- *
- * Call this function >320 ms after a call to `sgp41_execute_self_test`.
- *
- * @param[in] device Pointer to an `Sgp41Device` structure representing the sensor instance.
- *
- * @retval `SGP41_SUCCESS` Self-test completed successfully.
- * @retval `SGP41_I2C_ERROR` I2C communication error occurred.
- * @retval `SGP41_CRC_FAILURE` CRC verification of the received data failed.
- * @retval `SGP41_SELF_TEST_FAILURE` The self-test indicated a sensor failure.
- */
-Sgp41Status sgp41_evaluate_self_test(Sgp41Device *device)
-{
-    SGP41_CHECK_STATUS(sgp41_check_device(device));
+    device->delay_ms(320);
 
     uint8_t rx_data[3];
     uint8_t crc_check;

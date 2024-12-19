@@ -8,21 +8,24 @@
 #include "sgp41.h"
 #include "bme280_i2c.h"
 #include "scd4x.h"
+#include "sps30_i2c.h"
 
 static const char *TAG = "sensor_control";
 
-void setup_sht4x(void);
-void measure_sht4x(void);
 int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
 int8_t sht4x_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
 int8_t sgp41_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
 int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
+int8_t sgp41_delay_ms(uint16_t ms);
 int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
 int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
 int8_t bme280_delay_ms(uint16_t ms);
 int8_t scd4x_i2c_write(uint8_t address, const uint8_t *payload, size_t length);
 int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length);
 int8_t scd4x_delay_ms(uint16_t ms);
+int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
+int8_t sps30_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
+int8_t sps30_delay_ms(uint16_t ms);
 
 /* ---------- I2C ---------- */
 
@@ -48,8 +51,7 @@ i2c_master_dev_handle_t sht4x_device_handle;
 Sht4xDevice sht4x_device = {
     .i2c_write = &sht4x_i2c_write,
     .i2c_read = &sht4x_i2c_read,
-    .i2c_address = SHT4X_I2C_ADDR_A,
-};
+    .i2c_address = SHT4X_I2C_ADDR_A};
 Sht4xStatus sht4x_status;
 Sht4xData sht4x_data;
 uint32_t sht4x_serial_number;
@@ -69,8 +71,8 @@ i2c_master_dev_handle_t sgp41_device_handle;
 Sgp41Device sgp41_device = {
     .i2c_write = &sgp41_i2c_write,
     .i2c_read = &sgp41_i2c_read,
-    .sampling_period_s = SGP41_SAMPLING_INTERVAL_S,
-};
+    .delay_ms = &sgp41_delay_ms,
+    .sampling_period_s = SGP41_SAMPLING_INTERVAL_S};
 uint64_t sgp41_serial_number;
 Sgp41Status sgp41_status;
 Sgp41Data sgp41_data;
@@ -108,19 +110,42 @@ i2c_device_config_t scd4x_config = {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = SCD4X_I2C_ADDRESS,
     .scl_speed_hz = 100000,
-    .scl_wait_us = 0,
-};
+    .scl_wait_us = 0};
 i2c_master_dev_handle_t scd4x_device_handle;
 
 Scd4xDevice scd4x_device = {
     .i2c_write = &scd4x_i2c_write,
     .i2c_read = &scd4x_i2c_read,
-    .delay_ms = &scd4x_delay_ms,
-};
+    .delay_ms = &scd4x_delay_ms};
 Scd4xStatus scd4x_status;
 Scd4xData scd4x_data;
 bool scd4x_data_ready = false;
 uint64_t scd4x_serial_number;
+
+/* ---------- SPS30 ---------- */
+
+#define SPS30_MAX_RETRY_COUNT 10
+#define SPS30_RETRY_PERIOD_MS 100
+
+i2c_device_config_t sps30_config = {
+    .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+    .device_address = SPS30_I2C_ADDRESS,
+    .scl_speed_hz = 100000,
+    .scl_wait_us = 0};
+i2c_master_dev_handle_t sps30_device_handle;
+
+Sps30Device sps30_device = {
+    .i2c_write = &sps30_i2c_write,
+    .i2c_read = &sps30_i2c_read,
+    .delay_ms = &sps30_delay_ms};
+Sps30Status sps30_status;
+Sps30FirmwareVersion sps30_version;
+char sps30_product_type[8] = {'\0'};
+char sps30_serial_number[32] = {'\0'};
+Sps30StatusFlags sps30_flags;
+Sps30FloatData sps30_float_data;
+Sps30Uint16Data sps30_uint16_data;
+bool sps30_data_ready = false;
 
 void setup_i2c_bus(void)
 {
@@ -158,14 +183,11 @@ void setup_sgp41(void)
     sgp41_status = sgp41_initialize(&sgp41_device);
 
     sgp41_status = sgp41_get_serial_number(&sgp41_device, &sgp41_serial_number);
-    ESP_LOGI(TAG, "[SGP41] Get Serial Number, status = %d, serial number: %lld",
-             sgp41_status, sgp41_serial_number);
+    ESP_LOGI(TAG, "[SGP41] Get Serial Number, serial number: %lld, status = %d",
+             sgp41_serial_number, sgp41_status);
 
     sgp41_status = sgp41_execute_self_test(&sgp41_device);
     ESP_LOGI(TAG, "[SGP41] Execute Self Test, status = %d", sgp41_status);
-    vTaskDelay(350 / portTICK_PERIOD_MS);
-    sgp41_status = sgp41_evaluate_self_test(&sgp41_device);
-    ESP_LOGI(TAG, "[SGP41] Evaluate Self Test, status = %d", sgp41_status);
 
     sgp41_status = sgp41_execute_conditioning(&sgp41_device);
     ESP_LOGI(TAG, "[SGP41] Execute Conditioning, status = %d", sgp41_status);
@@ -180,9 +202,12 @@ void measure_sgp41(void)
 {
     sgp41_status = sgp41_measure_raw_signals(&sgp41_device, NULL, NULL);
     ESP_LOGI(TAG, "[SGP41] Measure Raw Signals, status = %d", sgp41_status);
+
     vTaskDelay(55 / portTICK_PERIOD_MS);
+
     sgp41_status = sgp41_read_gas_indices(&sgp41_device, &sgp41_data);
-    ESP_LOGI(TAG, "[SGP41] Read Gas Indices, status = %d, voc = %d, nox = %d", sgp41_status, (int)sgp41_data.voc_index, (int)sgp41_data.nox_index);
+    ESP_LOGI(TAG, "[SGP41] Read Gas Indices, voc = %d, nox = %d, status = %d",
+             (int)sgp41_data.voc_index, (int)sgp41_data.nox_index, sgp41_status);
 }
 
 void setup_bme280(void)
@@ -233,13 +258,14 @@ void measure_scd4x(void)
     {
         scd4x_status = scd4x_get_data_ready_status(&scd4x_device, &scd4x_data_ready);
         ESP_LOGI(TAG, "[SCD4x] Read Data Ready Status, data ready = %d, status = %d", scd4x_data_ready, scd4x_status);
+
         if (scd4x_data_ready)
         {
             break;
         }
-        else if (retry_count > SCD4X_MAX_RETRY_COUNT)
+        else if (retry_count == SCD4X_MAX_RETRY_COUNT)
         {
-            ESP_LOGE(TAG, "[SCD4x] Data not ready after %d retries", SCD4X_MAX_RETRY_COUNT);
+            ESP_LOGE(TAG, "[SCD4x] Data not ready after %d retries", retry_count);
             return;
         }
         retry_count++;
@@ -250,6 +276,57 @@ void measure_scd4x(void)
     ESP_LOGI(TAG, "[SCD4x] Read Data, CO2 concentration = %d ppm, Temperature = %.2f °C, Rel. humidity = %.2f %% status = %d",
              scd4x_data.co2_ppm, scd4x_data.temperature / 100.0, scd4x_data.relative_humidity / 100.0, scd4x_status);
     scd4x_data_ready = false;
+}
+
+void setup_sps30(void)
+{
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &sps30_config, &sps30_device_handle));
+
+    sps30_status = sps30_read_product_type(&sps30_device, sps30_product_type);
+    ESP_LOGI(TAG, "[SPS30] Read Product Type, product type = %s, status = %d", sps30_product_type, sps30_status);
+
+    sps30_status = sps30_read_serial_number(&sps30_device, sps30_serial_number);
+    ESP_LOGI(TAG, "[SPS30] Read Serial Number, serial number = %s, status = %d", sps30_serial_number, sps30_status);
+
+    sps30_status = sps30_read_firmware_version(&sps30_device, &sps30_version);
+    ESP_LOGI(TAG, "[SPS30] Read Firmware Version, version = %d.%d, status = %d", sps30_version.major, sps30_version.minor, sps30_status);
+
+    sps30_status = sps30_read_device_status_flags(&sps30_device, &sps30_flags);
+    ESP_LOGI(TAG, "[SPS30] Read Device Status Flags, speed warning = %d, laser error = %d, fan error = %d, status = %d",
+             sps30_flags.speed_warning, sps30_flags.laser_error, sps30_flags.fan_error, sps30_status);
+
+    sps30_status = sps30_start_measurement(&sps30_device, SPS30_FLOAT);
+    ESP_LOGI(TAG, "[SPS30] Start Measurement (float), status = %d", sps30_status);
+}
+
+void measure_sps30(void)
+{
+    uint8_t retry_count = 0;
+    while (true)
+    {
+        sps30_status = sps30_read_data_ready_flag(&sps30_device, &sps30_data_ready);
+        ESP_LOGI(TAG, "[SPS30] Read Data Ready Flag, data ready = %d, status = %d", sps30_data_ready, sps30_status);
+
+        if (sps30_data_ready)
+        {
+            break;
+        }
+        else if (retry_count == SPS30_MAX_RETRY_COUNT)
+        {
+            ESP_LOGE(TAG, "[SPS30] Data not ready after %d retries", retry_count);
+            return;
+        }
+        retry_count++;
+        vTaskDelay(SPS30_RETRY_PERIOD_MS / portTICK_PERIOD_MS);
+    }
+
+    sps30_status = sps30_read_measured_values_float(&sps30_device, &sps30_float_data);
+    ESP_LOGI(TAG, "[SPS30] Read Float Data, PM1.0 = %.2f ug/m^3, PM2.5 = %.2f ug/m^3, PM4.0 = %.2f ug/m^3, PM10.0 = %.2f ug/m^3, status = %d",
+             sps30_float_data.mass_concentration_pm1_0,
+             sps30_float_data.mass_concentration_pm2_5,
+             sps30_float_data.mass_concentration_pm4_0,
+             sps30_float_data.mass_concentration_pm10_0, sps30_status);
+    sps30_data_ready = false;
 }
 
 int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
@@ -281,6 +358,15 @@ int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
     return err == ESP_OK ? 0 : -1;
 }
 
+int8_t sgp41_delay_ms(uint16_t ms)
+{
+    if (ms < 10)
+        ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
+
+    vTaskDelay(ms / portTICK_PERIOD_MS);
+    return 0;
+}
+
 int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
@@ -299,6 +385,9 @@ int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
 
 int8_t bme280_delay_ms(uint16_t ms)
 {
+    if (ms < 10)
+        ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
+
     vTaskDelay(ms);
     return 0;
 }
@@ -319,6 +408,33 @@ int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length)
 
 int8_t scd4x_delay_ms(uint16_t ms)
 {
+    if (ms < 10)
+        ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
+
+    vTaskDelay(ms / portTICK_PERIOD_MS);
+    return 0;
+}
+
+int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
+{
+
+    (void)address; // Address not necessary
+    esp_err_t err = i2c_master_transmit(sps30_device_handle, payload, length, 10);
+    return err == ESP_OK ? 0 : -1;
+}
+
+int8_t sps30_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
+{
+    (void)address; // Address not necessary
+    esp_err_t err = i2c_master_receive(sps30_device_handle, payload, length, 10);
+    return err == ESP_OK ? 0 : -1;
+}
+
+int8_t sps30_delay_ms(uint16_t ms)
+{
+    if (ms < 10)
+        ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
+
     vTaskDelay(ms / portTICK_PERIOD_MS);
     return 0;
 }

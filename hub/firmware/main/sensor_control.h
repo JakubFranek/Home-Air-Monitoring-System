@@ -12,6 +12,8 @@ extern "C"
     void measure_bme280(void);
     void setup_scd4x(void);
     void measure_scd4x(void);
+    void setup_sps30(void);
+    void measure_sps30(void);
 
 #ifdef __cplusplus
 }

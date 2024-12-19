@@ -36,6 +36,7 @@ void app_main(void)
     setup_sgp41();
     setup_bme280();
     setup_scd4x();
+    setup_sps30();
 
     while (true)
     {
@@ -44,6 +45,7 @@ void app_main(void)
         measure_sgp41();
         measure_sht4x();
         measure_bme280();
+        measure_sps30();
 
         if (minute_counter % 5 == 0)
         {
