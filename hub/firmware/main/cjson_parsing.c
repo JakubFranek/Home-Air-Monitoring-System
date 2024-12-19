@@ -1,5 +1,8 @@
 #include "cjson_parsing.h"
 #include <string.h>
+#include <esp_log.h>
+
+static const char *TAG = "cjson_parsing";
 
 /**
  * @brief Parse a float value from a `cJSON` object.
@@ -13,11 +16,12 @@
 int8_t set_float_from_cjson(cJSON *json, char *key, float *data)
 {
     cJSON *value = cJSON_GetObjectItem(json, key);
-    if (value != NULL)
+    if (value != NULL && cJSON_IsNumber(value))
     {
-        *data = value->valuedouble;
+        *data = (float)value->valuedouble;
         return 0;
     }
+    ESP_LOGW(TAG, "Failed to parse float from cJSON, key = %s", key);
     return -1;
 }
 
@@ -44,6 +48,7 @@ int8_t set_string_from_cjson(cJSON *json, char *key, char *data, size_t size)
         strncpy(data, value->valuestring, length);
         return 0;
     }
+    ESP_LOGW(TAG, "Failed to parse float from cJSON, key = %s", key);
     return -1;
 }
 
@@ -64,6 +69,7 @@ int8_t set_int_from_cjson(cJSON *json, char *key, int *data)
         *data = value->valueint;
         return 0;
     }
+    ESP_LOGW(TAG, "Failed to parse float from cJSON, key = %s", key);
     return -1;
 }
 
@@ -93,5 +99,6 @@ int8_t set_bool_from_cjson(cJSON *json, char *key, bool *data)
             return 0;
         }
     }
+    ESP_LOGW(TAG, "Failed to parse float from cJSON, key = %s", key);
     return -1;
 }

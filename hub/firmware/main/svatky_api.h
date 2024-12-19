@@ -13,7 +13,7 @@ extern "C"
         char holiday_name[SVATKY_MAX_STRING_LENGTH];
     } SvatkyApiData;
 
-    void request_svatkyapi_data(SvatkyApiData *data);
+    int8_t request_svatkyapi_data(SvatkyApiData *data);
 
 #ifdef __cplusplus
 }

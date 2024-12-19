@@ -25,7 +25,7 @@ void app_main(void)
     setup_wifi();
     initialize_sntp();
     request_svatkyapi_data(&svatky_data);
-    // request_weather_data(&weather_data);
+    request_weather_data(&weather_data);
 
     while (true)
     {

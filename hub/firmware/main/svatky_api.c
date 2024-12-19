@@ -166,7 +166,7 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
-void request_svatkyapi_data(SvatkyApiData *data)
+int8_t request_svatkyapi_data(SvatkyApiData *data)
 {
     esp_http_client_config_t config = {
         .url = "https://svatkyapi.cz/api/day",
@@ -200,15 +200,20 @@ void request_svatkyapi_data(SvatkyApiData *data)
         set_string_from_cjson(json, "dayInWeek", data->day_in_week, SVATKY_MAX_STRING_LENGTH);
         set_string_from_cjson(json, "name", data->name, SVATKY_MAX_STRING_LENGTH);
         set_bool_from_cjson(json, "isHoliday", &data->is_holiday);
-        set_string_from_cjson(json, "holidayName", data->holiday_name, SVATKY_MAX_STRING_LENGTH);
+        if (data->is_holiday)
+        {
+            set_string_from_cjson(json, "holidayName", data->holiday_name, SVATKY_MAX_STRING_LENGTH);
+        }
 
         cJSON_Delete(json); // Deallocate the JSON object
 
         ESP_LOGI(TAG, "SvatkyApiData received: day_in_week = %s, name = %s, is_holiday = %d, holiday_name = %s",
                  data->day_in_week, data->name, data->is_holiday, data->holiday_name);
+        return 0;
     }
     else
     {
         ESP_LOGE(TAG, "Failed to parse JSON");
+        return -1;
     }
 }
