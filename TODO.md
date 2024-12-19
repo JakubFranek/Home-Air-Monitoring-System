@@ -29,7 +29,24 @@ This is a task list for HAMS project.
         - [x] [Prepare a set of weather icon byte arrays for openweatherapi weather codes](https://github.com/JakubFranek/ESP32/blob/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo/main/weather_icons.h)
         - [x] [Prepare a set of small morning / day / eve / night icons for temperatures](https://github.com/JakubFranek/ESP32/blob/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo/main/time_of_day_icons.h)
     - [ ] Assemble all firmware components together into one codebase
-    - [ ] Implement debug display view based on GPIO button toggle
+        - [x] Implement e-ink display driver
+        - [x] Implement WiFi connectivity
+        - [x] Implement SNTP
+        - [x] Implement svatkyapi.cz requests
+        - [x] Implement openweathermap.org requests
+        - [x] Implement SHT40 driver
+        - [x] Implement SCD41 driver
+        - [x] Implement SGP41 driver
+        - [x] Implement SPS30 driver
+        - [x] Implement BME280 driver
+        - [x] Implement fan control
+        - [x] Implement nRF24L01+ driver
+        - [ ] Display sensor data
+        - [ ] Display weather data
+        - [ ] Implement node timestamp checking
+        - [ ] Implement 24h minimum temperature logic for particular node
+        - [ ] Implement logic for long holiday names
+        - [ ] Implement debug display view based on GPIO button toggle
 
 ## To do
 
