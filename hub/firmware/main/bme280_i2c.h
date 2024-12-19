@@ -4,7 +4,10 @@
  * @brief BME280 I2C driver
  *
  * How to use this driver:
- * // TODO: add how to - guide
+ * 1. Reset the BME280 sensor using the `bme280_reset` function.
+ * 2. Initialize the BME280 sensor using the `bme280_init` function.
+ * 3. Set the sensor mode using the `bme280_set_mode` function.
+ * 4. Read the measurement data using the `bme280_read_measurement` function.
  */
 
 #include <stdint.h>

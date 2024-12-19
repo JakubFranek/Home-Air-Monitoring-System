@@ -4,30 +4,17 @@
  * @brief nRF24L01+ driver
  *
  * How to use this driver:
- * // TODO: add how to - guide
+ * 1. Call nrf24l01p_init_ptx or nrf24l01p_init_prx to initialize the nRF24L01+ device.
+ * 2. Clear status flags by calling nrf24l01p_clear_status_flags.
+ * 3. Power up the device by calling nrf24l01p_power_up.
+ * 4. Proceed with the desired operation (e.g., sending or receiving data), depending on PTX or PRX mode.
  */
-
-// TODO: move private defines elsewhere
 
 #ifndef __NRF24L01P_H__
 #define __NRF24L01P_H__
 
 #include <stdint.h>	 // definition of uint8_t etc
 #include <stdbool.h> // definition of bool
-
-/*----------- nRF24L01+ Commands -----------*/
-
-#define NRF24L01P_CMD_R_REGISTER 0b00000000
-#define NRF24L01P_CMD_W_REGISTER 0b00100000
-#define NRF24L01P_CMD_R_RX_PAYLOAD 0b01100001
-#define NRF24L01P_CMD_W_TX_PAYLOAD 0b10100000
-#define NRF24L01P_CMD_FLUSH_TX 0b11100001
-#define NRF24L01P_CMD_FLUSH_RX 0b11100010
-#define NRF24L01P_CMD_REUSE_TX_PL 0b11100011
-#define NRF24L01P_CMD_R_RX_PL_WID 0b01100000
-#define NRF24L01P_CMD_W_ACK_PAYLOAD 0b10101000
-#define NRF24L01P_CMD_W_TX_PAYLOAD_NOACK 0b10110000
-#define NRF24L01P_CMD_NOP 0b11111111
 
 /*----------- nRF24L01+ Registers -----------*/
 
