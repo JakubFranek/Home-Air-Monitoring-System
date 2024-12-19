@@ -173,7 +173,7 @@ void Epd::draw_aligned_text(const GFXfont *font, int16_t x, int16_t y, uint16_t 
   if (text_h > h)
     ESP_LOGE(TAG, "draw_centered_text [%s]: text height out of bounds", text.c_str());
 
-  ESP_LOGI(TAG, "draw_centered_text: string = %s, x = %d, y = %d, \
+  ESP_LOGD(TAG, "draw_centered_text: string = %s, x = %d, y = %d, \
 w = %d, h = %d, text_x = %d, text_y = %d, text_w = %d, text_h = %d, tx = %d, ty = %d",
            text.c_str(), x, y, w, h, text_x, text_y, text_w, text_h, tx, ty);
 

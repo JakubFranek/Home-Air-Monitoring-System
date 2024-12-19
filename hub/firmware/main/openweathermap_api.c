@@ -20,6 +20,7 @@
 #include "secrets.h"
 #include "cjson_parsing.h"
 
+#define REQUEST_TIMEOUT_MS 10000
 #define MAX_HTTP_OUTPUT_BUFFER 8192 - 1
 
 // Macro to log an error and exit a function with error code -1 if expr != 0
@@ -33,7 +34,7 @@
 extern const char openweathermaporg_cert_pem_start[] asm("_binary_openweathermaporg_cert_pem_start");
 extern const char openweathermaporg_cert_pem_end[] asm("_binary_openweathermaporg_cert_pem_end");
 
-static const char *TAG = "main";
+static const char *TAG = "openweathermap_api";
 
 static char received_data[MAX_HTTP_OUTPUT_BUFFER + 1] = {0}; // Extra byte for the NULL character
 static int received_data_len = 0;
@@ -191,9 +192,19 @@ int8_t request_weather_data(WeatherData *data)
 
     esp_http_client_cleanup(client);
 
-    while (!received_data_valid) // TODO: add a timeout
+    // Get current time (as ticks) to check for timeout
+    TickType_t start_time = xTaskGetTickCount();
+    TickType_t diff;
+    while (!received_data_valid) // Wait for the data to be received.
     {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+
+        diff = xTaskGetTickCount() - start_time;
+        if (diff > REQUEST_TIMEOUT_MS / portTICK_PERIOD_MS) // Check for timeout
+        {
+            ESP_LOGE(TAG, "Request timed out.");
+            return -1;
+        }
     }
 
     cJSON *json = cJSON_Parse(received_data); // Watch out, this contains dynamic memory allocation

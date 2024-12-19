@@ -1,4 +1,4 @@
-#include "wifi_sta.h"
+#include "wifi_station.h"
 
 #include <string.h>
 #include "freertos/FreeRTOS.h"

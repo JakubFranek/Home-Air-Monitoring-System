@@ -34,6 +34,8 @@
 #define DISPLAY_TIME_ICON_YPOS 142
 #define DISPLAY_VSEC2_TEXT_YPOS DISPLAY_TIME_ICON_YPOS + 4 * TIME_OF_DAY_ICON_SIZE + 20
 
+static const char *TAG = "display_control";
+
 EpdSpi epd_spi;
 Gdey075T7 display(epd_spi);
 
@@ -225,6 +227,8 @@ void update_display(void)
 
     display_counter++;
     gpio_set_level(GPIO_NUM_2, 0);
+
+    ESP_LOGI(TAG, "update_display done");
 }
 
 /**
