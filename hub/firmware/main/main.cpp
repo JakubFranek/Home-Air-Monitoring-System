@@ -22,7 +22,7 @@ extern "C"
 static SvatkyApiData svatky_data;
 static WeatherData weather_data;
 
-uint8_t seconds_counter = 0;
+uint8_t minute_counter = 0;
 
 void app_main(void)
 {
@@ -35,21 +35,25 @@ void app_main(void)
     setup_sht4x();
     setup_sgp41();
     setup_bme280();
+    setup_scd4x();
 
     while (true)
     {
         TickType_t xLastWakeTime = xTaskGetTickCount();
 
         measure_sgp41();
-        if (seconds_counter == 0)
+        measure_sht4x();
+        measure_bme280();
+
+        if (minute_counter % 5 == 0)
         {
-            measure_sht4x();
-            measure_bme280();
-            update_display();
+            measure_scd4x(); // the SCD41 algorithm expects 5 minute sampling period
         }
 
-        seconds_counter = (seconds_counter == 59) ? 0 : seconds_counter + 1;
+        update_display();
 
-        xTaskDelayUntil(&xLastWakeTime, 1 * 1000 / portTICK_PERIOD_MS);
+        minute_counter++;
+
+        xTaskDelayUntil(&xLastWakeTime, 60 * 1000 / portTICK_PERIOD_MS);
     }
 }

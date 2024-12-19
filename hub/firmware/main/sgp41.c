@@ -75,8 +75,8 @@ Sgp41Status sgp41_initialize(Sgp41Device *device)
 {
     SGP41_CHECK_STATUS(sgp41_check_device(device));
 
-    GasIndexAlgorithm_init(&device->gia_voc, GasIndexAlgorithm_ALGORITHM_TYPE_VOC);
-    GasIndexAlgorithm_init(&device->gia_nox, GasIndexAlgorithm_ALGORITHM_TYPE_NOX);
+    GasIndexAlgorithm_init_with_sampling_interval(&device->gia_voc, GasIndexAlgorithm_ALGORITHM_TYPE_VOC, device->sampling_period_s);
+    GasIndexAlgorithm_init_with_sampling_interval(&device->gia_nox, GasIndexAlgorithm_ALGORITHM_TYPE_NOX, device->sampling_period_s);
     return SGP41_SUCCESS;
 }
 

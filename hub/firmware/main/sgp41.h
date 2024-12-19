@@ -51,6 +51,7 @@ typedef struct Sgp41Device
 {
     sgp41_i2c_write_t i2c_write;
     sgp41_i2c_read_t i2c_read;
+    float sampling_period_s;             // Sampling period in seconds (Sensirion uses 1 second by default)
     sgp41_calculate_crc_t calculate_crc; // Optional: If `NULL`, internal SW CRC algorithm will be used
     GasIndexAlgorithmParams gia_voc;     // Do not initialize, leave as `NULL`
     GasIndexAlgorithmParams gia_nox;     // Do not initialize, leave as `NULL`

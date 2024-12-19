@@ -7,6 +7,7 @@
 #include "sht4x.h"
 #include "sgp41.h"
 #include "bme280_i2c.h"
+#include "scd4x.h"
 
 static const char *TAG = "sensor_control";
 
@@ -19,6 +20,9 @@ int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
 int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
 int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
 int8_t bme280_delay_ms(uint16_t ms);
+int8_t scd4x_i2c_write(uint8_t address, const uint8_t *payload, size_t length);
+int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length);
+int8_t scd4x_delay_ms(uint16_t ms);
 
 /* ---------- I2C ---------- */
 
@@ -52,6 +56,8 @@ uint32_t sht4x_serial_number;
 
 /* ---------- SGP41 ---------- */
 
+#define SGP41_SAMPLING_INTERVAL_S 60.0f
+
 i2c_device_config_t sgp41_config = {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = SGP41_I2C_ADDRESS,
@@ -63,6 +69,7 @@ i2c_master_dev_handle_t sgp41_device_handle;
 Sgp41Device sgp41_device = {
     .i2c_write = &sgp41_i2c_write,
     .i2c_read = &sgp41_i2c_read,
+    .sampling_period_s = SGP41_SAMPLING_INTERVAL_S,
 };
 uint64_t sgp41_serial_number;
 Sgp41Status sgp41_status;
@@ -92,6 +99,29 @@ Bme280Status bme280_status;
 Bme280Data bme280_data;
 bool bme280_measurement_in_progress = false;
 
+/* ---------- SCD4x ---------- */
+
+#define SCD4X_MAX_RETRY_COUNT 10
+#define SCD4X_RETRY_PERIOD_MS 100
+
+i2c_device_config_t scd4x_config = {
+    .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+    .device_address = SCD4X_I2C_ADDRESS,
+    .scl_speed_hz = 100000,
+    .scl_wait_us = 0,
+};
+i2c_master_dev_handle_t scd4x_device_handle;
+
+Scd4xDevice scd4x_device = {
+    .i2c_write = &scd4x_i2c_write,
+    .i2c_read = &scd4x_i2c_read,
+    .delay_ms = &scd4x_delay_ms,
+};
+Scd4xStatus scd4x_status;
+Scd4xData scd4x_data;
+bool scd4x_data_ready = false;
+uint64_t scd4x_serial_number;
+
 void setup_i2c_bus(void)
 {
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_config, &bus));
@@ -102,23 +132,23 @@ void setup_sht4x(void)
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &sht4x_config, &sht4x_device_handle));
 
     sht4x_status = sht4x_request_serial_number(&sht4x_device);
-    ESP_LOGI(TAG, "[SHT4X] Request Serial Number, status = %d", sht4x_status);
+    ESP_LOGI(TAG, "[SHT4x] Request Serial Number, status = %d", sht4x_status);
     vTaskDelay(10 / portTICK_PERIOD_MS);
 
     sht4x_status = sht4x_read_serial_number(&sht4x_device, &sht4x_serial_number);
-    ESP_LOGI(TAG, "[SHT4X] Read Serial Number, serial number = %ld, status = %d", sht4x_serial_number, sht4x_status);
+    ESP_LOGI(TAG, "[SHT4x] Read Serial Number, serial number = %ld, status = %d", sht4x_serial_number, sht4x_status);
 }
 
 void measure_sht4x(void)
 {
     sht4x_status = sht4x_start_measurement(&sht4x_device, SHT4X_I2C_CMD_MEAS_HIGH_PREC);
-    ESP_LOGI(TAG, "[SHT4X] Start Measurement, status = %d", sht4x_status);
+    ESP_LOGI(TAG, "[SHT4x] Start Measurement, status = %d", sht4x_status);
 
     vTaskDelay(10 / portTICK_PERIOD_MS);
 
     sht4x_status = sht4x_read_measurement(&sht4x_device, &sht4x_data);
-    ESP_LOGI(TAG, "[SHT4X] Read Data, status = %d", sht4x_status);
-    ESP_LOGI(TAG, "[SHT4X] Temperature = %.2f °C, Rel. humidity = %.2f %%", sht4x_data.temperature / 1000.0, sht4x_data.humidity / 1000.0);
+    ESP_LOGI(TAG, "[SHT4x] Read Data, status = %d", sht4x_status);
+    ESP_LOGI(TAG, "[SHT4x] Temperature = %.2f °C, Rel. humidity = %.2f %%", sht4x_data.temperature / 1000.0, sht4x_data.humidity / 1000.0);
 }
 
 void setup_sgp41(void)
@@ -180,6 +210,48 @@ void measure_bme280(void)
              bme280_data.temperature / 100.0, bme280_data.humidity / 1000.0, bme280_data.pressure / 10.0, bme280_status);
 }
 
+void setup_scd4x(void)
+{
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &scd4x_config, &scd4x_device_handle));
+
+    scd4x_status = scd4x_get_serial_number(&scd4x_device, &scd4x_serial_number);
+    ESP_LOGI(TAG, "[SCD4x] Read Serial Number, serial number = %lld, status = %d", scd4x_serial_number, scd4x_status);
+
+    scd4x_status = scd4x_perform_self_test(&scd4x_device);
+    ESP_LOGI(TAG, "[SCD4x] Perform Self Test, status = %d", scd4x_status);
+}
+
+void measure_scd4x(void)
+{
+    scd4x_status = scd41_measure_single_shot(&scd4x_device);
+    ESP_LOGI(TAG, "[SCD4x] Measure Single Shot, status = %d", scd4x_status);
+
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+
+    uint8_t retry_count = 0;
+    while (true)
+    {
+        scd4x_status = scd4x_get_data_ready_status(&scd4x_device, &scd4x_data_ready);
+        ESP_LOGI(TAG, "[SCD4x] Read Data Ready Status, data ready = %d, status = %d", scd4x_data_ready, scd4x_status);
+        if (scd4x_data_ready)
+        {
+            break;
+        }
+        else if (retry_count > SCD4X_MAX_RETRY_COUNT)
+        {
+            ESP_LOGE(TAG, "[SCD4x] Data not ready after %d retries", SCD4X_MAX_RETRY_COUNT);
+            return;
+        }
+        retry_count++;
+        vTaskDelay(SCD4X_RETRY_PERIOD_MS / portTICK_PERIOD_MS);
+    }
+
+    scd4x_status = scd4x_read_measurement(&scd4x_device, &scd4x_data);
+    ESP_LOGI(TAG, "[SCD4x] Read Data, CO2 concentration = %d ppm, Temperature = %.2f °C, Rel. humidity = %.2f %% status = %d",
+             scd4x_data.co2_ppm, scd4x_data.temperature / 100.0, scd4x_data.relative_humidity / 100.0, scd4x_status);
+    scd4x_data_ready = false;
+}
+
 int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
@@ -228,5 +300,25 @@ int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
 int8_t bme280_delay_ms(uint16_t ms)
 {
     vTaskDelay(ms);
+    return 0;
+}
+
+int8_t scd4x_i2c_write(uint8_t address, const uint8_t *payload, size_t length)
+{
+    (void)address; // Address not necessary
+    esp_err_t err = i2c_master_transmit(scd4x_device_handle, payload, length, 10);
+    return err == ESP_OK ? 0 : -1;
+}
+
+int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length)
+{
+    (void)address; // Address not necessary
+    esp_err_t err = i2c_master_receive(scd4x_device_handle, payload, length, 10);
+    return err == ESP_OK ? 0 : -1;
+}
+
+int8_t scd4x_delay_ms(uint16_t ms)
+{
+    vTaskDelay(ms / portTICK_PERIOD_MS);
     return 0;
 }
