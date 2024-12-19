@@ -3,7 +3,7 @@
 
 #define NRF24_DATA_LENGTH 10		// bytes
 #define NODE_ID 0
-#define RTC_WAKE_UP_PERIOD_S 3		// min. 1 second
+#define RTC_WAKE_UP_PERIOD_S 10		// min. 1 second
 
 void app_setup(void);
 void app_loop(void);

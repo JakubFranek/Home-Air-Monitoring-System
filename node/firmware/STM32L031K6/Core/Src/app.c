@@ -245,6 +245,9 @@ AppState handle_state_phase1(volatile AppEvent *event)
 
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_up(&nrf24_device), ERROR_PHASE1);
 
+	// Flushing TX FIFO, because previous unacknowledged packets are still in it and we don't want to send them
+	NRF24_CHECK_ERROR_RETURN(nrf24l01p_flush_tx_fifo(&nrf24_device), ERROR_PHASE1);
+
 	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, PHASE2_LENGTH, &irs_phase2_done), ERROR_PHASE1);
 
 	return STATE_PHASE2;
@@ -268,7 +271,7 @@ AppState handle_state_phase2(volatile AppEvent *event)
 
 	build_payload(tx_payload);
 
-	// TX data can be written any time, nRF24L01+ will send it when ready¨
+	// TX data can be written any time, nRF24L01+ will send it when ready
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_write_tx_fifo(&nrf24_device, tx_payload, NRF24_DATA_LENGTH), ERROR_PHASE2);
 
 	// min 10 us CE pulse according to nRF24 datasheet
