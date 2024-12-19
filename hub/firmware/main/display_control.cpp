@@ -46,11 +46,6 @@ void print_weather_summary(Gdey075T7 *display, string weather_summary);
 
 void setup_display(void)
 {
-    // On laskakit ESPink board, the display is powered through a transistor controlled by GPIO_NUM_2
-    // To power the display, GPIO_NUM_2 must be set to 1
-    gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
-    gpio_set_level(GPIO_NUM_2, 1);
-
     display.initialize();
     display.clear_screen();
     display.setRotation(2);
@@ -226,7 +221,6 @@ void update_display(void)
     /* --- Frame buffer MUST NOT change now --- */
 
     display_counter++;
-    gpio_set_level(GPIO_NUM_2, 0);
 
     ESP_LOGI(TAG, "update_display done");
 }

@@ -15,8 +15,10 @@
 #include "svatky_api.h"
 #include "openweathermap_api.h"
 #include "sensor_control.h"
+#include "radio_control.h"
 
-#define FAN_SWITCH_PIN (gpio_num_t)32
+#define FAN_SWITCH_PIN GPIO_NUM_32
+#define ESPINK_VSENSOR_ENA_PIN GPIO_NUM_2
 
 static const char *TAG = "main";
 
@@ -41,6 +43,10 @@ void app_main(void)
     gpio_set_direction(FAN_SWITCH_PIN, GPIO_MODE_OUTPUT);
     gpio_set_pull_mode(FAN_SWITCH_PIN, GPIO_FLOATING);
 
+    gpio_set_direction(ESPINK_VSENSOR_ENA_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_pull_mode(ESPINK_VSENSOR_ENA_PIN, GPIO_FLOATING);
+    gpio_set_level(ESPINK_VSENSOR_ENA_PIN, 1);
+
     setup_display();
 
     setup_wifi();
@@ -58,6 +64,8 @@ void app_main(void)
     setup_bme280();
     setup_scd4x();
     setup_sps30();
+
+    xTaskCreatePinnedToCore(task_nrf24_control, "nrf24_receive", 4096, NULL, 1, NULL, APP_CPU_NUM);
 
     while (true)
     {

@@ -169,7 +169,7 @@ void measure_sht4x(void)
     sht4x_status = sht4x_start_measurement(&sht4x_device, SHT4X_I2C_CMD_MEAS_HIGH_PREC);
     ESP_LOGI(TAG, "[SHT4x] Start Measurement, status = %d", sht4x_status);
 
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelay(20 / portTICK_PERIOD_MS);
 
     sht4x_status = sht4x_read_measurement(&sht4x_device, &sht4x_data);
     ESP_LOGI(TAG, "[SHT4x] Read Data, Temperature = %.2f °C, Rel. humidity = %.2f %%, status = %d",
