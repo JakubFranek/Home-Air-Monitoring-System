@@ -172,8 +172,8 @@ void measure_sht4x(void)
     vTaskDelay(10 / portTICK_PERIOD_MS);
 
     sht4x_status = sht4x_read_measurement(&sht4x_device, &sht4x_data);
-    ESP_LOGI(TAG, "[SHT4x] Read Data, status = %d", sht4x_status);
-    ESP_LOGI(TAG, "[SHT4x] Temperature = %.2f °C, Rel. humidity = %.2f %%", sht4x_data.temperature / 1000.0, sht4x_data.humidity / 1000.0);
+    ESP_LOGI(TAG, "[SHT4x] Read Data, Temperature = %.2f °C, Rel. humidity = %.2f %%, status = %d",
+             sht4x_data.temperature / 1000.0, sht4x_data.humidity / 1000.0, sht4x_status);
 }
 
 void setup_sgp41(void)
@@ -332,14 +332,14 @@ void measure_sps30(void)
 int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
-    esp_err_t err = i2c_master_transmit(sht4x_device_handle, payload, length, 10);
+    esp_err_t err = i2c_master_transmit(sht4x_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
 int8_t sht4x_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
-    esp_err_t err = i2c_master_receive(sht4x_device_handle, payload, length, 10);
+    esp_err_t err = i2c_master_receive(sht4x_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
@@ -347,14 +347,14 @@ int8_t sgp41_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
 
     (void)address; // Address not necessary
-    esp_err_t err = i2c_master_transmit(sgp41_device_handle, payload, length, 10);
+    esp_err_t err = i2c_master_transmit(sgp41_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
 int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
-    esp_err_t err = i2c_master_receive(sgp41_device_handle, payload, length, 10);
+    esp_err_t err = i2c_master_receive(sgp41_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
@@ -395,14 +395,14 @@ int8_t bme280_delay_ms(uint16_t ms)
 int8_t scd4x_i2c_write(uint8_t address, const uint8_t *payload, size_t length)
 {
     (void)address; // Address not necessary
-    esp_err_t err = i2c_master_transmit(scd4x_device_handle, payload, length, 10);
+    esp_err_t err = i2c_master_transmit(scd4x_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
 int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length)
 {
     (void)address; // Address not necessary
-    esp_err_t err = i2c_master_receive(scd4x_device_handle, payload, length, 10);
+    esp_err_t err = i2c_master_receive(scd4x_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
@@ -419,14 +419,14 @@ int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
 
     (void)address; // Address not necessary
-    esp_err_t err = i2c_master_transmit(sps30_device_handle, payload, length, 10);
+    esp_err_t err = i2c_master_transmit(sps30_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
 int8_t sps30_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
-    esp_err_t err = i2c_master_receive(sps30_device_handle, payload, length, 10);
+    esp_err_t err = i2c_master_receive(sps30_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
