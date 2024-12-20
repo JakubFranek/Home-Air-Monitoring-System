@@ -21,5 +21,7 @@ typedef struct DebugData
 } DebugData;
 
 void setup_display(void);
+void clear_screen(void);
+void print_line(const char *format, ...);
 void update_display(DisplayData *display_data);
 void show_debug_info(DebugData *debug_data); // TODO: implement debug screen

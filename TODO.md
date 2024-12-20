@@ -41,8 +41,9 @@ This is a task list for HAMS project.
         - [x] Implement BME280 driver
         - [x] Implement fan control
         - [x] Implement nRF24L01+ driver
-        - [ ] Display sensor data
-        - [ ] Display weather data
+        - [x] Display sensor data
+        - [x] Display weather data
+        - [x] Display startup sequence debug info
         - [ ] Implement node timestamp checking
         - [x] Implement 24h minimum temperature logic for particular node
         - [ ] Implement logic for long holiday names
@@ -91,6 +92,7 @@ This is a task list for HAMS project.
         - [ ] design
         - [ ] print
     - [ ] Assemble hub
+  
 - [ ] Create documentation
     - [ ] Document node software incl. flowchart
     - [ ] Document hub software incl. FreeRTOS tasks and flowchart

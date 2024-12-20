@@ -40,13 +40,18 @@ extern "C"
 
     extern SensorHubData sensor_hub_data;
 
-    void setup_sensors(void);
+    int8_t setup_i2c_bus(void);
+    int8_t setup_sht4x(void);
+    int8_t setup_sgp41(void);
+    int8_t setup_bme280(void);
+    int8_t setup_scd4x(void);
+    int8_t setup_sps30(void);
 
-    void measure_sht4x(void);
-    void measure_sgp41(void);
-    void measure_bme280(void);
-    void measure_scd4x(void);
-    void measure_sps30(void);
+    int8_t measure_sht4x(void);
+    int8_t measure_sgp41(void);
+    int8_t measure_bme280(void);
+    int8_t measure_scd4x(void);
+    int8_t measure_sps30(void);
 
 #endif /* __SENSOR_CONTROL_H__ */
 

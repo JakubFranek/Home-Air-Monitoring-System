@@ -3,7 +3,9 @@ extern "C"
 {
 #endif
 
-    void initialize_sntp(void);
+#include <stdint.h>
+
+    int8_t initialize_sntp(void);
 
 #ifdef __cplusplus
 }

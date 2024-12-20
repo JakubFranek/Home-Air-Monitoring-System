@@ -168,13 +168,13 @@ void task_nrf24_control(void *pvParameters)
     nrf24_status = nrf24l01p_power_up(&nrf24_device);
     ESP_LOGI(TAG, "[nRF24] power_up: status = %d", nrf24_status);
 
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelay(20 / portTICK_PERIOD_MS);
 
     nrf24l01p_set_ce(1);
 
     while (1)
     {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
 
         if (nrf24_irq_flag)
         {

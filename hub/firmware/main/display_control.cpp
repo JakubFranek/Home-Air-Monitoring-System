@@ -37,6 +37,7 @@ using namespace std;
 
 #define SHOW_DEBUG_RECTS false
 
+#define DISPLAY_REFRESH_EVERY_N_FRAMES 15
 #define DISPLAY_TEXT_12PT_YOFFSET 30
 #define DISPLAY_TEXT_10PT_YOFFSET 25
 #define DISPLAY_VSEC0_HEIGHT 110
@@ -66,6 +67,7 @@ static unordered_map<string, const uint8_t *> weather_icons = {
 
 static const uint8_t *weather_icon = weather_01d;
 static uint32_t display_counter = 0;
+static uint32_t line_counter = 0;
 char string_buffer[64] = {0};
 
 static void print_weather_summary(Gdey075T7 *display, string weather_summary);
@@ -77,6 +79,36 @@ void setup_display(void)
     display.clear_screen();
     display.setRotation(2);
     display.setTextColor(EPD_BLACK);
+}
+
+void clear_screen(void)
+{
+    display.clear_screen();
+    line_counter = 0;
+}
+
+void print_line(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    char text_buffer[1024];
+    int size = vsnprintf(text_buffer, sizeof text_buffer, format, args);
+    va_end(args);
+    string text = "";
+    if (size < sizeof(text_buffer))
+        text = std::string(text_buffer);
+    else
+        ESP_LOGE(TAG, "print_line: text_buffer out of range");
+
+    display.wake_up();
+    display.setFont(&FreeSans10pt7b);
+    if (line_counter == 0)
+    {
+        display.setCursor(0, 15);
+    }
+    display.print(text);
+    line_counter++;
+    display.update();
 }
 
 void update_display(DisplayData *data)
@@ -104,6 +136,7 @@ void update_display(DisplayData *data)
     strcat(string_buffer, date_buffer);
     display.draw_aligned_text(&FreeSansBold18pt7b, GDEY075T7_WIDTH / 2, 0, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT / 2, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
+    // TODO: make a function that will take holidays into account
     sprintf(string_buffer, "%s", data->svatky.name);
     display.draw_aligned_text(&FreeSansBold16pt7b, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT / 2, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT / 2, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
@@ -126,22 +159,22 @@ void update_display(DisplayData *data)
         display.drawRect(0, DISPLAY_TIME_ICON_YPOS + 3 * TIME_OF_DAY_ICON_SIZE, TIME_OF_DAY_ICON_SIZE, TIME_OF_DAY_ICON_SIZE, EPD_BLACK);
     }
 
-    sprintf(string_buffer, "%.2f", data->weather.temperature.real_morning);
+    sprintf(string_buffer, "%.1f", data->weather.temperature.real_morning);
     display.draw_aligned_text(&FreeSans15pt7b, 50, DISPLAY_TIME_ICON_YPOS + 0 * TIME_OF_DAY_ICON_SIZE, 85, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f", data->weather.temperature.real_day);
+    sprintf(string_buffer, "%.1f", data->weather.temperature.real_day);
     display.draw_aligned_text(&FreeSans15pt7b, 50, DISPLAY_TIME_ICON_YPOS + 1 * TIME_OF_DAY_ICON_SIZE, 85, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f", data->weather.temperature.real_evening);
+    sprintf(string_buffer, "%.1f", data->weather.temperature.real_evening);
     display.draw_aligned_text(&FreeSans15pt7b, 50, DISPLAY_TIME_ICON_YPOS + 2 * TIME_OF_DAY_ICON_SIZE, 85, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f", data->weather.temperature.real_evening);
+    sprintf(string_buffer, "%.1f", data->weather.temperature.real_evening);
     display.draw_aligned_text(&FreeSans15pt7b, 50, DISPLAY_TIME_ICON_YPOS + 3 * TIME_OF_DAY_ICON_SIZE, 85, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
-    sprintf(string_buffer, "%.2f", data->weather.temperature.feel_morning);
+    sprintf(string_buffer, "%.1f", data->weather.temperature.feel_morning);
     display.draw_aligned_text(&FreeSans15pt7b, 140, DISPLAY_TIME_ICON_YPOS + 0 * TIME_OF_DAY_ICON_SIZE, 95, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f", data->weather.temperature.feel_day);
+    sprintf(string_buffer, "%.1f", data->weather.temperature.feel_day);
     display.draw_aligned_text(&FreeSans15pt7b, 140, DISPLAY_TIME_ICON_YPOS + 1 * TIME_OF_DAY_ICON_SIZE, 95, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f", data->weather.temperature.feel_evening);
+    sprintf(string_buffer, "%.1f", data->weather.temperature.feel_evening);
     display.draw_aligned_text(&FreeSans15pt7b, 140, DISPLAY_TIME_ICON_YPOS + 2 * TIME_OF_DAY_ICON_SIZE, 95, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f", data->weather.temperature.feel_evening);
+    sprintf(string_buffer, "%.1f", data->weather.temperature.feel_evening);
     display.draw_aligned_text(&FreeSans15pt7b, 140, DISPLAY_TIME_ICON_YPOS + 3 * TIME_OF_DAY_ICON_SIZE, 95, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
     display.drawLine(0, DISPLAY_VSEC0_HEIGHT + 8 * DISPLAY_TEXT_12PT_YOFFSET, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT + 8 * 30, EPD_BLACK); // horizontal line in the weather section separating temperatures and other weather data
@@ -215,7 +248,7 @@ void update_display(DisplayData *data)
         }
         else
         {
-            sprintf(string_buffer, "-- *C");
+            sprintf(string_buffer, "-- %%%%");
         }
         display.draw_aligned_text(&FreeSans12pt7b, 670, DISPLAY_VSEC0_HEIGHT + (2 + i) * DISPLAY_TEXT_12PT_YOFFSET, 130, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     }
@@ -271,19 +304,22 @@ void update_display(DisplayData *data)
 
     string weather_icon_key = string(data->weather.weather_icon);
     ESP_LOGI(TAG, "weather_icon_key: %s", weather_icon_key.c_str());
-    // Test if key is in map
-    if (weather_icons.find(weather_icon_key) == weather_icons.end())
+
+    if (weather_icons.find(weather_icon_key) == weather_icons.end()) // Test if key is in map
     {
         ESP_LOGE(TAG, "weather_icon_key not found in map");
     }
-    weather_icon = weather_icons[weather_icon_key]; // Map weather icon string to bitmap
+    else
+    {
+        weather_icon = weather_icons[weather_icon_key]; // Map weather icon string to bitmap
+    }
 
     display.drawBitmap(400 - 155, 165, weather_icon, WEATHER_ICON_SIZE, WEATHER_ICON_SIZE, EPD_BLACK);
 
     if (SHOW_DEBUG_RECTS)
         display.drawRect(400 - 155, 165, WEATHER_ICON_SIZE, WEATHER_ICON_SIZE, EPD_BLACK);
 
-    if (display_counter > 0 && display_counter % 15 == 0)
+    if (display_counter > 0 && display_counter % DISPLAY_REFRESH_EVERY_N_FRAMES == 0)
     {
         display.clear_screen();
     }

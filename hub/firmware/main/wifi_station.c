@@ -29,6 +29,19 @@ static const char *TAG = "wifi station";
 
 static int s_retry_num = 0;
 
+/**
+ * @brief WiFi event handler.
+ *
+ * Handles the following events:
+ *  - `WIFI_EVENT_STA_START`: Triggered when the Wi-Fi station starts.
+ *    In response, attempt to connect to the AP.
+ *  - `WIFI_EVENT_STA_DISCONNECTED`: Triggered when the Wi-Fi station disconnects
+ *    from the AP. Attempt to reconnect to the AP up to the maximum number of
+ *    retries. If the maximum number of retries is exceeded, set the WIFI_FAIL_BIT
+ *    in the event group.
+ *  - `IP_EVENT_STA_GOT_IP`: Triggered when the Wi-Fi station gets an IP address.
+ *    Reset the retry counter and set the WIFI_CONNECTED_BIT in the event group.
+ */
 static void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data)
 {
@@ -59,6 +72,20 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     }
 }
 
+/**
+ * @brief Initialize Wi-Fi as a station and connect to the AP.
+ *
+ * @return void
+ *
+ * @details This function initializes the Wi-Fi as a station and
+ * connects to the AP. The function will block until the station is
+ * connected to the AP or the maximum number of retries is reached.
+ *
+ * If the connection is successful, the function will return and the
+ * bits WIFI_CONNECTED_BIT will be set in the event group. If the
+ * maximum number of retries is reached, the function will return and
+ * the bits WIFI_FAIL_BIT will be set in the event group.
+ */
 void wifi_init_sta(void)
 {
     s_wifi_event_group = xEventGroupCreate();
@@ -118,7 +145,14 @@ void wifi_init_sta(void)
     }
 }
 
-void setup_wifi(void)
+/**
+ * @brief Initializes the WiFi station mode by setting up non-volatile storage,
+ * network interface and event loop, and attempts to connect to a WiFi network.
+ *
+ * @return `int8_t` Returns 0 on successful connection to the WiFi network,
+ * otherwise returns -1 if the connection could not be established.
+ */
+int8_t setup_wifi(void)
 {
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -131,4 +165,20 @@ void setup_wifi(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     wifi_init_sta();
+
+    if (!is_wifi_connected())
+    {
+        return -1;
+    }
+    return 0;
+}
+
+/**
+ * @brief Check if WiFi is connected.
+ *
+ * @return `true` if WiFi is connected, `false` otherwise
+ */
+bool is_wifi_connected(void)
+{
+    return (xEventGroupGetBits(s_wifi_event_group) & WIFI_CONNECTED_BIT) & !(xEventGroupGetBits(s_wifi_event_group) & WIFI_FAIL_BIT);
 }

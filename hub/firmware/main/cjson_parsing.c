@@ -45,10 +45,11 @@ int8_t set_string_from_cjson(cJSON *json, char *key, char *data, size_t size)
         {
             return -1;
         }
+        memset(data, 0, size);
         strncpy(data, value->valuestring, length);
         return 0;
     }
-    ESP_LOGW(TAG, "Failed to parse float from cJSON, key = %s", key);
+    ESP_LOGW(TAG, "Failed to parse string from cJSON, key = %s", key);
     return -1;
 }
 

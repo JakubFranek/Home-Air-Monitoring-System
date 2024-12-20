@@ -25,12 +25,32 @@
 
 static const char *TAG = "sntp_api";
 
+/**
+ * @brief Time synchronization callback function.
+ *
+ * This function is called after a successful synchronization with an NTP server.
+ * The current time is passed as a parameter.
+ *
+ * @param tv Pointer to the current time.
+ */
 void time_sync_notification_cb(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Time synchronized with NTP server");
 }
 
-void initialize_sntp(void)
+/**
+ * @brief Initializes and starts the Simple Network Time Protocol (SNTP)
+ *
+ * This function will perform the following steps:
+ *   1. Initialize the SNTP client
+ *   2. Set the time synchronization callback function
+ *   3. Start the SNTP client
+ *   4. Wait for the system time to be set. If it does not receive a valid time
+ *      within 15 attempts, it will return -1.
+ *
+ * @return 0 on success, -1 if the system time could not be set within 15 attempts.
+ */
+int8_t initialize_sntp(void)
 {
     ESP_LOGI(TAG, "Initializing and starting SNTP");
 
@@ -42,8 +62,20 @@ void initialize_sntp(void)
 
     int retry = 0;
     const int retry_count = 15;
-    while (esp_netif_sntp_sync_wait(2000 / portTICK_PERIOD_MS) == ESP_ERR_TIMEOUT && ++retry < retry_count)
+    while (++retry < retry_count)
     {
         ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+        esp_err_t err = esp_netif_sntp_sync_wait(2000 / portTICK_PERIOD_MS);
+
+        if (err == ESP_OK)
+        {
+            break;
+        }
+        else if (err == ESP_ERR_TIMEOUT && retry == retry_count)
+        {
+            return -1;
+        }
     }
+
+    return 0;
 }
