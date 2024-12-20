@@ -118,7 +118,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             }
             else
             {
-                ESP_LOGW(TAG, "Not enough space to store all data in buffer.");
+                ESP_LOGW(TAG, "Not enough space to store all data in buffer");
                 return ESP_FAIL;
             }
         }
@@ -146,8 +146,8 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
         esp_err_t err = esp_tls_get_and_clear_last_error((esp_tls_error_handle_t)evt->data, &mbedtls_err, NULL);
         if (err != 0)
         {
-            ESP_LOGD(TAG, "Last esp error code: 0x%x", err);
-            ESP_LOGD(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
+            ESP_LOGD(TAG, "Last esp error code = 0x%x", err);
+            ESP_LOGD(TAG, "Last mbedtls failure = 0x%x", mbedtls_err);
         }
         break;
 
@@ -186,7 +186,7 @@ int8_t request_weather_data(WeatherData *data)
     }
     else
     {
-        ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "Error performing HTTP request %s", esp_err_to_name(err));
         return -1;
     }
 
@@ -257,7 +257,11 @@ int8_t request_weather_data(WeatherData *data)
 
         cJSON_Delete(json); // Deallocate the JSON object
 
-        ESP_LOGI(TAG, "OpenWeatherMap data received: summary = %s", data->weather_summary);
+        struct timeval current_time;
+        gettimeofday(&current_time, NULL);
+        data->timestamp = current_time;
+
+        ESP_LOGI(TAG, "OpenWeatherMap data received, summary = %s", data->weather_summary);
         return 0;
     }
     else

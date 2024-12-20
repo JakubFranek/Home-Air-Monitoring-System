@@ -6,6 +6,12 @@ extern "C"
 #define OPENWEATHERMAP_SUMMARY_STRING_LENGTH 128
 #define OPENWEATHERMAP_ICON_STRING_LENGTH 4
 
+#ifndef __OPENWEATHERMAP_API_H__
+#define __OPENWEATHERMAP_API_H__
+
+#include <time.h>
+#include <sys/time.h>
+
     typedef struct WeatherTemperatureData
     {
         float real_morning;
@@ -30,9 +36,12 @@ extern "C"
         float wind_gust;
         char weather_summary[OPENWEATHERMAP_SUMMARY_STRING_LENGTH];
         char weather_icon[OPENWEATHERMAP_ICON_STRING_LENGTH];
+        struct timeval timestamp;
     } WeatherData;
 
     int8_t request_weather_data(WeatherData *data);
+
+#endif /* __OPENWEATHERMAP_API_H__ */
 
 #ifdef __cplusplus
 }

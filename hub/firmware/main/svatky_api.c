@@ -112,7 +112,7 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             }
             else
             {
-                ESP_LOGW(TAG, "Not enough space to store all data in buffer.");
+                ESP_LOGW(TAG, "Not enough space to store all data in buffer");
                 return ESP_FAIL;
             }
         }
@@ -146,8 +146,8 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
         esp_err_t err = esp_tls_get_and_clear_last_error((esp_tls_error_handle_t)evt->data, &mbedtls_err, NULL);
         if (err != 0)
         {
-            ESP_LOGD(TAG, "Last esp error code: 0x%x", err);
-            ESP_LOGD(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
+            ESP_LOGD(TAG, "Last esp error code = 0x%x", err);
+            ESP_LOGD(TAG, "Last mbedtls failure = 0x%x", mbedtls_err);
         }
         if (output_buffer != NULL)
         {
@@ -186,7 +186,7 @@ int8_t request_svatkyapi_data(SvatkyApiData *data)
     }
     else
     {
-        ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "Error perform HTTP request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
 
@@ -200,7 +200,7 @@ int8_t request_svatkyapi_data(SvatkyApiData *data)
         diff = xTaskGetTickCount() - start_time;
         if (diff > REQUEST_TIMEOUT_MS / portTICK_PERIOD_MS) // Check for timeout
         {
-            ESP_LOGE(TAG, "Request timed out.");
+            ESP_LOGE(TAG, "Request timed out");
             return -1;
         }
     }
@@ -218,7 +218,11 @@ int8_t request_svatkyapi_data(SvatkyApiData *data)
 
         cJSON_Delete(json); // Deallocate the JSON object
 
-        ESP_LOGI(TAG, "SvatkyApiData received: day_in_week = %s, name = %s, is_holiday = %d, holiday_name = %s",
+        struct timeval current_time;
+        gettimeofday(&current_time, NULL);
+        data->timestamp = current_time;
+
+        ESP_LOGI(TAG, "SvatkyApiData received, day_in_week = %s, name = %s, is_holiday = %d, holiday_name = %s",
                  data->day_in_week, data->name, data->is_holiday, data->holiday_name);
         return 0;
     }
