@@ -28,7 +28,7 @@ This is a task list for HAMS project.
         - [x] Create display interface layout ([implemented in GDEY075T7 test project](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo))
         - [x] [Prepare a set of weather icon byte arrays for openweatherapi weather codes](https://github.com/JakubFranek/ESP32/blob/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo/main/weather_icons.h)
         - [x] [Prepare a set of small morning / day / eve / night icons for temperatures](https://github.com/JakubFranek/ESP32/blob/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo/main/time_of_day_icons.h)
-    - [ ] Assemble all firmware components together into one codebase
+    - [ ] [Assemble all firmware components together into one codebase](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/hub/firmware)
         - [x] Implement e-ink display driver
         - [x] Implement WiFi connectivity
         - [x] Implement SNTP
@@ -44,7 +44,7 @@ This is a task list for HAMS project.
         - [ ] Display sensor data
         - [ ] Display weather data
         - [ ] Implement node timestamp checking
-        - [ ] Implement 24h minimum temperature logic for particular node
+        - [x] Implement 24h minimum temperature logic for particular node
         - [ ] Implement logic for long holiday names
         - [ ] Implement debug display view based on GPIO button toggle
 
@@ -82,8 +82,9 @@ This is a task list for HAMS project.
     - [ ] Cover exterior nodes in protective plastic coating
 
 - [ ] Hub hardware
-    - [ ] Decide which connector to use to provide 5 Volt power to ESPink, SPS30 and fan
+    - [ ] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (test current capability)
     - [ ] Create hub connector board (perfboard?)
+    - [ ] Consider red LED error indicator for errors which prevent use of e-ink display
     - [ ] Hub 3D enclosure
         - [ ] determine layout of ESPink + sensors + fan + power connector board
         - [ ] determine debug display button location

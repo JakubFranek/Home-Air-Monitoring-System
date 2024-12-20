@@ -16,7 +16,7 @@
 		nrf24_status = (expr);                 \
 		if (nrf24_status != NRF24L01P_SUCCESS) \
 		{                                      \
-			app_error = error;                 \
+			app_status = error;                \
 			return STATE_ERROR;                \
 		}                                      \
 	} while (0)
@@ -28,7 +28,7 @@
 		if (nrf24_status != NRF24L01P_SUCCESS)   \
 		{                                        \
 			state = STATE_ERROR;                 \
-			app_error = error;                   \
+			app_status = error;                  \
 		}                                        \
 	} while (0)
 
@@ -38,7 +38,7 @@
 		sht4x_status = (expr);                \
 		if (sht4x_status != SHT4X_SUCCESS)    \
 		{                                     \
-			app_error = error;                \
+			app_status = error;               \
 			return STATE_ERROR;               \
 		}                                     \
 	} while (0)
@@ -50,7 +50,7 @@
 		if (sht4x_status != SHT4X_SUCCESS)       \
 		{                                        \
 			state = STATE_ERROR;                 \
-			app_error = error;                   \
+			app_status = error;                  \
 		}                                        \
 	} while (0)
 
@@ -60,7 +60,7 @@
 		if (expr != 0)                     \
 		{                                  \
 			state = STATE_ERROR;           \
-			app_error = error;             \
+			app_status = error;            \
 		}                                  \
 	} while (0)
 
@@ -69,7 +69,7 @@
 	{                                   \
 		if (expr != 0)                  \
 		{                               \
-			app_error = error;          \
+			app_status = error;         \
 			return STATE_ERROR;         \
 		}                               \
 	} while (0)
@@ -166,7 +166,7 @@ static uint8_t tx_payload[NRF24_DATA_LENGTH] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 volatile static AppEvent event = EVENT_NONE; // changes value during ISRs
 static AppState state = STATE_IDLE;
-static AppError app_error = ERROR_NONE;
+static AppError app_status = ERROR_NONE;
 
 /* ---------------- Prototypes --------------------*/
 AppState dispatch_states(AppState state, volatile AppEvent *event);
@@ -244,11 +244,10 @@ AppState handle_state_phase1(volatile AppEvent *event)
 	*event = EVENT_NONE; // clear event flag
 
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_up(&nrf24_device), ERROR_PHASE1);
+	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, PHASE2_LENGTH, &irs_phase2_done), ERROR_PHASE1);
 
 	// Flushing TX FIFO, because previous unacknowledged packets are still in it and we don't want to send them
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_flush_tx_fifo(&nrf24_device), ERROR_PHASE1);
-
-	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, PHASE2_LENGTH, &irs_phase2_done), ERROR_PHASE1);
 
 	return STATE_PHASE2;
 }
@@ -298,9 +297,10 @@ AppState handle_state_awaiting_ack(volatile AppEvent *event)
 
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources), ERROR_AWAITING_ACK);
 
-	if (nrf24_irq_sources.max_rt)
+	if (!nrf24_irq_sources.tx_ds)
 		return STATE_ERROR;
 
+	NRF24_CHECK_ERROR_RETURN(nrf24l01p_flush_tx_fifo(&nrf24_device), ERROR_AWAITING_ACK);
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device), ERROR_AWAITING_ACK);
 
 	return STATE_SLEEP;
@@ -359,7 +359,7 @@ AppState dispatch_states(AppState state, volatile AppEvent *event)
 	case STATE_ERROR:
 		return handle_state_error(event);
 	default:
-		app_error = ERROR_DISPATCHER;
+		app_status = ERROR_DISPATCHER;
 		return STATE_ERROR;
 	}
 }
@@ -396,7 +396,7 @@ void build_payload(uint8_t *payload)
 	humidity = sht4x_data.humidity / 10;	   // limit data to 16 bits (losing 3rd decimal point precision)
 
 	payload[0] = NODE_ID;
-	payload[1] = app_error;	   // to be interpreted as signed at receiver
+	payload[1] = app_status;   // to be interpreted as signed at receiver
 	payload[2] = sht4x_status; // to be interpreted as signed at receiver
 	payload[3] = nrf24_status; // to be interpreted as signed at receiver
 	payload[4] = (temperature & 0xFF00) >> 8;
@@ -406,5 +406,5 @@ void build_payload(uint8_t *payload)
 	payload[8] = (vdda_mv & 0xFF00) >> 8;
 	payload[9] = (vdda_mv & 0x00FF);
 
-	app_error = ERROR_NONE; // clear eror
+	app_status = ERROR_NONE; // clear error
 }
