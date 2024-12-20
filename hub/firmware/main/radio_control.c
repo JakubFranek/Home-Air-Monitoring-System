@@ -20,15 +20,15 @@
 
 static const char *TAG = "radio_control";
 
-void nrf24l01p_set_ce(uint8_t state);
-void nrf24l01p_set_cs(uint8_t state);
-int8_t nrf24l01p_spi_tx(const uint8_t *tx_data, uint8_t length);
-int8_t nrf24l01p_spi_rx(uint8_t *rx_data, uint8_t length);
-int8_t nrf24l01p_spi_tx_rx(const uint8_t *tx_data, uint8_t *rx_data, uint8_t length);
-void nrf24l01p_irq_handler(void *arg);
-int8_t decode_payload(uint8_t *payload);
+static void nrf24l01p_set_ce(uint8_t state);
+static void nrf24l01p_set_cs(uint8_t state);
+static int8_t nrf24l01p_spi_tx(const uint8_t *tx_data, uint8_t length);
+static int8_t nrf24l01p_spi_rx(uint8_t *rx_data, uint8_t length);
+static int8_t nrf24l01p_spi_tx_rx(const uint8_t *tx_data, uint8_t *rx_data, uint8_t length);
+static void nrf24l01p_irq_handler(void *arg);
+static int8_t decode_payload(uint8_t *payload);
 
-Nrf24l01pDevice nrf24_device = {
+static Nrf24l01pDevice nrf24_device = {
     .config = {
         .address_width = 5,
         .channel_MHz = 2500,
@@ -106,7 +106,7 @@ static NodeData node_data_set[NODE_COUNT] = {
         .node_id = 5,
     }};
 
-spi_bus_config_t spi_bus_config = {
+static spi_bus_config_t spi_bus_config = {
     .mosi_io_num = 13,
     .miso_io_num = 12,
     .sclk_io_num = 14,
@@ -115,7 +115,7 @@ spi_bus_config_t spi_bus_config = {
     .isr_cpu_id = APP_CPU_NUM,
     .intr_flags = 0,
 };
-spi_device_interface_config_t nrf24_spi_device_config = {
+static spi_device_interface_config_t nrf24_spi_device_config = {
     .command_bits = 0,
     .address_bits = 0,
     .dummy_bits = 0,
@@ -132,7 +132,7 @@ spi_device_interface_config_t nrf24_spi_device_config = {
     .pre_cb = NULL,
     .post_cb = NULL,
 };
-spi_device_handle_t nrf24_spi_handle;
+static spi_device_handle_t nrf24_spi_handle;
 
 void task_nrf24_control(void *pvParameters)
 {
@@ -205,17 +205,17 @@ void task_nrf24_control(void *pvParameters)
     }
 }
 
-void nrf24l01p_set_ce(uint8_t state)
+static void nrf24l01p_set_ce(uint8_t state)
 {
     gpio_set_level(NRF24_CE_PIN, state);
 }
 
-void nrf24l01p_set_cs(uint8_t state)
+static void nrf24l01p_set_cs(uint8_t state)
 {
     // Leave empty, as CS is managed by ESP-IDF SPI driver
 }
 
-int8_t nrf24l01p_spi_tx(const uint8_t *tx_data, uint8_t length)
+static int8_t nrf24l01p_spi_tx(const uint8_t *tx_data, uint8_t length)
 {
     spi_transaction_t transaction = {
         .flags = 0,
@@ -230,7 +230,7 @@ int8_t nrf24l01p_spi_tx(const uint8_t *tx_data, uint8_t length)
     return 0;
 }
 
-int8_t nrf24l01p_spi_rx(uint8_t *rx_data, uint8_t length)
+static int8_t nrf24l01p_spi_rx(uint8_t *rx_data, uint8_t length)
 {
     spi_transaction_t transaction = {
         .flags = 0,
@@ -245,7 +245,7 @@ int8_t nrf24l01p_spi_rx(uint8_t *rx_data, uint8_t length)
     return 0;
 }
 
-int8_t nrf24l01p_spi_tx_rx(const uint8_t *tx_data, uint8_t *rx_data, uint8_t length)
+static int8_t nrf24l01p_spi_tx_rx(const uint8_t *tx_data, uint8_t *rx_data, uint8_t length)
 {
     spi_transaction_t transaction = {
         .flags = 0,
@@ -260,14 +260,14 @@ int8_t nrf24l01p_spi_tx_rx(const uint8_t *tx_data, uint8_t *rx_data, uint8_t len
     return 0;
 }
 
-void nrf24l01p_irq_handler(void *arg)
+static IRAM_ATTR void nrf24l01p_irq_handler(void *arg)
 {
     (void)arg;
     if (gpio_get_level(NRF24_IRQ_PIN) == 0)
         nrf24_irq_flag = true;
 }
 
-int8_t decode_payload(uint8_t *payload)
+static int8_t decode_payload(uint8_t *payload)
 {
     uint8_t node_id = payload[0];
     if (node_id > NODE_COUNT - 1)
@@ -301,6 +301,7 @@ int8_t decode_payload(uint8_t *payload)
             data->timestamp_temperature_24h_min = current_timeval;
         }
         data->timestamp = current_timeval;
+        data->rx_count++;
 
         // Release mutex
         xSemaphoreGive(node_data_set_mutex);

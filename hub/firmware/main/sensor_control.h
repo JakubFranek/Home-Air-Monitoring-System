@@ -13,15 +13,18 @@ extern "C"
     {
         float pressure_hPa;
         struct timeval pressure_timestamp;
-        int8_t pressure_status;
+        int32_t pressure_measurements;
+        int8_t pressure_status; // TODO: implement status codes
 
         uint16_t co2;
         struct timeval co2_timestamp;
+        int32_t co2_measurements;
         int8_t co2_status;
 
         int32_t voc_index;
         int32_t nox_index;
         struct timeval gas_index_timestamp;
+        int32_t gas_index_measurements;
         int8_t gas_index_status;
 
         float pm_1_0;
@@ -30,11 +33,13 @@ extern "C"
         float pm_10_0;
         float pm_typical_size;
         struct timeval pm_timestamp;
+        int32_t pm_measurements;
         int8_t pm_status;
 
         float temperature;
         float humidity;
         struct timeval temperature_humidity_timestamp;
+        int32_t temperature_humidity_measurements;
         int8_t temperature_humidity_status;
     } SensorHubData;
 

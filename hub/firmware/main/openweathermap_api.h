@@ -37,6 +37,7 @@ extern "C"
         char weather_summary[OPENWEATHERMAP_SUMMARY_STRING_LENGTH];
         char weather_icon[OPENWEATHERMAP_ICON_STRING_LENGTH];
         struct timeval timestamp;
+        int32_t update_count;
     } WeatherData;
 
     int8_t request_weather_data(WeatherData *data);

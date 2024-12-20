@@ -221,6 +221,7 @@ int8_t request_svatkyapi_data(SvatkyApiData *data)
         struct timeval current_time;
         gettimeofday(&current_time, NULL);
         data->timestamp = current_time;
+        data->update_count++;
 
         ESP_LOGI(TAG, "SvatkyApiData received, day_in_week = %s, name = %s, is_holiday = %d, holiday_name = %s",
                  data->day_in_week, data->name, data->is_holiday, data->holiday_name);

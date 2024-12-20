@@ -17,8 +17,10 @@
 #include "sensor_control.h"
 #include "radio_control.h"
 
+#define LED_PIN GPIO_NUM_27
 #define FAN_SWITCH_PIN GPIO_NUM_32
 #define ESPINK_VSENSOR_ENA_PIN GPIO_NUM_2
+#define BUTTON_DEBUG_PIN GPIO_NUM_36
 
 static const char *TAG = "main";
 
@@ -37,8 +39,22 @@ int8_t status_code;
 
 static DisplayData display_data;
 
+volatile bool debug_mode = false;
+
+TaskHandle_t task_handle_display_update;
+TaskHandle_t task_handle_nrf24_receive;
+TaskHandle_t task_handle_poll_button;
+
+void task_display_update(void *pvParameters);
+void task_poll_button(void *pvParameters);
+
 void app_main(void)
 {
+    gpio_reset_pin(LED_PIN);
+    gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_pull_mode(LED_PIN, GPIO_FLOATING);
+    gpio_set_level(LED_PIN, 0);
+
     gpio_reset_pin(FAN_SWITCH_PIN);
     gpio_set_direction(FAN_SWITCH_PIN, GPIO_MODE_OUTPUT);
     gpio_set_pull_mode(FAN_SWITCH_PIN, GPIO_FLOATING);
@@ -46,6 +62,9 @@ void app_main(void)
     gpio_set_direction(ESPINK_VSENSOR_ENA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_pull_mode(ESPINK_VSENSOR_ENA_PIN, GPIO_FLOATING);
     gpio_set_level(ESPINK_VSENSOR_ENA_PIN, 1);
+
+    ESP_ERROR_CHECK(gpio_set_direction(BUTTON_DEBUG_PIN, GPIO_MODE_INPUT));
+    ESP_ERROR_CHECK(gpio_set_pull_mode(BUTTON_DEBUG_PIN, GPIO_FLOATING));
 
     setup_display();
     gpio_set_level(FAN_SWITCH_PIN, 1);
@@ -56,6 +75,7 @@ void app_main(void)
     print_line("done (%d).\nInitializing timezone... ", status_code);
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
     tzset();
+    gettimeofday(&display_data.start_time, NULL);
     print_line("done.\n");
 
     print_line("Requesting data from svatkyapi.cz... ");
@@ -81,8 +101,8 @@ void app_main(void)
     status_code = setup_sps30();
     print_line("done (%d).\n", status_code);
 
-    print_line("Starting nRF24L01+ receiver thread... ");
-    xTaskCreatePinnedToCore(task_nrf24_control, "nrf24_receive", 4096, NULL, 1, NULL, APP_CPU_NUM);
+    print_line("Starting nRF24L01+ receiver task... ");
+    xTaskCreatePinnedToCore(task_nrf24_control, "nrf24_receive", 4096, NULL, 1, &task_handle_nrf24_receive, APP_CPU_NUM);
 
     print_line("done.\nMaking SHT4x measurement... ");
     status_code = measure_sht4x();
@@ -99,9 +119,17 @@ void app_main(void)
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     clear_screen();
+
+    get_wifi_ap_record(&display_data);
     display_data.hub = sensor_hub_data;
     int8_t status = get_node_data(display_data.nodes);
+    display_data.sntp_last_sync = sntp_last_sync;
+    display_data.sntp_sync_count = sntp_sync_count;
+
     update_display(&display_data);
+
+    xTaskCreatePinnedToCore(task_display_update, "display_update", 4096, NULL, 1, &task_handle_display_update, APP_CPU_NUM);
+    xTaskCreatePinnedToCore(task_poll_button, "poll_button", 1024, NULL, 1, &task_handle_poll_button, APP_CPU_NUM);
 
     vTaskDelay(60 * 1000 / portTICK_PERIOD_MS);
 
@@ -130,7 +158,7 @@ void app_main(void)
             request_svatkyapi_data(&display_data.svatky);
         }
 
-        if (minute_counter % 60 == 0)
+        if (minute_counter > 0 && minute_counter % 60 == 0)
         {
             request_weather_data(&display_data.weather); // update weather once per hour
         }
@@ -140,22 +168,71 @@ void app_main(void)
         ESP_LOGI(TAG, "Fan OFF");
         vTaskDelay(5000 / portTICK_PERIOD_MS);
 
-        measure_sgp41();
         measure_sht4x();
+        measure_sgp41();
         measure_bme280();
         measure_sps30();
-        if (minute_counter % 5 == 0)
+        if (minute_counter > 0 && minute_counter % 5 == 0)
         {
             measure_scd4x(); // the SCD41 algorithm expects 5 minute sampling period
         }
 
+        get_wifi_ap_record(&display_data);
         display_data.hub = sensor_hub_data;
         int8_t status = get_node_data(display_data.nodes);
+        display_data.sntp_last_sync = sntp_last_sync;
+        display_data.sntp_sync_count = sntp_sync_count;
 
-        update_display(&display_data);
+        xTaskNotify(task_handle_display_update, 1, eSetValueWithOverwrite);
 
         minute_counter++;
 
         xTaskDelayUntil(&xLastWakeTime, 60 * 1000 / portTICK_PERIOD_MS);
+    }
+}
+
+void task_display_update(void *pvParameters)
+{
+    uint32_t notification;
+    while (true)
+    {
+        notification = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        if ((notification == 1) && !debug_mode)
+        {
+            update_display(&display_data);
+        }
+        else if (notification == 2 && debug_mode)
+        {
+            show_debug_info(&display_data);
+        }
+        else if (notification == 3 && !debug_mode)
+        {
+            clear_screen();
+            update_display(&display_data);
+        }
+    }
+}
+
+void task_poll_button(void *pvParameters)
+{
+    bool button_history[3] = {false, false, false};
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    uint32_t notification;
+
+    while (true)
+    {
+        // Poll button at 100 ms rate, if it is high for two cycles, toggle debug mode and send notification
+        xLastWakeTime = xTaskGetTickCount();
+
+        button_history[0] = button_history[1];
+        button_history[1] = button_history[2];
+        button_history[2] = gpio_get_level(BUTTON_DEBUG_PIN);
+        if (button_history[0] == false && button_history[1] == true && button_history[2] == true)
+        {
+            debug_mode = !debug_mode;
+            notification = (debug_mode) ? 2 : 3;
+            xTaskNotify(task_handle_display_update, notification, eSetValueWithOverwrite);
+        }
+        xTaskDelayUntil(&xLastWakeTime, 100 / portTICK_PERIOD_MS);
     }
 }

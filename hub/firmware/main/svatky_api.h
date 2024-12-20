@@ -15,6 +15,7 @@ extern "C"
         bool is_holiday;
         char holiday_name[SVATKY_MAX_STRING_LENGTH];
         struct timeval timestamp;
+        int32_t update_count;
     } SvatkyApiData;
 
     int8_t request_svatkyapi_data(SvatkyApiData *data);

@@ -9,8 +9,6 @@
 #include "sntp_api.h"
 
 #include <string.h>
-#include <time.h>
-#include <sys/time.h>
 #include "esp_system.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -25,6 +23,12 @@
 
 static const char *TAG = "sntp_api";
 
+/* --- Public variables --- */
+struct timeval sntp_last_sync;
+uint32_t sntp_sync_count = 0;
+
+static struct tm timeinfo;
+
 /**
  * @brief Time synchronization callback function.
  *
@@ -35,7 +39,11 @@ static const char *TAG = "sntp_api";
  */
 void time_sync_notification_cb(struct timeval *tv)
 {
-    ESP_LOGI(TAG, "Time synchronized with NTP server");
+    gettimeofday(&sntp_last_sync, NULL);
+    localtime_r(&sntp_last_sync.tv_sec, &timeinfo);
+    sntp_sync_count++;
+    ESP_LOGI(TAG, "Time synchronized with NTP server at %02d:%02d:%02d (count = %ld)",
+             timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, sntp_sync_count);
 }
 
 /**

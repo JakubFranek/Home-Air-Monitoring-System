@@ -193,6 +193,7 @@ int8_t setup_sht4x(void)
     sht4x_status = sht4x_read_serial_number(&sht4x_device, &sht4x_serial_number);
     ESP_LOGI(TAG, "[SHT4x] Read Serial Number, serial number = %ld, status = %d", sht4x_serial_number, sht4x_status);
     RETURN_IF_NOT_ZERO((int8_t)sht4x_status);
+
     return 0;
 }
 
@@ -214,6 +215,7 @@ int8_t measure_sht4x(void)
     sensor_hub_data.temperature_humidity_status = sht4x_status;
     gettimeofday(&current_time, NULL);
     sensor_hub_data.temperature_humidity_timestamp = current_time;
+    sensor_hub_data.temperature_humidity_measurements++;
 
     return 0;
 }
@@ -265,6 +267,7 @@ int8_t measure_sgp41(void)
     sensor_hub_data.gas_index_status = sgp41_status;
     gettimeofday(&current_time, NULL);
     sensor_hub_data.gas_index_timestamp = current_time;
+    sensor_hub_data.gas_index_measurements++;
 
     return 0;
 }
@@ -302,6 +305,7 @@ int8_t measure_bme280(void)
     sensor_hub_data.pressure_status = bme280_status;
     gettimeofday(&current_time, NULL);
     sensor_hub_data.pressure_timestamp = current_time;
+    sensor_hub_data.pressure_measurements++;
 
     return 0;
 }
@@ -360,6 +364,7 @@ int8_t measure_scd4x(void)
     sensor_hub_data.co2_status = scd4x_status;
     gettimeofday(&current_time, NULL);
     sensor_hub_data.co2_timestamp = current_time;
+    sensor_hub_data.co2_measurements++;
 
     return 0;
 }
@@ -432,6 +437,7 @@ int8_t measure_sps30(void)
     sensor_hub_data.pm_typical_size = sps30_float_data.typical_particle_size;
     gettimeofday(&current_time, NULL);
     sensor_hub_data.pm_timestamp = current_time;
+    sensor_hub_data.pm_measurements++;
 
     return 0;
 }

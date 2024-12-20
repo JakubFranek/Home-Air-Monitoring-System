@@ -260,6 +260,7 @@ int8_t request_weather_data(WeatherData *data)
         struct timeval current_time;
         gettimeofday(&current_time, NULL);
         data->timestamp = current_time;
+        data->update_count++;
 
         ESP_LOGI(TAG, "OpenWeatherMap data received, summary = %s", data->weather_summary);
         return 0;

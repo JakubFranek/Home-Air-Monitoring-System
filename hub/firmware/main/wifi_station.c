@@ -182,3 +182,28 @@ bool is_wifi_connected(void)
 {
     return (xEventGroupGetBits(s_wifi_event_group) & WIFI_CONNECTED_BIT) & !(xEventGroupGetBits(s_wifi_event_group) & WIFI_FAIL_BIT);
 }
+
+void get_wifi_ap_record(DisplayData *data)
+{
+    wifi_ap_record_t ap_record;
+    esp_err_t err = esp_wifi_sta_get_ap_info(&ap_record);
+
+    if (err == ESP_OK)
+    {
+        strncpy(data->wifi_status, "connected", sizeof(data->wifi_status));
+        strncpy(data->wifi_ssid, (char *)ap_record.ssid, sizeof(data->wifi_ssid));
+        data->wifi_rssi = ap_record.rssi;
+    }
+    else if (err == ESP_ERR_WIFI_CONN)
+    {
+        strncpy(data->wifi_status, "uninitialized", sizeof(data->wifi_status));
+        strncpy(data->wifi_ssid, "--", sizeof(data->wifi_ssid));
+        data->wifi_rssi = 0;
+    }
+    else if (err == ESP_ERR_WIFI_NOT_CONNECT)
+    {
+        strncpy(data->wifi_status, "disconnected", sizeof(data->wifi_status));
+        strncpy(data->wifi_ssid, "--", sizeof(data->wifi_ssid));
+        data->wifi_rssi = 0;
+    }
+}

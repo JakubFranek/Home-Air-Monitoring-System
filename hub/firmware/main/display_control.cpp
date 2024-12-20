@@ -11,19 +11,14 @@
 
 #include "gfxfont.h"
 #include "Fonts/FreeSansBold10pt7b.h"
-#include "Fonts/FreeSansBold11pt7b.h"
 #include "Fonts/FreeSansBold12pt7b.h"
-#include "Fonts/FreeSansBold14pt7b.h"
 #include "Fonts/FreeSansBold16pt7b.h"
 #include "Fonts/FreeSansBold18pt7b.h"
-#include "Fonts/FreeSans10pt7b.h"
-#include "Fonts/FreeSans11pt7b.h"
-#include "Fonts/FreeSans12pt7b.h"
-#include "Fonts/FreeSans14pt7b.h"
-#include "Fonts/FreeSans15pt7b.h"
-#include "Fonts/FreeSans16pt7b.h"
-#include "Fonts/FreeSans18pt7b.h"
 #include "Fonts/FreeSansBold72pt7b.h"
+#include "Fonts/FreeSans9pt7b.h"
+#include "Fonts/FreeSans10pt7b.h"
+#include "Fonts/FreeSans12pt7b.h"
+#include "Fonts/FreeSans15pt7b.h"
 
 #include "displays/goodisplay/gdey075T7.h"
 
@@ -50,8 +45,8 @@ static const char *TAG = "display_control";
 static unordered_map<char, char> cz_to_ascii = {
     {'á', 'a'}, {'č', 'c'}, {'ď', 'd'}, {'é', 'e'}, {'ě', 'e'}, {'í', 'i'}, {'ň', 'n'}, {'ó', 'o'}, {'ř', 'r'}, {'š', 's'}, {'ť', 't'}, {'ú', 'u'}, {'ů', 'u'}, {'ý', 'y'}, {'ž', 'z'}, {'Á', 'A'}, {'Č', 'C'}, {'Ď', 'D'}, {'É', 'E'}, {'Ě', 'E'}, {'Í', 'I'}, {'Ň', 'N'}, {'Ó', 'O'}, {'Ř', 'R'}, {'Š', 'S'}, {'Ť', 'T'}, {'Ú', 'U'}, {'Ů', 'U'}, {'Ý', 'Y'}, {'Ž', 'Z'}};
 
-EpdSpi epd_spi;
-Gdey075T7 display(epd_spi);
+static EpdSpi epd_spi;
+static Gdey075T7 display(epd_spi);
 
 static unordered_map<string, const uint8_t *> weather_icons = {
     {"01d", weather_01d},
@@ -68,22 +63,27 @@ static unordered_map<string, const uint8_t *> weather_icons = {
 static const uint8_t *weather_icon = weather_01d;
 static uint32_t display_counter = 0;
 static uint32_t line_counter = 0;
-char string_buffer[64] = {0};
+static uint32_t full_update_count = 0, fast_update_count = 0;
+static char string_buffer[512] = {0};
 
 static void print_weather_summary(Gdey075T7 *display, string weather_summary);
 static void replaceCzechChars(char *buffer);
+static void get_timestamp_string(struct timeval *timestamp, char *buffer);
 
 void setup_display(void)
 {
     display.initialize();
     display.clear_screen();
+    full_update_count++;
     display.setRotation(2);
     display.setTextColor(EPD_BLACK);
 }
 
 void clear_screen(void)
 {
+    display.fillScreen(EPD_WHITE);
     display.clear_screen();
+    full_update_count++;
     line_counter = 0;
 }
 
@@ -108,7 +108,9 @@ void print_line(const char *format, ...)
     }
     display.print(text);
     line_counter++;
+
     display.update();
+    fast_update_count++;
 }
 
 void update_display(DisplayData *data)
@@ -120,7 +122,7 @@ void update_display(DisplayData *data)
 
     /* --- Frame buffer CAN change now --- */
 
-    display.fillScreen(EPD_WHITE);
+    display.fillScreen(EPD_WHITE); // Reset frame buffer to white
 
     struct timeval current_time;
     struct tm time_info;
@@ -322,8 +324,10 @@ void update_display(DisplayData *data)
     if (display_counter > 0 && display_counter % DISPLAY_REFRESH_EVERY_N_FRAMES == 0)
     {
         display.clear_screen();
+        full_update_count++;
     }
     display.update();
+    fast_update_count++;
     /* --- Frame buffer MUST NOT change now --- */
 
     display_counter++;
@@ -408,4 +412,88 @@ static void replaceCzechChars(char *buffer)
             buffer[i] = cz_to_ascii[buffer[i]];
         }
     }
+}
+
+void show_debug_info(DisplayData *data)
+{
+    clear_screen();
+
+    display.setFont(&FreeSans9pt7b);
+    display.setCursor(0, 15);
+
+    char timestamp_buffer_1[64], timestamp_buffer_2[64];
+
+    // Print start and current time
+    get_timestamp_string(&data->start_time, timestamp_buffer_1);
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+    get_timestamp_string(&current_time, timestamp_buffer_2);
+    sprintf(string_buffer, "Start time = %s, current time = %s\n", timestamp_buffer_1, timestamp_buffer_2);
+    display.print(string_buffer);
+
+    // Print Wi-Fi AP record
+    sprintf(string_buffer, "Wi-Fi AP: status = %s, SSID = %s, RSSI = %d\n", data->wifi_status, data->wifi_ssid, data->wifi_rssi);
+    display.print(string_buffer);
+
+    // Print display update counts
+    sprintf(string_buffer, "Display: full updates = %ld, fast updates = %ld\n", full_update_count, fast_update_count);
+    display.print(string_buffer);
+
+    // Print last svatkyapi request timestamp
+    get_timestamp_string(&data->svatky.timestamp, timestamp_buffer_1);
+    sprintf(string_buffer, "SvatkyAPI: last request = %s, count = %ld\n", timestamp_buffer_1, data->svatky.update_count);
+    display.print(string_buffer);
+
+    // Print last openweathermap request timestamp
+    get_timestamp_string(&data->weather.timestamp, timestamp_buffer_1);
+    sprintf(string_buffer, "OpenWeatherMap: last request = %s, count = %ld\n", timestamp_buffer_1, data->weather.update_count);
+    display.print(string_buffer);
+
+    // Print timestamps of last measurements of all hub sensors
+    get_timestamp_string(&data->hub.temperature_humidity_timestamp, timestamp_buffer_1);
+    sprintf(string_buffer, "SHT40: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.temperature_humidity_measurements);
+    display.print(string_buffer);
+
+    get_timestamp_string(&data->hub.gas_index_timestamp, timestamp_buffer_1);
+    sprintf(string_buffer, "SGP41: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.gas_index_measurements);
+    display.print(string_buffer);
+
+    get_timestamp_string(&data->hub.pressure_timestamp, timestamp_buffer_1);
+    sprintf(string_buffer, "BME280: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.pressure_measurements);
+    display.print(string_buffer);
+
+    get_timestamp_string(&data->hub.co2_timestamp, timestamp_buffer_1);
+    sprintf(string_buffer, "SCD41: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.co2_measurements);
+    display.print(string_buffer);
+
+    get_timestamp_string(&data->hub.pm_timestamp, timestamp_buffer_1);
+    sprintf(string_buffer, "SPS30: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.pm_measurements);
+    display.print(string_buffer);
+
+    // Print timestamps and error codes of all nodes
+    for (int i = 0; i < NODE_COUNT; i++)
+    {
+        get_timestamp_string(&data->nodes[i].timestamp, timestamp_buffer_1);
+        get_timestamp_string(&data->nodes[i].timestamp_temperature_24h_min, timestamp_buffer_2);
+        sprintf(string_buffer, "Node %d [%s]: last RX = %s, RX count = %ld, vdda = %.3f V,\n"
+                               "    status (app/sht4x/nrf24) = %d/%d/%d, T 24h min. timestamp = %s\n",
+                i + 1, NODE_NAMES[i], timestamp_buffer_1, data->nodes[i].rx_count, data->nodes[i].vdda_v,
+                data->nodes[i].app_status, data->nodes[i].sht4x_status, data->nodes[i].nrf24_status, timestamp_buffer_2);
+        display.print(string_buffer);
+    }
+
+    display.update();
+    fast_update_count++;
+}
+
+static void get_timestamp_string(struct timeval *timestamp, char *buffer)
+{
+    struct tm time_info;
+    char time_buffer[32];
+    localtime_r(&timestamp->tv_sec, &time_info);
+    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", &time_info);
+    char usec_buffer[16];
+    sprintf(usec_buffer, ".%06ld", timestamp->tv_usec);
+    strcat(time_buffer, usec_buffer);
+    strcpy(buffer, time_buffer);
 }
