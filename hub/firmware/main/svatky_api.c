@@ -169,8 +169,16 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 int8_t request_svatkyapi_data(SvatkyApiData *data)
 {
+    char url_buffer[64] = {0};
+    struct timeval current_time;
+    struct tm time_info;
+    gettimeofday(&current_time, NULL);
+    localtime_r(&current_time.tv_sec, &time_info);
+
+    sprintf(url_buffer, "https://svatkyapi.cz/api/day/%d-%d-%d", time_info.tm_year + 1900, time_info.tm_mon + 1, time_info.tm_mday);
+
     esp_http_client_config_t config = {
-        .url = "https://svatkyapi.cz/api/day",
+        .url = url_buffer,
         .event_handler = _http_event_handler,
         .cert_pem = svatkyapicz_cert_pem_start,
         //.crt_bundle_attach = esp_crt_bundle_attach,

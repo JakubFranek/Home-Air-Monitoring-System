@@ -42,8 +42,8 @@ using namespace std;
 static const char *TAG = "display_control";
 
 // Define a mapping of Czech characters to ASCII equivalents
-static unordered_map<char, char> cz_to_ascii = {
-    {'á', 'a'}, {'č', 'c'}, {'ď', 'd'}, {'é', 'e'}, {'ě', 'e'}, {'í', 'i'}, {'ň', 'n'}, {'ó', 'o'}, {'ř', 'r'}, {'š', 's'}, {'ť', 't'}, {'ú', 'u'}, {'ů', 'u'}, {'ý', 'y'}, {'ž', 'z'}, {'Á', 'A'}, {'Č', 'C'}, {'Ď', 'D'}, {'É', 'E'}, {'Ě', 'E'}, {'Í', 'I'}, {'Ň', 'N'}, {'Ó', 'O'}, {'Ř', 'R'}, {'Š', 'S'}, {'Ť', 'T'}, {'Ú', 'U'}, {'Ů', 'U'}, {'Ý', 'Y'}, {'Ž', 'Z'}};
+static unordered_map<string, char> cz_to_ascii = {
+    {"á", 'a'}, {"č", 'c'}, {"ď", 'd'}, {"é", 'e'}, {"ě", 'e'}, {"í", 'i'}, {"ň", 'n'}, {"ó", 'o'}, {"ř", 'r'}, {"š", 's'}, {"ť", 't'}, {"ú", 'u'}, {"ů", 'u'}, {"ý", 'y'}, {"ž", 'z'}, {"Á", 'A'}, {"Č", 'C'}, {"Ď", 'D'}, {"É", 'E'}, {"Ě", 'E'}, {"Í", 'I'}, {"Ň", 'N'}, {"Ó", 'O'}, {"Ř", 'R'}, {"Š", 'S'}, {"Ť", 'T'}, {"Ú", 'U'}, {"Ů", 'U'}, {"Ý", 'Y'}, {"Ž", 'Z'}};
 
 static EpdSpi epd_spi;
 static Gdey075T7 display(epd_spi);
@@ -70,6 +70,14 @@ static void print_weather_summary(Gdey075T7 *display, string weather_summary);
 static void replaceCzechChars(char *buffer);
 static void get_timestamp_string(struct timeval *timestamp, char *buffer);
 
+/**
+ * @brief Initializes the display and clears it.
+ *
+ * This function calls the `initialize()` method of the display object to set
+ * up the display controller. It then calls `clear_screen()` to fill the display
+ * with white and reset the internal display pointer. Finally, it sets the display
+ * rotation to horizontal mode and sets the text color to black.
+ */
 void setup_display(void)
 {
     display.initialize();
@@ -79,6 +87,9 @@ void setup_display(void)
     display.setTextColor(EPD_BLACK);
 }
 
+/**
+ * @brief Clears the display and fills it with white.
+ */
 void clear_screen(void)
 {
     display.fillScreen(EPD_WHITE);
@@ -87,6 +98,16 @@ void clear_screen(void)
     line_counter = 0;
 }
 
+/**
+ * @brief Prints a line of text to the display.
+ *
+ * This function prints a line of text to the display using a printf-style
+ * format string. The function handles the display wake-up and update process
+ * internally.
+ *
+ * @param format The printf-style format string.
+ * @param ... Additional arguments for the format string.
+ */
 void print_line(const char *format, ...)
 {
     va_list args;
@@ -112,6 +133,12 @@ void print_line(const char *format, ...)
     display.update();
     fast_update_count++;
 }
+
+/**
+ * @brief Updates the display with the current time, date, weather information, and sensor data.
+ *
+ * @param data Pointer to the DisplayData structure containing time, weather, and sensor information.
+ */
 
 void update_display(DisplayData *data)
 {
@@ -140,6 +167,7 @@ void update_display(DisplayData *data)
 
     // TODO: make a function that will take holidays into account
     sprintf(string_buffer, "%s", data->svatky.name);
+    replaceCzechChars(string_buffer);
     display.draw_aligned_text(&FreeSansBold16pt7b, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT / 2, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT / 2, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
     display.drawLine(0, DISPLAY_VSEC0_HEIGHT, GDEY075T7_WIDTH, DISPLAY_VSEC0_HEIGHT, EPD_BLACK);
@@ -223,7 +251,7 @@ void update_display(DisplayData *data)
     for (int i = 0; i < NODE_COUNT; i++)
     {
         bool is_ok = (data->nodes[i].app_status == 0 && data->nodes[i].sht4x_status == 0 && data->nodes[i].nrf24_status == 0);
-        bool is_up_to_date = (data->nodes[i].timestamp.tv_sec + 3 * 60 > current_time.tv_sec);
+        bool is_up_to_date = (data->nodes[i].timestamp.tv_sec + NODE_MAX_SECONDS_SINCE_LAST_UPDATE > current_time.tv_sec);
 
         if (is_ok)
         {
@@ -402,18 +430,50 @@ void print_weather_summary(Gdey075T7 *display, string weather_summary)
  */
 static void replaceCzechChars(char *buffer)
 {
-    // Iterate over the buffer
-    for (size_t i = 0; buffer[i] != '\0'; ++i)
+    string input(buffer);
+    string result;
+    size_t i = 0;
+
+    while (i < input.size())
     {
-        // Check if the current character is in the mapping
-        if (cz_to_ascii.find(buffer[i]) != cz_to_ascii.end())
+        bool replaced = false;
+
+        // Try to match a multibyte UTF-8 character
+        for (const auto &pair : cz_to_ascii)
         {
-            // Replace with the ASCII equivalent
-            buffer[i] = cz_to_ascii[buffer[i]];
+            const string &key = pair.first;
+
+            if (input.compare(i, key.size(), key) == 0)
+            {
+                // Match found: replace with ASCII equivalent
+                result += pair.second;
+                i += key.size(); // Skip matched bytes
+                replaced = true;
+                break;
+            }
+        }
+
+        if (!replaced)
+        {
+            // No match: copy the original character
+            result += input[i];
+            ++i;
         }
     }
+
+    // Copy the result back to the input buffer
+    std::strcpy(buffer, result.c_str());
 }
 
+/**
+ * @brief Shows debug information about the system on the display.
+ *
+ * This includes the current and start time, Wi-Fi AP status and RSSI, display update counts, last
+ * svatkyapi and openweathermap request timestamps and counts, timestamps of last measurements of all
+ * hub sensors, timestamps and error codes of all nodes.
+ *
+ * @param data The structure containing all the debug information.
+ */
 void show_debug_info(DisplayData *data)
 {
     clear_screen();
@@ -485,6 +545,13 @@ void show_debug_info(DisplayData *data)
     display.update();
     fast_update_count++;
 }
+
+/**
+ * @brief Convert a struct timeval to a string in the format "YYYY-MM-DD HH:MM:SS.SSSSSS"
+ *
+ * @param timestamp The struct timeval to convert
+ * @param buffer The string buffer to write the result to
+ */
 
 static void get_timestamp_string(struct timeval *timestamp, char *buffer)
 {
