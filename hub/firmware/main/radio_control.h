@@ -9,6 +9,7 @@ extern "C"
 #include <time.h>
 #include <sys/time.h>
 #include "freertos/FreeRTOS.h"
+#include "nodes.h"
 
 #define NODE_NAME_MAX_LENGTH 12
 
@@ -29,14 +30,9 @@ extern "C"
         struct timeval timestamp_temperature_24h_min;
     } NodeData;
 
-    typedef struct NodeDataSet
-    {
-        NodeData node_data[6];
-    } NodeDataSet;
-
     void task_nrf24_control(void *pvParameters);
 
-    int8_t get_node_data(NodeDataSet *node_data_set);
+    int8_t get_node_data(NodeData node_data_set[NODE_COUNT]);
 
 #endif /* __RADIO_CONTROL_H__ */
 

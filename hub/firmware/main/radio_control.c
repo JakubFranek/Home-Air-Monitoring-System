@@ -79,32 +79,31 @@ static bool rx_fifo_empty;
 static uint8_t rx_payload[NRF24_PAYLOAD_LENGTH];
 
 static SemaphoreHandle_t node_data_set_mutex; // Mutex for accessing `node_data_set`
-static NodeDataSet node_data_set = {
-    .node_data = {{
-                      .node_name = NODE0_NAME,
-                      .node_id = 0,
-                  },
-                  {
-                      .node_name = NODE1_NAME,
-                      .node_id = 1,
-                  },
-                  {
-                      .node_name = NODE2_NAME,
-                      .node_id = 2,
-                  },
-                  {
-                      .node_name = NODE3_NAME,
-                      .node_id = 3,
-                  },
-                  {
-                      .node_name = NODE4_NAME,
-                      .node_id = 4,
-                  },
-                  {
-                      .node_name = NODE5_NAME,
-                      .node_id = 5,
-                  }},
-};
+static NodeData node_data_set[NODE_COUNT] = {
+    {
+        .node_name = NODE0_NAME,
+        .node_id = 0,
+    },
+    {
+        .node_name = NODE1_NAME,
+        .node_id = 1,
+    },
+    {
+        .node_name = NODE2_NAME,
+        .node_id = 2,
+    },
+    {
+        .node_name = NODE3_NAME,
+        .node_id = 3,
+    },
+    {
+        .node_name = NODE4_NAME,
+        .node_id = 4,
+    },
+    {
+        .node_name = NODE5_NAME,
+        .node_id = 5,
+    }};
 
 spi_bus_config_t spi_bus_config = {
     .mosi_io_num = 13,
@@ -270,14 +269,14 @@ void nrf24l01p_irq_handler(void *arg)
 int8_t decode_payload(uint8_t *payload)
 {
     uint8_t node_id = payload[0];
-    if (node_id > 5)
+    if (node_id > NODE_COUNT - 1)
     {
         return -1;
     }
 
     if (xSemaphoreTake(node_data_set_mutex, portMAX_DELAY) == pdTRUE) // Attempt to acquire the mutex
     {
-        NodeData *data = &node_data_set.node_data[node_id];
+        NodeData *data = &node_data_set[node_id];
         data->app_status = (int8_t)payload[1];
         data->sht4x_status = payload[2];
         data->nrf24_status = payload[3];
@@ -316,16 +315,16 @@ int8_t decode_payload(uint8_t *payload)
     return -1;
 }
 
-int8_t get_node_data(NodeDataSet *target)
+int8_t get_node_data(NodeData target_array[NODE_COUNT])
 {
-    if (target == NULL)
+    if (target_array == NULL)
     {
         return -1; // Invalid pointer
     }
 
     if (xSemaphoreTake(node_data_set_mutex, portMAX_DELAY) == pdTRUE) // Attempt to acquire the mutex
     {
-        *target = node_data_set;             // Copy data to the caller's buffer
+        target_array = node_data_set;        // Copy data to the caller's buffer
         xSemaphoreGive(node_data_set_mutex); // Release the mutex
         return 0;
     }
