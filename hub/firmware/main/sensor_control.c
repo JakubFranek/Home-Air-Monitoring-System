@@ -12,6 +12,13 @@
 
 static const char *TAG = "sensor_control";
 
+void setup_i2c_bus(void);
+void setup_sht4x(void);
+void setup_sgp41(void);
+void setup_bme280(void);
+void setup_scd4x(void);
+void setup_sps30(void);
+
 int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
 int8_t sht4x_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
 int8_t sgp41_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
@@ -146,6 +153,17 @@ Sps30StatusFlags sps30_flags;
 Sps30FloatData sps30_float_data;
 Sps30Uint16Data sps30_uint16_data;
 bool sps30_data_ready = false;
+
+void setup_sensors(void)
+{
+    setup_i2c_bus();
+
+    setup_sht4x();
+    setup_sgp41();
+    setup_bme280();
+    setup_scd4x();
+    setup_sps30();
+}
 
 void setup_i2c_bus(void)
 {

@@ -37,6 +37,8 @@ struct tm timeinfo;
 char time_str[64];
 uint64_t time_now_us;
 
+DisplayData display_data;
+
 void app_main(void)
 {
     gpio_reset_pin(FAN_SWITCH_PIN);
@@ -49,21 +51,16 @@ void app_main(void)
 
     setup_display();
 
-    setup_wifi();
+    setup_wifi(); // TODO: reconnect if connection lost
     initialize_sntp();
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
     tzset();
 
-    request_svatkyapi_data(&svatky_data);
-    request_weather_data(&weather_data);
+    request_svatkyapi_data(&svatky_data); // TODO: to be requested once per calendar day
+    request_weather_data(&weather_data);  // TODO: to be requested once per hour
 
-    setup_i2c_bus();
-    setup_sht4x();
-    setup_sgp41();
-    setup_bme280();
-    setup_scd4x();
-    setup_sps30();
+    setup_sensors();
 
     xTaskCreatePinnedToCore(task_nrf24_control, "nrf24_receive", 4096, NULL, 1, NULL, APP_CPU_NUM);
 
@@ -76,6 +73,7 @@ void app_main(void)
         vTaskDelay(5000 / portTICK_PERIOD_MS);
         gpio_set_level(FAN_SWITCH_PIN, 0);
         ESP_LOGI(TAG, "Fan OFF");
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
 
         measure_sgp41();
         measure_sht4x();
@@ -91,12 +89,14 @@ void app_main(void)
         localtime_r(&tv.tv_sec, &timeinfo);                                   // Convert seconds to local time
         time_now_us = ((uint64_t)tv.tv_sec * 1000000) + (uint64_t)tv.tv_usec; // Get current time in microseconds
         strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", &timeinfo); // Format time
-        time_str[strcspn(time_str, "\n")] = '\0';                             // Remove the newline
+        time_str[strcspn(time_str, "\n")] = '\0';                             // Remove the newline (for ESP_LOGI call)
         ESP_LOGI(TAG, "Current time: %s.%06ld", time_str, tv.tv_usec);
 
-        update_display();
+        update_display(&display_data);
 
         minute_counter++;
+
+        // TODO: consider some soft low power mode?
 
         xTaskDelayUntil(&xLastWakeTime, 60 * 1000 / portTICK_PERIOD_MS);
     }

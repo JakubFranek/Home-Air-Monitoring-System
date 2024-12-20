@@ -26,6 +26,8 @@
 #include "weather_icons.h"
 #include "time_of_day_icons.h"
 
+#include "display_control.h"
+
 #define SHOW_DEBUG_RECTS false
 
 #define DISPLAY_TEXT_12PT_YOFFSET 30
@@ -49,17 +51,13 @@ void setup_display(void)
     display.initialize();
     display.clear_screen();
     display.setRotation(2);
-
     display.setTextColor(EPD_BLACK);
 }
 
-void update_display(void)
+void update_display(DisplayData *data)
 {
     if (display_counter > 0)
     {
-        gpio_set_level(GPIO_NUM_2, 1);
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-
         display.wake_up(); // this re-initializes the "old" frame buffer after deep sleep period, which prevents pixel noise
     }
 
