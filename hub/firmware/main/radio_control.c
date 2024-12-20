@@ -9,6 +9,7 @@
 
 #include "nrf24l01p.h"
 #include "radio_control.h"
+#include "nodes.h"
 
 #define NRF24_CE_PIN 25
 #define NRF24_IRQ_PIN 26
@@ -24,7 +25,7 @@ int8_t nrf24l01p_spi_tx(const uint8_t *tx_data, uint8_t length);
 int8_t nrf24l01p_spi_rx(uint8_t *rx_data, uint8_t length);
 int8_t nrf24l01p_spi_tx_rx(const uint8_t *tx_data, uint8_t *rx_data, uint8_t length);
 void nrf24l01p_irq_handler(void *arg);
-int8_t decode_payload(uint8_t *payload, uint8_t length);
+int8_t decode_payload(uint8_t *payload);
 
 Nrf24l01pDevice nrf24_device = {
     .config = {
@@ -37,12 +38,12 @@ Nrf24l01pDevice nrf24_device = {
         .enable_irq_tx_ds = true,
     },
     .rx_config = {
-        .address_p0 = NRF24L01P_REG_RX_ADDR_P0_RSTVAL,
-        .address_p1 = NRF24L01P_REG_RX_ADDR_P1_RSTVAL,
-        .address_p2 = NRF24L01P_REG_RX_ADDR_P2_RSTVAL,
-        .address_p3 = NRF24L01P_REG_RX_ADDR_P3_RSTVAL,
-        .address_p4 = NRF24L01P_REG_RX_ADDR_P4_RSTVAL,
-        .address_p5 = NRF24L01P_REG_RX_ADDR_P5_RSTVAL,
+        .address_p0 = NODE0_ADDRESS,
+        .address_p1 = NODE1_ADDRESS,
+        .address_p2 = NODE2_ADDRESS,
+        .address_p3 = NODE3_ADDRESS,
+        .address_p4 = NODE4_ADDRESS,
+        .address_p5 = NODE5_ADDRESS,
         .data_length = {
             NRF24_PAYLOAD_LENGTH,
             NRF24_PAYLOAD_LENGTH,
@@ -77,60 +78,31 @@ static volatile bool nrf24_irq_flag = false;
 static bool rx_fifo_empty;
 static uint8_t rx_payload[NRF24_PAYLOAD_LENGTH];
 
+static SemaphoreHandle_t node_data_set_mutex; // Mutex for accessing `node_data_set`
 static NodeDataSet node_data_set = {
     .node_data = {{
+                      .node_name = NODE0_NAME,
                       .node_id = 0,
-                      .app_error = 0,
-                      .sht4x_status = 0,
-                      .nrf24_status = 0,
-                      .temperature_celsius = 0.0,
-                      .humidity_pct = 0.0,
-                      .vdda_v = 0.0,
                   },
                   {
+                      .node_name = NODE1_NAME,
                       .node_id = 1,
-                      .app_error = 0,
-                      .sht4x_status = 0,
-                      .nrf24_status = 0,
-                      .temperature_celsius = 0.0,
-                      .humidity_pct = 0.0,
-                      .vdda_v = 0.0,
                   },
                   {
+                      .node_name = NODE2_NAME,
                       .node_id = 2,
-                      .app_error = 0,
-                      .sht4x_status = 0,
-                      .nrf24_status = 0,
-                      .temperature_celsius = 0.0,
-                      .humidity_pct = 0.0,
-                      .vdda_v = 0.0,
                   },
                   {
+                      .node_name = NODE3_NAME,
                       .node_id = 3,
-                      .app_error = 0,
-                      .sht4x_status = 0,
-                      .nrf24_status = 0,
-                      .temperature_celsius = 0.0,
-                      .humidity_pct = 0.0,
-                      .vdda_v = 0.0,
                   },
                   {
+                      .node_name = NODE4_NAME,
                       .node_id = 4,
-                      .app_error = 0,
-                      .sht4x_status = 0,
-                      .nrf24_status = 0,
-                      .temperature_celsius = 0.0,
-                      .humidity_pct = 0.0,
-                      .vdda_v = 0.0,
                   },
                   {
+                      .node_name = NODE5_NAME,
                       .node_id = 5,
-                      .app_error = 0,
-                      .sht4x_status = 0,
-                      .nrf24_status = 0,
-                      .temperature_celsius = 0.0,
-                      .humidity_pct = 0.0,
-                      .vdda_v = 0.0,
                   }},
 };
 
@@ -164,7 +136,7 @@ spi_device_handle_t nrf24_spi_handle;
 
 void task_nrf24_control(void *pvParameters)
 {
-    node_data_set.mutex = xSemaphoreCreateMutex();
+    node_data_set_mutex = xSemaphoreCreateMutex();
 
     ESP_ERROR_CHECK(gpio_set_direction(NRF24_CE_PIN, GPIO_MODE_OUTPUT));
     ESP_ERROR_CHECK(gpio_set_pull_mode(NRF24_CE_PIN, GPIO_FLOATING));
@@ -217,7 +189,7 @@ void task_nrf24_control(void *pvParameters)
                 while (true)
                 {
                     nrf24_status = nrf24l01p_is_rx_fifo_empty(&nrf24_device, &rx_fifo_empty);
-                    ESP_LOGI(TAG, "[nRF24] is RX FIFO empty: %d, status = %d", rx_fifo_empty, nrf24_status);
+                    ESP_LOGI(TAG, "[nRF24] is RX FIFO empty = %d, status = %d", rx_fifo_empty, nrf24_status);
 
                     if (rx_fifo_empty)
                     {
@@ -226,11 +198,7 @@ void task_nrf24_control(void *pvParameters)
 
                     nrf24_status = nrf24l01p_rx_receive(&nrf24_device, rx_payload);
                     ESP_LOGI(TAG, "[nRF24] read RX FIFO: status = %d", nrf24_status);
-                    decode_payload(rx_payload, NRF24_PAYLOAD_LENGTH);
-                    ESP_LOGI(TAG, "[nRF24] temperature: %.2f °C, humidity: %.2f %%, voltage = %.3f V",
-                             node_data_set.node_data[0].temperature_celsius,
-                             node_data_set.node_data[0].humidity_pct,
-                             node_data_set.node_data[0].vdda_v);
+                    decode_payload(rx_payload);
                 }
             }
         }
@@ -299,7 +267,7 @@ void nrf24l01p_irq_handler(void *arg)
         nrf24_irq_flag = true;
 }
 
-int8_t decode_payload(uint8_t *payload, uint8_t length)
+int8_t decode_payload(uint8_t *payload)
 {
     uint8_t node_id = payload[0];
     if (node_id > 5)
@@ -307,10 +275,10 @@ int8_t decode_payload(uint8_t *payload, uint8_t length)
         return -1;
     }
 
-    if (xSemaphoreTake(node_data_set.mutex, portMAX_DELAY) == pdTRUE) // Attempt to acquire the mutex
+    if (xSemaphoreTake(node_data_set_mutex, portMAX_DELAY) == pdTRUE) // Attempt to acquire the mutex
     {
         NodeData *data = &node_data_set.node_data[node_id];
-        data->app_error = (int8_t)payload[1];
+        data->app_status = (int8_t)payload[1];
         data->sht4x_status = payload[2];
         data->nrf24_status = payload[3];
 
@@ -322,10 +290,26 @@ int8_t decode_payload(uint8_t *payload, uint8_t length)
         data->humidity_pct = (float)rh_16 / 100.0;
         data->vdda_v = (float)v_16 / 1000.0;
 
-        gettimeofday(&data->timestamp, NULL);
+        struct timeval current_timeval;
+        gettimeofday(&current_timeval, NULL);
+
+        if (data->timestamp_temperature_24h_min.tv_sec == 0 ||                                  // If it's the first time
+            data->temperature_celsius < data->temperature_24h_min ||                            // Or if the temperature is lower
+            current_timeval.tv_sec > data->timestamp_temperature_24h_min.tv_sec + 24 * 60 * 60) // Or if it's been 24 hours
+        {
+            data->temperature_24h_min = data->temperature_celsius;
+            data->timestamp_temperature_24h_min = current_timeval;
+        }
+        data->timestamp = current_timeval;
 
         // Release mutex
-        xSemaphoreGive(node_data_set.mutex);
+        xSemaphoreGive(node_data_set_mutex);
+
+        ESP_LOGI(TAG, "[nRF24] Decoded payload: node = %d, temperature = %.2f °C, humidity = %.2f %%, voltage = %.3f V, "
+                      "app_status = %d, sht4x_status = %d, nrf24_status = %d",
+                 data->node_id, data->temperature_celsius, data->humidity_pct, data->vdda_v,
+                 data->app_status, data->sht4x_status, data->nrf24_status);
+
         return 0;
     }
 
@@ -339,10 +323,10 @@ int8_t get_node_data(NodeDataSet *target)
         return -1; // Invalid pointer
     }
 
-    if (xSemaphoreTake(node_data_set.mutex, portMAX_DELAY) == pdTRUE) // Attempt to acquire the mutex
+    if (xSemaphoreTake(node_data_set_mutex, portMAX_DELAY) == pdTRUE) // Attempt to acquire the mutex
     {
         *target = node_data_set;             // Copy data to the caller's buffer
-        xSemaphoreGive(node_data_set.mutex); // Release the mutex
+        xSemaphoreGive(node_data_set_mutex); // Release the mutex
         return 0;
     }
 
