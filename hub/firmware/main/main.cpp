@@ -27,9 +27,6 @@ extern "C"
     void app_main(void);
 }
 
-static SvatkyApiData svatky_data;
-static WeatherData weather_data;
-
 uint8_t minute_counter = 0;
 
 struct timeval tv;
@@ -37,7 +34,7 @@ struct tm timeinfo;
 char time_str[64];
 uint64_t time_now_us;
 
-DisplayData display_data;
+static DisplayData display_data;
 
 void app_main(void)
 {
@@ -57,8 +54,8 @@ void app_main(void)
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
     tzset();
 
-    request_svatkyapi_data(&svatky_data); // TODO: to be requested once per calendar day
-    request_weather_data(&weather_data);  // TODO: to be requested once per hour
+    request_svatkyapi_data(&display_data.svatky); // TODO: to be requested once per calendar day
+    request_weather_data(&display_data.weather);  // TODO: to be requested once per hour
 
     setup_sensors();
 
@@ -84,6 +81,9 @@ void app_main(void)
         {
             measure_scd4x(); // the SCD41 algorithm expects 5 minute sampling period
         }
+
+        display_data.hub = sensor_hub_data;
+        int8_t status = get_node_data(display_data.nodes);
 
         gettimeofday(&tv, NULL);                                              // Get the current time
         localtime_r(&tv.tv_sec, &timeinfo);                                   // Convert seconds to local time

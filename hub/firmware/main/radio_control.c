@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
 
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
@@ -306,8 +307,8 @@ int8_t decode_payload(uint8_t *payload)
 
         ESP_LOGI(TAG, "[nRF24] Decoded payload: node = %d, temperature = %.2f °C, humidity = %.2f %%, voltage = %.3f V, "
                       "app_status = %d, sht4x_status = %d, nrf24_status = %d",
-                 data->node_id, data->temperature_celsius, data->humidity_pct, data->vdda_v,
-                 data->app_status, data->sht4x_status, data->nrf24_status);
+                 node_id, node_data_set[node_id].temperature_celsius, node_data_set[node_id].humidity_pct, node_data_set[node_id].vdda_v,
+                 node_data_set[node_id].app_status, node_data_set[node_id].sht4x_status, node_data_set[node_id].nrf24_status);
 
         return 0;
     }
@@ -324,7 +325,7 @@ int8_t get_node_data(NodeData target_array[NODE_COUNT])
 
     if (xSemaphoreTake(node_data_set_mutex, portMAX_DELAY) == pdTRUE) // Attempt to acquire the mutex
     {
-        target_array = node_data_set;        // Copy data to the caller's buffer
+        memcpy(target_array, node_data_set, sizeof(NodeData) * NODE_COUNT);
         xSemaphoreGive(node_data_set_mutex); // Release the mutex
         return 0;
     }

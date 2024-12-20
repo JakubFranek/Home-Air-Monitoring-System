@@ -6,19 +6,22 @@ extern "C"
 #ifndef __SENSOR_CONTROL_H__
 #define __SENSOR_CONTROL_H__
 
+#include <time.h>
+#include <sys/time.h>
+
     typedef struct SensorHubData
     {
-        float pressure;
-        timeval pressure_timestamp;
+        float pressure_hPa;
+        struct timeval pressure_timestamp;
         int8_t pressure_status;
 
-        float co2;
-        timeval co2_timestamp;
+        uint16_t co2;
+        struct timeval co2_timestamp;
         int8_t co2_status;
 
         int32_t voc_index;
         int32_t nox_index;
-        timeval gas_index_timestamp;
+        struct timeval gas_index_timestamp;
         int8_t gas_index_status;
 
         float pm_1_0;
@@ -26,14 +29,16 @@ extern "C"
         float pm_4_0;
         float pm_10_0;
         float pm_typical_size;
-        timeval pm_timestamp;
+        struct timeval pm_timestamp;
         int8_t pm_status;
 
         float temperature;
         float humidity;
-        timeval temperature_humidity_timestamp;
+        struct timeval temperature_humidity_timestamp;
         int8_t temperature_humidity_status;
     } SensorHubData;
+
+    extern SensorHubData sensor_hub_data;
 
     void setup_sensors(void);
 

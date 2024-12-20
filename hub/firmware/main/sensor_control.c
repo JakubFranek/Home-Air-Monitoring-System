@@ -10,34 +10,36 @@
 #include "scd4x.h"
 #include "sps30_i2c.h"
 
+#include "sensor_control.h"
 static const char *TAG = "sensor_control";
 
-void setup_i2c_bus(void);
-void setup_sht4x(void);
-void setup_sgp41(void);
-void setup_bme280(void);
-void setup_scd4x(void);
-void setup_sps30(void);
+/* ---------- Static Prototypes ---------- */
 
-int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
-int8_t sht4x_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
-int8_t sgp41_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
-int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
-int8_t sgp41_delay_ms(uint16_t ms);
-int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
-int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
-int8_t bme280_delay_ms(uint16_t ms);
-int8_t scd4x_i2c_write(uint8_t address, const uint8_t *payload, size_t length);
-int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length);
-int8_t scd4x_delay_ms(uint16_t ms);
-int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
-int8_t sps30_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
-int8_t sps30_delay_ms(uint16_t ms);
+static void setup_i2c_bus(void);
+static void setup_sht4x(void);
+static void setup_sgp41(void);
+static void setup_bme280(void);
+static void setup_scd4x(void);
+static void setup_sps30(void);
+
+static int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
+static int8_t sht4x_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
+static int8_t sgp41_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
+static int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
+static int8_t sgp41_delay_ms(uint16_t ms);
+static int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
+static int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
+static int8_t scd4x_i2c_write(uint8_t address, const uint8_t *payload, size_t length);
+static int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length);
+static int8_t scd4x_delay_ms(uint16_t ms);
+static int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
+static int8_t sps30_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
+static int8_t sps30_delay_ms(uint16_t ms);
 
 /* ---------- I2C ---------- */
 
-i2c_master_bus_handle_t bus;
-i2c_master_bus_config_t i2c_config = {
+static i2c_master_bus_handle_t bus;
+static i2c_master_bus_config_t i2c_config = {
     .i2c_port = I2C_NUM_0,
     .sda_io_num = 21,
     .scl_io_num = 22,
@@ -48,52 +50,52 @@ i2c_master_bus_config_t i2c_config = {
 
 /* ---------- SHT4x ---------- */
 
-i2c_device_config_t sht4x_config = {
+static i2c_device_config_t sht4x_config = {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = SHT4X_I2C_ADDR_A,
     .scl_speed_hz = 100000,
     .scl_wait_us = 0};
-i2c_master_dev_handle_t sht4x_device_handle;
+static i2c_master_dev_handle_t sht4x_device_handle;
 
-Sht4xDevice sht4x_device = {
+static Sht4xDevice sht4x_device = {
     .i2c_write = &sht4x_i2c_write,
     .i2c_read = &sht4x_i2c_read,
     .i2c_address = SHT4X_I2C_ADDR_A};
-Sht4xStatus sht4x_status;
-Sht4xData sht4x_data;
-uint32_t sht4x_serial_number;
+static Sht4xStatus sht4x_status;
+static Sht4xData sht4x_data;
+static uint32_t sht4x_serial_number;
 
 /* ---------- SGP41 ---------- */
 
 #define SGP41_SAMPLING_INTERVAL_S 60.0f
 
-i2c_device_config_t sgp41_config = {
+static i2c_device_config_t sgp41_config = {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = SGP41_I2C_ADDRESS,
     .scl_speed_hz = 100000,
     .scl_wait_us = 0,
 };
-i2c_master_dev_handle_t sgp41_device_handle;
+static i2c_master_dev_handle_t sgp41_device_handle;
 
-Sgp41Device sgp41_device = {
+static Sgp41Device sgp41_device = {
     .i2c_write = &sgp41_i2c_write,
     .i2c_read = &sgp41_i2c_read,
     .delay_ms = &sgp41_delay_ms,
     .sampling_period_s = SGP41_SAMPLING_INTERVAL_S};
-uint64_t sgp41_serial_number;
-Sgp41Status sgp41_status;
-Sgp41Data sgp41_data;
+static uint64_t sgp41_serial_number;
+static Sgp41Status sgp41_status;
+static Sgp41Data sgp41_data;
 
 /* ---------- BME280 ---------- */
 
-i2c_device_config_t bme280_config = {
+static i2c_device_config_t bme280_config = {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = BME280_I2C_ADDRESS_SDO_HIGH,
     .scl_speed_hz = 100000,
     .scl_wait_us = 0};
-i2c_master_dev_handle_t bme280_device_handle;
+static i2c_master_dev_handle_t bme280_device_handle;
 
-Bme280Device bme280_device = {
+static Bme280Device bme280_device = {
     .i2c_write = &bme280_i2c_write,
     .i2c_read = &bme280_i2c_read,
     .address = BME280_I2C_ADDRESS_SDO_HIGH,
@@ -104,55 +106,63 @@ Bme280Device bme280_device = {
         .temperature_oversampling = BME280_OVERSAMPLING_X1,
         .pressure_oversampling = BME280_OVERSAMPLING_X1,
         .humidity_oversampling = BME280_OVERSAMPLING_X1}};
-Bme280Status bme280_status;
-Bme280Data bme280_data;
-bool bme280_measurement_in_progress = false;
+static Bme280Status bme280_status;
+static Bme280Data bme280_data;
 
 /* ---------- SCD4x ---------- */
 
 #define SCD4X_MAX_RETRY_COUNT 10
 #define SCD4X_RETRY_PERIOD_MS 100
 
-i2c_device_config_t scd4x_config = {
+static i2c_device_config_t scd4x_config = {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = SCD4X_I2C_ADDRESS,
     .scl_speed_hz = 100000,
     .scl_wait_us = 0};
-i2c_master_dev_handle_t scd4x_device_handle;
+static i2c_master_dev_handle_t scd4x_device_handle;
 
-Scd4xDevice scd4x_device = {
+static Scd4xDevice scd4x_device = {
     .i2c_write = &scd4x_i2c_write,
     .i2c_read = &scd4x_i2c_read,
     .delay_ms = &scd4x_delay_ms};
-Scd4xStatus scd4x_status;
-Scd4xData scd4x_data;
-bool scd4x_data_ready = false;
-uint64_t scd4x_serial_number;
+static Scd4xStatus scd4x_status;
+static Scd4xData scd4x_data;
+static bool scd4x_data_ready = false;
+static uint64_t scd4x_serial_number;
 
 /* ---------- SPS30 ---------- */
 
 #define SPS30_MAX_RETRY_COUNT 10
 #define SPS30_RETRY_PERIOD_MS 100
 
-i2c_device_config_t sps30_config = {
+static i2c_device_config_t sps30_config = {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = SPS30_I2C_ADDRESS,
     .scl_speed_hz = 100000,
     .scl_wait_us = 0};
-i2c_master_dev_handle_t sps30_device_handle;
+static i2c_master_dev_handle_t sps30_device_handle;
 
-Sps30Device sps30_device = {
+static Sps30Device sps30_device = {
     .i2c_write = &sps30_i2c_write,
     .i2c_read = &sps30_i2c_read,
     .delay_ms = &sps30_delay_ms};
-Sps30Status sps30_status;
-Sps30FirmwareVersion sps30_version;
-char sps30_product_type[8] = {'\0'};
-char sps30_serial_number[32] = {'\0'};
-Sps30StatusFlags sps30_flags;
-Sps30FloatData sps30_float_data;
-Sps30Uint16Data sps30_uint16_data;
-bool sps30_data_ready = false;
+static Sps30Status sps30_status;
+static Sps30FirmwareVersion sps30_version;
+static char sps30_product_type[8] = {'\0'};
+static char sps30_serial_number[32] = {'\0'};
+static Sps30StatusFlags sps30_flags;
+static Sps30FloatData sps30_float_data;
+static bool sps30_data_ready = false;
+
+/* ---------- Other static variables ---------- */
+
+static struct timeval current_time;
+
+/* ---------- Sensor Data Struct ---------- */
+
+SensorHubData sensor_hub_data;
+
+/* ---------- Functions ---------- */
 
 void setup_sensors(void)
 {
@@ -165,12 +175,12 @@ void setup_sensors(void)
     setup_sps30();
 }
 
-void setup_i2c_bus(void)
+static void setup_i2c_bus(void)
 {
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_config, &bus));
 }
 
-void setup_sht4x(void)
+static void setup_sht4x(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &sht4x_config, &sht4x_device_handle));
 
@@ -192,9 +202,15 @@ void measure_sht4x(void)
     sht4x_status = sht4x_read_measurement(&sht4x_device, &sht4x_data);
     ESP_LOGI(TAG, "[SHT4x] Read Data, Temperature = %.2f °C, Rel. humidity = %.2f %%, status = %d",
              sht4x_data.temperature / 1000.0, sht4x_data.humidity / 1000.0, sht4x_status);
+
+    sensor_hub_data.temperature = sht4x_data.temperature / 1000.0;
+    sensor_hub_data.humidity = sht4x_data.humidity / 1000.0;
+    sensor_hub_data.temperature_humidity_status = sht4x_status;
+    gettimeofday(&current_time, NULL);
+    sensor_hub_data.temperature_humidity_timestamp = current_time;
 }
 
-void setup_sgp41(void)
+static void setup_sgp41(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &sgp41_config, &sgp41_device_handle));
 
@@ -226,9 +242,15 @@ void measure_sgp41(void)
     sgp41_status = sgp41_read_gas_indices(&sgp41_device, &sgp41_data);
     ESP_LOGI(TAG, "[SGP41] Read Gas Indices, voc = %d, nox = %d, status = %d",
              (int)sgp41_data.voc_index, (int)sgp41_data.nox_index, sgp41_status);
+
+    sensor_hub_data.voc_index = sgp41_data.voc_index;
+    sensor_hub_data.nox_index = sgp41_data.nox_index;
+    sensor_hub_data.gas_index_status = sgp41_status;
+    gettimeofday(&current_time, NULL);
+    sensor_hub_data.gas_index_timestamp = current_time;
 }
 
-void setup_bme280(void)
+static void setup_bme280(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &bme280_config, &bme280_device_handle));
 
@@ -249,11 +271,16 @@ void measure_bme280(void)
     vTaskDelay(500 / portTICK_PERIOD_MS);
 
     bme280_status = bme280_read_measurement(&bme280_device, &bme280_data);
-    ESP_LOGI(TAG, "[BME280] Read Data, Temperature = %.2f °C, Rel. humidity = %.2f %%, Pressure = %.2f Pa, status = %d",
+    ESP_LOGI(TAG, "[BME280] Read Data, Temperature = %.2f °C, Rel. humidity = %.2f %%, Pressure = %.1f hPa, status = %d",
              bme280_data.temperature / 100.0, bme280_data.humidity / 1000.0, bme280_data.pressure / 10.0, bme280_status);
+
+    sensor_hub_data.pressure_hPa = bme280_data.pressure / 10.0;
+    sensor_hub_data.pressure_status = bme280_status;
+    gettimeofday(&current_time, NULL);
+    sensor_hub_data.pressure_timestamp = current_time;
 }
 
-void setup_scd4x(void)
+static void setup_scd4x(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &scd4x_config, &scd4x_device_handle));
 
@@ -294,9 +321,14 @@ void measure_scd4x(void)
     ESP_LOGI(TAG, "[SCD4x] Read Data, CO2 concentration = %d ppm, Temperature = %.2f °C, Rel. humidity = %.2f %% status = %d",
              scd4x_data.co2_ppm, scd4x_data.temperature / 100.0, scd4x_data.relative_humidity / 100.0, scd4x_status);
     scd4x_data_ready = false;
+
+    sensor_hub_data.co2 = scd4x_data.co2_ppm;
+    sensor_hub_data.co2_status = scd4x_status;
+    gettimeofday(&current_time, NULL);
+    sensor_hub_data.co2_timestamp = current_time;
 }
 
-void setup_sps30(void)
+static void setup_sps30(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &sps30_config, &sps30_device_handle));
 
@@ -339,29 +371,39 @@ void measure_sps30(void)
     }
 
     sps30_status = sps30_read_measured_values_float(&sps30_device, &sps30_float_data);
-    ESP_LOGI(TAG, "[SPS30] Read Float Data, PM1.0 = %.2f ug/m^3, PM2.5 = %.2f ug/m^3, PM4.0 = %.2f ug/m^3, PM10.0 = %.2f ug/m^3, status = %d",
+    ESP_LOGI(TAG, "[SPS30] Read Float Data, PM1.0 = %.2f ug/m^3, PM2.5 = %.2f ug/m^3, "
+                  "PM4.0 = %.2f ug/m^3, PM10.0 = %.2f ug/m^3, typ. particle = %.2f nm, status = %d",
              sps30_float_data.mass_concentration_pm1_0,
              sps30_float_data.mass_concentration_pm2_5,
              sps30_float_data.mass_concentration_pm4_0,
-             sps30_float_data.mass_concentration_pm10_0, sps30_status);
+             sps30_float_data.mass_concentration_pm10_0,
+             sps30_float_data.typical_particle_size, sps30_status);
     sps30_data_ready = false;
+
+    sensor_hub_data.pm_1_0 = sps30_float_data.mass_concentration_pm1_0;
+    sensor_hub_data.pm_2_5 = sps30_float_data.mass_concentration_pm2_5;
+    sensor_hub_data.pm_4_0 = sps30_float_data.mass_concentration_pm4_0;
+    sensor_hub_data.pm_10_0 = sps30_float_data.mass_concentration_pm10_0;
+    sensor_hub_data.pm_typical_size = sps30_float_data.typical_particle_size;
+    gettimeofday(&current_time, NULL);
+    sensor_hub_data.pm_timestamp = current_time;
 }
 
-int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
+static int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
     esp_err_t err = i2c_master_transmit(sht4x_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t sht4x_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
+static int8_t sht4x_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
     esp_err_t err = i2c_master_receive(sht4x_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t sgp41_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
+static int8_t sgp41_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
 
     (void)address; // Address not necessary
@@ -369,14 +411,14 @@ int8_t sgp41_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
+static int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
     esp_err_t err = i2c_master_receive(sgp41_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t sgp41_delay_ms(uint16_t ms)
+static int8_t sgp41_delay_ms(uint16_t ms)
 {
     if (ms < 10)
         ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
@@ -385,7 +427,7 @@ int8_t sgp41_delay_ms(uint16_t ms)
     return 0;
 }
 
-int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
+static int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
     esp_err_t err = i2c_master_transmit(bme280_device_handle, payload, length, 20);
@@ -393,7 +435,7 @@ int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
+static int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
     esp_err_t err = i2c_master_receive(bme280_device_handle, payload, length, 20);
@@ -401,30 +443,21 @@ int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t bme280_delay_ms(uint16_t ms)
-{
-    if (ms < 10)
-        ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
-
-    vTaskDelay(ms);
-    return 0;
-}
-
-int8_t scd4x_i2c_write(uint8_t address, const uint8_t *payload, size_t length)
+static int8_t scd4x_i2c_write(uint8_t address, const uint8_t *payload, size_t length)
 {
     (void)address; // Address not necessary
     esp_err_t err = i2c_master_transmit(scd4x_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length)
+static int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length)
 {
     (void)address; // Address not necessary
     esp_err_t err = i2c_master_receive(scd4x_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t scd4x_delay_ms(uint16_t ms)
+static int8_t scd4x_delay_ms(uint16_t ms)
 {
     if (ms < 10)
         ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
@@ -433,7 +466,7 @@ int8_t scd4x_delay_ms(uint16_t ms)
     return 0;
 }
 
-int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
+static int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
 
     (void)address; // Address not necessary
@@ -441,14 +474,14 @@ int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t sps30_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
+static int8_t sps30_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
     esp_err_t err = i2c_master_receive(sps30_device_handle, payload, length, 20);
     return err == ESP_OK ? 0 : -1;
 }
 
-int8_t sps30_delay_ms(uint16_t ms)
+static int8_t sps30_delay_ms(uint16_t ms)
 {
     if (ms < 10)
         ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
