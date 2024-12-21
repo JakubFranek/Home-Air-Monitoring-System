@@ -189,7 +189,7 @@ void task_nrf24_control(void *pvParameters)
                 while (true)
                 {
                     nrf24_status = nrf24l01p_is_rx_fifo_empty(&nrf24_device, &rx_fifo_empty);
-                    ESP_LOGI(TAG, "[nRF24] is RX FIFO empty = %d, status = %d", rx_fifo_empty, nrf24_status);
+                    ESP_LOGI(TAG, "[nRF24] is_rx_fifo_empty = %d, status = %d", rx_fifo_empty, nrf24_status);
 
                     if (rx_fifo_empty)
                     {
@@ -197,7 +197,7 @@ void task_nrf24_control(void *pvParameters)
                     }
 
                     nrf24_status = nrf24l01p_rx_receive(&nrf24_device, rx_payload);
-                    ESP_LOGI(TAG, "[nRF24] read RX FIFO: status = %d", nrf24_status);
+                    ESP_LOGI(TAG, "[nRF24] rx_receive: status = %d", nrf24_status);
                     decode_payload(rx_payload);
                 }
             }

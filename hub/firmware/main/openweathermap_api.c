@@ -163,6 +163,8 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 int8_t request_weather_data(WeatherData *data)
 {
+    ESP_LOGI(TAG, "Requesting weather data...");
+
     char url[200];
     snprintf(url, sizeof(url), "%s%s%s%s%s%s%s",
              "https://api.openweathermap.org/data/3.0/onecall?lat=",

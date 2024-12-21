@@ -17,6 +17,7 @@
 #include "Fonts/FreeSansBold16pt7b.h"
 #include "Fonts/FreeSansBold18pt7b.h"
 #include "Fonts/FreeSansBold72pt7b.h"
+#include "Fonts/FreeSans8pt7b.h"
 #include "Fonts/FreeSans9pt7b.h"
 #include "Fonts/FreeSans10pt7b.h"
 #include "Fonts/FreeSans12pt7b.h"
@@ -530,7 +531,7 @@ void show_debug_info(DisplayData *data)
 {
     clear_screen();
 
-    display.setFont(&FreeSans9pt7b);
+    display.setFont(&FreeSans8pt7b);
     display.setCursor(0, 15);
 
     char timestamp_buffer_1[64], timestamp_buffer_2[64];
@@ -540,15 +541,22 @@ void show_debug_info(DisplayData *data)
     struct timeval current_time;
     gettimeofday(&current_time, NULL);
     get_timestamp_string(&current_time, timestamp_buffer_2);
-    sprintf(string_buffer, "Start time = %s, current time = %s\n", timestamp_buffer_1, timestamp_buffer_2);
+    sprintf(string_buffer, "Start time = %s, current time = %s, app_status = %d\n", timestamp_buffer_1, timestamp_buffer_2, data->app_status);
     display.print(string_buffer);
+
+    // Print display update counts
+    sprintf(string_buffer, "Display: full updates = %ld, fast updates = %ld\n", full_update_count, fast_update_count);
+    display.print(string_buffer);
+
+    display.print("\n");
 
     // Print Wi-Fi AP record
     sprintf(string_buffer, "Wi-Fi AP: status = %s, SSID = %s, RSSI = %d\n", data->wifi_status, data->wifi_ssid, data->wifi_rssi);
     display.print(string_buffer);
 
-    // Print display update counts
-    sprintf(string_buffer, "Display: full updates = %ld, fast updates = %ld\n", full_update_count, fast_update_count);
+    // Print SNTP last sync time and count
+    get_timestamp_string(&data->sntp_last_sync, timestamp_buffer_1);
+    sprintf(string_buffer, "SNTP: last sync = %s, count = %ld\n", timestamp_buffer_1, data->sntp_sync_count);
     display.print(string_buffer);
 
     // Print last svatkyapi request timestamp
@@ -560,6 +568,8 @@ void show_debug_info(DisplayData *data)
     get_timestamp_string(&data->weather.timestamp, timestamp_buffer_1);
     sprintf(string_buffer, "OpenWeatherMap: last request = %s, count = %ld\n", timestamp_buffer_1, data->weather.update_count);
     display.print(string_buffer);
+
+    display.print("\n");
 
     // Print timestamps of last measurements of all hub sensors
     get_timestamp_string(&data->hub.temperature_humidity_timestamp, timestamp_buffer_1);
@@ -574,13 +584,15 @@ void show_debug_info(DisplayData *data)
     sprintf(string_buffer, "BME280: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.pressure_measurements);
     display.print(string_buffer);
 
+    get_timestamp_string(&data->hub.pm_timestamp, timestamp_buffer_1);
+    sprintf(string_buffer, "SPS30: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.pm_measurements);
+    display.print(string_buffer);
+
     get_timestamp_string(&data->hub.co2_timestamp, timestamp_buffer_1);
     sprintf(string_buffer, "SCD41: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.co2_measurements);
     display.print(string_buffer);
 
-    get_timestamp_string(&data->hub.pm_timestamp, timestamp_buffer_1);
-    sprintf(string_buffer, "SPS30: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.pm_measurements);
-    display.print(string_buffer);
+    display.print("\n");
 
     // Print timestamps and error codes of all nodes
     for (int i = 0; i < NODE_COUNT; i++)
@@ -588,7 +600,7 @@ void show_debug_info(DisplayData *data)
         get_timestamp_string(&data->nodes[i].timestamp, timestamp_buffer_1);
         get_timestamp_string(&data->nodes[i].timestamp_temperature_24h_min, timestamp_buffer_2);
         sprintf(string_buffer, "Node %d [%s]: last RX = %s, RX count = %ld, vdda = %.3f V,\n"
-                               "    status (app/sht4x/nrf24) = %d/%d/%d, T 24h min. timestamp = %s\n",
+                               "     status (app/sht4x/nrf24) = %d/%d/%d, T 24h min. timestamp = %s\n",
                 i + 1, NODE_NAMES[i], timestamp_buffer_1, data->nodes[i].rx_count, data->nodes[i].vdda_v,
                 data->nodes[i].app_status, data->nodes[i].sht4x_status, data->nodes[i].nrf24_status, timestamp_buffer_2);
         display.print(string_buffer);

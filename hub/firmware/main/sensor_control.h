@@ -14,7 +14,7 @@ extern "C"
         float pressure_hPa;
         struct timeval pressure_timestamp;
         int32_t pressure_measurements;
-        int8_t pressure_status; // TODO: implement status codes
+        int8_t pressure_status;
 
         uint16_t co2;
         struct timeval co2_timestamp;

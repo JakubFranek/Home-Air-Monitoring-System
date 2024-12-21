@@ -169,6 +169,8 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 int8_t request_svatkyapi_data(SvatkyApiData *data)
 {
+    ESP_LOGI(TAG, "Requesting svatkyapi data...");
+
     char url_buffer[64] = {0};
     struct timeval current_time;
     struct tm time_info;

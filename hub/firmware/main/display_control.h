@@ -26,6 +26,7 @@ typedef struct DisplayData
     struct timeval start_time;
     struct timeval sntp_last_sync;
     int32_t sntp_sync_count;
+    int8_t app_status;
 } DisplayData;
 
 void setup_display(void);

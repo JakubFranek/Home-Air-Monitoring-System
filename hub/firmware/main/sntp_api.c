@@ -20,6 +20,7 @@
 #include "esp_sntp.h"
 
 #define CONFIG_SNTP_TIME_SERVER "0.cz.pool.ntp.org"
+#define SNTP_RETRY_COUNT 10
 
 static const char *TAG = "sntp_api";
 
@@ -28,6 +29,8 @@ struct timeval sntp_last_sync;
 uint32_t sntp_sync_count = 0;
 
 static struct tm timeinfo;
+
+static int8_t wait_for_sync(void);
 
 /**
  * @brief Time synchronization callback function.
@@ -60,7 +63,7 @@ void time_sync_notification_cb(struct timeval *tv)
  */
 int8_t initialize_sntp(void)
 {
-    ESP_LOGI(TAG, "Initializing and starting SNTP");
+    ESP_LOGI(TAG, "Initializing and starting SNTP...");
 
     esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(CONFIG_SNTP_TIME_SERVER);
 
@@ -68,21 +71,35 @@ int8_t initialize_sntp(void)
 
     esp_netif_sntp_init(&config);
 
+    return wait_for_sync();
+}
+
+int8_t synchronize_time(void)
+{
+    ESP_LOGI(TAG, "Attempting to synchronize time via SNTP...");
+    esp_netif_sntp_start();
+    return wait_for_sync();
+}
+
+static int8_t wait_for_sync(void)
+{
     int retry = 0;
-    const int retry_count = 15;
-    while (++retry < retry_count)
+    while (true)
     {
-        ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
-        esp_err_t err = esp_netif_sntp_sync_wait(2000 / portTICK_PERIOD_MS);
+        ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, SNTP_RETRY_COUNT);
+        esp_err_t err = esp_netif_sntp_sync_wait(1000 / portTICK_PERIOD_MS);
 
         if (err == ESP_OK)
         {
+            ESP_LOGI(TAG, "System time is set");
             break;
         }
-        else if (err == ESP_ERR_TIMEOUT && retry == retry_count)
+        else if (retry == SNTP_RETRY_COUNT)
         {
+            ESP_LOGE(TAG, "System time could not be set");
             return -1;
         }
+        retry++;
     }
 
     return 0;

@@ -8,8 +8,8 @@ extern "C"
 #include "esp_wifi.h"
 #include "display_control.h"
 
-    void wifi_init_sta(void);
     int8_t setup_wifi(void);
+    int8_t connect_wifi(void);
     bool is_wifi_connected(void);
     void get_wifi_ap_record(DisplayData *data);
 
