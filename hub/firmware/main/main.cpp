@@ -91,6 +91,10 @@ void app_main(void)
     ESP_ERROR_CHECK(gpio_set_level(FAN_SWITCH_PIN, 1));
     print_line("E-paper display initialized.\nFan turned on.\nInitializing Wi-Fi... ");
     status_code = setup_wifi();
+    if (status_code == 0) // If connection is successful
+    {
+        display_data.wifi_connection_count++;
+    }
     print_line("done (%d).\nInitializing SNTP... ", status_code);
     status_code = initialize_sntp();
     print_line("done (%d).\nInitializing timezone... ", status_code);
@@ -162,6 +166,8 @@ void app_main(void)
             ESP_LOGI(TAG, "Attempting to connect to Wi-Fi...");
             if (connect_wifi() == 0) // If connection was successful
             {
+                display_data.wifi_connection_count++;
+
                 synchronize_time();
 
                 // If svatky data has not been successfully initialized yet, request immediately

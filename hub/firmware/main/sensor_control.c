@@ -13,11 +13,12 @@
 #include "sensor_control.h"
 static const char *TAG = "sensor_control";
 
-#define RETURN_IF_NOT_ZERO(status, data) \
-    data = status;                       \
-    if (status != 0)                     \
-    {                                    \
-        return status;                   \
+#define RETURN_IF_NOT_ZERO(status, data, error_counter) \
+    data = status;                                      \
+    if (status != 0)                                    \
+    {                                                   \
+        error_counter++;                                \
+        return status;                                  \
     }
 
 /* ---------- Static Prototypes ---------- */
@@ -187,13 +188,13 @@ int8_t setup_sht4x(void)
 
     sht4x_status = sht4x_request_serial_number(&sht4x_device);
     ESP_LOGI(TAG, "[SHT4x] Request Serial Number, status = %d", sht4x_status);
-    RETURN_IF_NOT_ZERO((int8_t)sht4x_status, sensor_hub_data.temperature_humidity_status);
+    RETURN_IF_NOT_ZERO((int8_t)sht4x_status, sensor_hub_data.temperature_humidity_status, sensor_hub_data.temperature_humidity_errors);
 
     vTaskDelay(20 / portTICK_PERIOD_MS);
 
     sht4x_status = sht4x_read_serial_number(&sht4x_device, &sht4x_serial_number);
     ESP_LOGI(TAG, "[SHT4x] Read Serial Number, serial number = %ld, status = %d", sht4x_serial_number, sht4x_status);
-    RETURN_IF_NOT_ZERO((int8_t)sht4x_status, sensor_hub_data.temperature_humidity_status);
+    RETURN_IF_NOT_ZERO((int8_t)sht4x_status, sensor_hub_data.temperature_humidity_status, sensor_hub_data.temperature_humidity_errors);
 
     return 0;
 }
@@ -202,14 +203,14 @@ int8_t measure_sht4x(void)
 {
     sht4x_status = sht4x_start_measurement(&sht4x_device, SHT4X_I2C_CMD_MEAS_HIGH_PREC);
     ESP_LOGI(TAG, "[SHT4x] Start Measurement, status = %d", sht4x_status);
-    RETURN_IF_NOT_ZERO((int8_t)sht4x_status, sensor_hub_data.temperature_humidity_status);
+    RETURN_IF_NOT_ZERO((int8_t)sht4x_status, sensor_hub_data.temperature_humidity_status, sensor_hub_data.temperature_humidity_errors);
 
     vTaskDelay(20 / portTICK_PERIOD_MS);
 
     sht4x_status = sht4x_read_measurement(&sht4x_device, &sht4x_data);
     ESP_LOGI(TAG, "[SHT4x] Read Data, Temperature = %.2f °C, Rel. humidity = %.2f %%, status = %d",
              sht4x_data.temperature / 1000.0, sht4x_data.humidity / 1000.0, sht4x_status);
-    RETURN_IF_NOT_ZERO((int8_t)sht4x_status, sensor_hub_data.temperature_humidity_status);
+    RETURN_IF_NOT_ZERO((int8_t)sht4x_status, sensor_hub_data.temperature_humidity_status, sensor_hub_data.temperature_humidity_errors);
 
     sensor_hub_data.temperature = sht4x_data.temperature / 1000.0;
     sensor_hub_data.humidity = sht4x_data.humidity / 1000.0;
@@ -226,26 +227,26 @@ int8_t setup_sgp41(void)
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &sgp41_config, &sgp41_device_handle));
 
     sgp41_status = sgp41_initialize(&sgp41_device);
-    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status);
+    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status, sensor_hub_data.gas_index_errors);
 
     sgp41_status = sgp41_get_serial_number(&sgp41_device, &sgp41_serial_number);
     ESP_LOGI(TAG, "[SGP41] Get Serial Number, serial number: %lld, status = %d",
              sgp41_serial_number, sgp41_status);
-    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status);
+    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status, sensor_hub_data.gas_index_errors);
 
     sgp41_status = sgp41_execute_self_test(&sgp41_device);
     ESP_LOGI(TAG, "[SGP41] Execute Self Test, status = %d", sgp41_status);
-    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status);
+    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status, sensor_hub_data.gas_index_errors);
 
     sgp41_status = sgp41_execute_conditioning(&sgp41_device);
     ESP_LOGI(TAG, "[SGP41] Execute Conditioning, status = %d", sgp41_status);
-    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status);
+    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status, sensor_hub_data.gas_index_errors);
 
     vTaskDelay(10000 / portTICK_PERIOD_MS); // max 10s conditioning*/
 
     sgp41_status = sgp41_turn_heater_off(&sgp41_device);
     ESP_LOGI(TAG, "[SGP41] Turn Heater Off, status = %d", sgp41_status);
-    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status);
+    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status, sensor_hub_data.gas_index_errors);
 
     return 0;
 }
@@ -254,14 +255,14 @@ int8_t measure_sgp41(void)
 {
     sgp41_status = sgp41_measure_raw_signals(&sgp41_device, NULL, NULL);
     ESP_LOGI(TAG, "[SGP41] Measure Raw Signals, status = %d", sgp41_status);
-    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status);
+    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status, sensor_hub_data.gas_index_errors);
 
     vTaskDelay(55 / portTICK_PERIOD_MS);
 
     sgp41_status = sgp41_read_gas_indices(&sgp41_device, &sgp41_data);
     ESP_LOGI(TAG, "[SGP41] Read Gas Indices, voc = %d, nox = %d, status = %d",
              (int)sgp41_data.voc_index, (int)sgp41_data.nox_index, sgp41_status);
-    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status);
+    RETURN_IF_NOT_ZERO((int8_t)sgp41_status, sensor_hub_data.gas_index_status, sensor_hub_data.gas_index_errors);
 
     sensor_hub_data.voc_index = sgp41_data.voc_index;
     sensor_hub_data.nox_index = sgp41_data.nox_index;
@@ -278,13 +279,13 @@ int8_t setup_bme280(void)
 
     bme280_status = bme280_reset(&bme280_device);
     ESP_LOGI(TAG, "[BME280] Reset, status = %d", bme280_status);
-    RETURN_IF_NOT_ZERO((int8_t)bme280_status, sensor_hub_data.pressure_status);
+    RETURN_IF_NOT_ZERO((int8_t)bme280_status, sensor_hub_data.pressure_status, sensor_hub_data.pressure_errors);
 
     vTaskDelay(20 / portTICK_PERIOD_MS);
 
     bme280_status = bme280_init(&bme280_device);
     ESP_LOGI(TAG, "[BME280] Init, status = %d", bme280_status);
-    RETURN_IF_NOT_ZERO((int8_t)bme280_status, sensor_hub_data.pressure_status);
+    RETURN_IF_NOT_ZERO((int8_t)bme280_status, sensor_hub_data.pressure_status, sensor_hub_data.pressure_errors);
 
     return 0;
 }
@@ -293,13 +294,14 @@ int8_t measure_bme280(void)
 {
     bme280_status = bme280_set_mode(&bme280_device, BME280_MODE_FORCED);
     ESP_LOGI(TAG, "[BME280] Set Forced Mode, status = %d", bme280_status);
+    RETURN_IF_NOT_ZERO((int8_t)bme280_status, sensor_hub_data.pressure_status, sensor_hub_data.pressure_errors);
 
     vTaskDelay(500 / portTICK_PERIOD_MS);
 
     bme280_status = bme280_read_measurement(&bme280_device, &bme280_data);
     ESP_LOGI(TAG, "[BME280] Read Data, Temperature = %.2f °C, Rel. humidity = %.2f %%, Pressure = %.1f hPa, status = %d",
              bme280_data.temperature / 100.0, bme280_data.humidity / 1000.0, bme280_data.pressure / 10.0, bme280_status);
-    RETURN_IF_NOT_ZERO((int8_t)bme280_status, sensor_hub_data.pressure_status);
+    RETURN_IF_NOT_ZERO((int8_t)bme280_status, sensor_hub_data.pressure_status, sensor_hub_data.pressure_errors);
 
     sensor_hub_data.pressure_hPa = bme280_data.pressure / 10.0;
     gettimeofday(&current_time, NULL);
@@ -315,13 +317,13 @@ int8_t setup_scd4x(void)
 
     scd4x_status = scd4x_get_serial_number(&scd4x_device, &scd4x_serial_number);
     ESP_LOGI(TAG, "[SCD4x] Read Serial Number, serial number = %lld, status = %d", scd4x_serial_number, scd4x_status);
-    RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status);
+    RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
 
     vTaskDelay(20 / portTICK_PERIOD_MS);
 
     scd4x_status = scd4x_perform_self_test(&scd4x_device);
     ESP_LOGI(TAG, "[SCD4x] Perform Self Test, status = %d", scd4x_status);
-    RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status);
+    RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
 
     return 0;
 }
@@ -330,6 +332,7 @@ int8_t measure_scd4x(void)
 {
     scd4x_status = scd41_measure_single_shot(&scd4x_device);
     ESP_LOGI(TAG, "[SCD4x] Measure Single Shot, status = %d", scd4x_status);
+    RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
 
     vTaskDelay(5000 / portTICK_PERIOD_MS);
 
@@ -338,7 +341,7 @@ int8_t measure_scd4x(void)
     {
         scd4x_status = scd4x_get_data_ready_status(&scd4x_device, &scd4x_data_ready);
         ESP_LOGI(TAG, "[SCD4x] Read Data Ready Status, data ready = %d, status = %d", scd4x_data_ready, scd4x_status);
-        RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status);
+        RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
 
         if (scd4x_data_ready)
         {
@@ -357,7 +360,7 @@ int8_t measure_scd4x(void)
     ESP_LOGI(TAG, "[SCD4x] Read Data, CO2 concentration = %d ppm, Temperature = %.2f °C, Rel. humidity = %.2f %% status = %d",
              scd4x_data.co2_ppm, scd4x_data.temperature / 100.0, scd4x_data.relative_humidity / 100.0, scd4x_status);
     scd4x_data_ready = false;
-    RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status);
+    RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
 
     sensor_hub_data.co2 = scd4x_data.co2_ppm;
     sensor_hub_data.co2_status = scd4x_status;
@@ -374,24 +377,24 @@ int8_t setup_sps30(void)
 
     sps30_status = sps30_read_product_type(&sps30_device, sps30_product_type);
     ESP_LOGI(TAG, "[SPS30] Read Product Type, product type = %s, status = %d", sps30_product_type, sps30_status);
-    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status);
+    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status, sensor_hub_data.pm_errors);
 
     sps30_status = sps30_read_serial_number(&sps30_device, sps30_serial_number);
     ESP_LOGI(TAG, "[SPS30] Read Serial Number, serial number = %s, status = %d", sps30_serial_number, sps30_status);
-    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status);
+    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status, sensor_hub_data.pm_errors);
 
     sps30_status = sps30_read_firmware_version(&sps30_device, &sps30_version);
     ESP_LOGI(TAG, "[SPS30] Read Firmware Version, version = %d.%d, status = %d", sps30_version.major, sps30_version.minor, sps30_status);
-    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status);
+    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status, sensor_hub_data.pm_errors);
 
     sps30_status = sps30_read_device_status_flags(&sps30_device, &sps30_flags);
     ESP_LOGI(TAG, "[SPS30] Read Device Status Flags, speed warning = %d, laser error = %d, fan error = %d, status = %d",
              sps30_flags.speed_warning, sps30_flags.laser_error, sps30_flags.fan_error, sps30_status);
-    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status);
+    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status, sensor_hub_data.pm_errors);
 
     sps30_status = sps30_start_measurement(&sps30_device, SPS30_FLOAT);
     ESP_LOGI(TAG, "[SPS30] Start Measurement (float), status = %d", sps30_status);
-    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status);
+    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status, sensor_hub_data.pm_errors);
 
     return 0;
 }
@@ -403,7 +406,7 @@ int8_t measure_sps30(void)
     {
         sps30_status = sps30_read_data_ready_flag(&sps30_device, &sps30_data_ready);
         ESP_LOGI(TAG, "[SPS30] Read Data Ready Flag, data ready = %d, status = %d", sps30_data_ready, sps30_status);
-        RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status);
+        RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status, sensor_hub_data.pm_errors);
 
         if (sps30_data_ready)
         {
@@ -427,7 +430,7 @@ int8_t measure_sps30(void)
              sps30_float_data.mass_concentration_pm10_0,
              sps30_float_data.typical_particle_size, sps30_status);
     sps30_data_ready = false;
-    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status);
+    RETURN_IF_NOT_ZERO((int8_t)sps30_status, sensor_hub_data.pm_status, sensor_hub_data.pm_errors);
 
     sensor_hub_data.pm_1_0 = sps30_float_data.mass_concentration_pm1_0;
     sensor_hub_data.pm_2_5 = sps30_float_data.mass_concentration_pm2_5;

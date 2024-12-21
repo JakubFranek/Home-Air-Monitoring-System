@@ -20,13 +20,16 @@ typedef struct DisplayData
     SensorHubData hub;
 
     // Debug data
+    struct timeval start_time;
+    int8_t app_status;
+
     char wifi_status[32];
     char wifi_ssid[33];
     int8_t wifi_rssi;
-    struct timeval start_time;
+    int32_t wifi_connection_count;
+
     struct timeval sntp_last_sync;
     int32_t sntp_sync_count;
-    int8_t app_status;
 } DisplayData;
 
 void setup_display(void);

@@ -551,7 +551,8 @@ void show_debug_info(DisplayData *data)
     display.print("\n");
 
     // Print Wi-Fi AP record
-    sprintf(string_buffer, "Wi-Fi AP: status = %s, SSID = %s, RSSI = %d\n", data->wifi_status, data->wifi_ssid, data->wifi_rssi);
+    sprintf(string_buffer, "Wi-Fi AP: status = %s, SSID = %s, RSSI = %d, successful connections = %ld\n",
+            data->wifi_status, data->wifi_ssid, data->wifi_rssi, data->wifi_connection_count);
     display.print(string_buffer);
 
     // Print SNTP last sync time and count
@@ -573,23 +574,28 @@ void show_debug_info(DisplayData *data)
 
     // Print timestamps of last measurements of all hub sensors
     get_timestamp_string(&data->hub.temperature_humidity_timestamp, timestamp_buffer_1);
-    sprintf(string_buffer, "SHT40: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.temperature_humidity_measurements);
+    sprintf(string_buffer, "SHT40: last measurement = %s, measurements = %ld, errors = %ld\n",
+            timestamp_buffer_1, data->hub.temperature_humidity_measurements, data->hub.temperature_humidity_errors);
     display.print(string_buffer);
 
     get_timestamp_string(&data->hub.gas_index_timestamp, timestamp_buffer_1);
-    sprintf(string_buffer, "SGP41: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.gas_index_measurements);
+    sprintf(string_buffer, "SGP41: last measurement = %s, measurements = %ld, errors = %ld\n",
+            timestamp_buffer_1, data->hub.gas_index_measurements, data->hub.gas_index_errors);
     display.print(string_buffer);
 
     get_timestamp_string(&data->hub.pressure_timestamp, timestamp_buffer_1);
-    sprintf(string_buffer, "BME280: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.pressure_measurements);
+    sprintf(string_buffer, "BME280: last measurement = %s, measurements = %ld, errors = %ld\n",
+            timestamp_buffer_1, data->hub.pressure_measurements, data->hub.pressure_errors);
     display.print(string_buffer);
 
     get_timestamp_string(&data->hub.pm_timestamp, timestamp_buffer_1);
-    sprintf(string_buffer, "SPS30: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.pm_measurements);
+    sprintf(string_buffer, "SPS30: last measurement = %s, measurements = %ld, errors = %ld\n",
+            timestamp_buffer_1, data->hub.pm_measurements, data->hub.pm_errors);
     display.print(string_buffer);
 
     get_timestamp_string(&data->hub.co2_timestamp, timestamp_buffer_1);
-    sprintf(string_buffer, "SCD41: last measurement = %s, count = %ld\n", timestamp_buffer_1, data->hub.co2_measurements);
+    sprintf(string_buffer, "SCD41: last measurement = %s, measurements = %ld, errors = %ld\n",
+            timestamp_buffer_1, data->hub.co2_measurements, data->hub.co2_errors);
     display.print(string_buffer);
 
     display.print("\n");

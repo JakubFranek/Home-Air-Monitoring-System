@@ -15,17 +15,20 @@ extern "C"
         struct timeval pressure_timestamp;
         int32_t pressure_measurements;
         int8_t pressure_status;
+        int32_t pressure_errors;
 
         uint16_t co2;
         struct timeval co2_timestamp;
         int32_t co2_measurements;
         int8_t co2_status;
+        int32_t co2_errors;
 
         int32_t voc_index;
         int32_t nox_index;
         struct timeval gas_index_timestamp;
         int32_t gas_index_measurements;
         int8_t gas_index_status;
+        int32_t gas_index_errors;
 
         float pm_1_0;
         float pm_2_5;
@@ -35,12 +38,14 @@ extern "C"
         struct timeval pm_timestamp;
         int32_t pm_measurements;
         int8_t pm_status;
+        int32_t pm_errors;
 
         float temperature;
         float humidity;
         struct timeval temperature_humidity_timestamp;
         int32_t temperature_humidity_measurements;
         int8_t temperature_humidity_status;
+        int32_t temperature_humidity_errors;
     } SensorHubData;
 
     extern SensorHubData sensor_hub_data;
