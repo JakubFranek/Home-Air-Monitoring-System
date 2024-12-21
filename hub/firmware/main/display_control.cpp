@@ -10,8 +10,10 @@
 #include "esp_log.h"
 
 #include "gfxfont.h"
+#include "Fonts/FreeSansBold8pt7b.h"
 #include "Fonts/FreeSansBold10pt7b.h"
 #include "Fonts/FreeSansBold12pt7b.h"
+#include "Fonts/FreeSansBold14pt7b.h"
 #include "Fonts/FreeSansBold16pt7b.h"
 #include "Fonts/FreeSansBold18pt7b.h"
 #include "Fonts/FreeSansBold72pt7b.h"
@@ -67,8 +69,9 @@ static uint32_t full_update_count = 0, fast_update_count = 0;
 static char string_buffer[512] = {0};
 
 static void print_weather_summary(Gdey075T7 *display, string weather_summary);
-static void replaceCzechChars(char *buffer);
+static void replace_czech_characters(char *buffer);
 static void get_timestamp_string(struct timeval *timestamp, char *buffer);
+static void print_holiday(DisplayData *data, struct tm *time_info);
 
 /**
  * @brief Initializes the display and clears it.
@@ -158,17 +161,7 @@ void update_display(DisplayData *data)
     strftime(string_buffer, sizeof(string_buffer), "%H:%M", &time_info);
     display.draw_aligned_text(&FreeSansBold72pt7b, 0, 0, GDEY075T7_WIDTH / 2, 107, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, string_buffer);
 
-    char date_buffer[16];
-    sprintf(string_buffer, "%s", data->svatky.day_in_week);
-    replaceCzechChars(string_buffer);
-    strftime(date_buffer, sizeof(date_buffer), " %d.%m.%Y", &time_info);
-    strcat(string_buffer, date_buffer);
-    display.draw_aligned_text(&FreeSansBold18pt7b, GDEY075T7_WIDTH / 2, 0, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT / 2, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-
-    // TODO: make a function that will take holidays into account
-    sprintf(string_buffer, "%s", data->svatky.name);
-    replaceCzechChars(string_buffer);
-    display.draw_aligned_text(&FreeSansBold16pt7b, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT / 2, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT / 2, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
+    print_holiday(data, &time_info);
 
     display.drawLine(0, DISPLAY_VSEC0_HEIGHT, GDEY075T7_WIDTH, DISPLAY_VSEC0_HEIGHT, EPD_BLACK);
     display.drawLine(GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT, GDEY075T7_WIDTH / 2, GDEY075T7_HEIGHT, EPD_BLACK);
@@ -420,6 +413,65 @@ void print_weather_summary(Gdey075T7 *display, string weather_summary)
     display->draw_aligned_text(&FreeSans10pt7b, 0, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, GDEY075T7_WIDTH / 2, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, line_2.c_str());
 }
 
+void print_holiday(DisplayData *data, struct tm *time_info)
+{
+    uint16_t y_height = (data->svatky.is_holiday) ? (DISPLAY_VSEC0_HEIGHT) / 3 : (DISPLAY_VSEC0_HEIGHT) / 2;
+
+    char date_buffer[16];
+    sprintf(string_buffer, "%s", data->svatky.day_in_week);
+    replace_czech_characters(string_buffer);
+    strftime(date_buffer, sizeof(date_buffer), " %d.%m.%Y", time_info);
+    strcat(string_buffer, date_buffer);
+    display.draw_aligned_text(&FreeSansBold18pt7b, GDEY075T7_WIDTH / 2, 0, GDEY075T7_WIDTH / 2, y_height, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
+
+    sprintf(string_buffer, "%s", data->svatky.name);
+    replace_czech_characters(string_buffer);
+    display.draw_aligned_text(&FreeSansBold16pt7b, GDEY075T7_WIDTH / 2, y_height, GDEY075T7_WIDTH / 2, y_height, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
+
+    if (data->svatky.is_holiday)
+    {
+        int16_t x, y;
+        uint16_t w, h;
+        sprintf(string_buffer, "%s", data->svatky.holiday_name);
+        replace_czech_characters(string_buffer);
+
+        display.setFont(&FreeSansBold16pt7b);
+        display.getTextBounds(string_buffer, 0, 0, &x, &y, &w, &h);
+
+        if (w < GDEY075T7_WIDTH / 2 - 5)
+        {
+            display.draw_aligned_text(&FreeSansBold16pt7b, GDEY075T7_WIDTH / 2, y_height * 2, GDEY075T7_WIDTH / 2, y_height, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
+            return;
+        }
+
+        display.setFont(&FreeSansBold14pt7b);
+        display.getTextBounds(string_buffer, 0, 0, &x, &y, &w, &h);
+        if (w < GDEY075T7_WIDTH / 2 - 5)
+        {
+            display.draw_aligned_text(&FreeSansBold14pt7b, GDEY075T7_WIDTH / 2, y_height * 2, GDEY075T7_WIDTH / 2, y_height, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
+            return;
+        }
+
+        display.setFont(&FreeSansBold12pt7b);
+        display.getTextBounds(string_buffer, 0, 0, &x, &y, &w, &h);
+        if (w < GDEY075T7_WIDTH / 2 - 5)
+        {
+            display.draw_aligned_text(&FreeSansBold12pt7b, GDEY075T7_WIDTH / 2, y_height * 2, GDEY075T7_WIDTH / 2, y_height, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
+            return;
+        }
+
+        display.setFont(&FreeSansBold10pt7b);
+        display.getTextBounds(string_buffer, 0, 0, &x, &y, &w, &h);
+        if (w < GDEY075T7_WIDTH / 2 - 5)
+        {
+            display.draw_aligned_text(&FreeSansBold10pt7b, GDEY075T7_WIDTH / 2, y_height * 2, GDEY075T7_WIDTH / 2, y_height, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
+            return;
+        }
+
+        display.draw_aligned_text(&FreeSansBold8pt7b, GDEY075T7_WIDTH / 2, y_height * 2, GDEY075T7_WIDTH / 2, y_height, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
+    }
+}
+
 /**
  * @brief Replace Czech characters in a string with their ASCII equivalents.
  *
@@ -428,7 +480,7 @@ void print_weather_summary(Gdey075T7 *display, string weather_summary)
  *
  * @param buffer The string to replace characters in.
  */
-static void replaceCzechChars(char *buffer)
+static void replace_czech_characters(char *buffer)
 {
     string input(buffer);
     string result;
