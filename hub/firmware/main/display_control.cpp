@@ -42,6 +42,10 @@ using namespace std;
 #define DISPLAY_TIME_ICON_YPOS 142
 #define DISPLAY_VSEC2_TEXT_YPOS DISPLAY_TIME_ICON_YPOS + 4 * TIME_OF_DAY_ICON_SIZE + 20
 
+// TODO: move these defines elsewhere
+#define HUB_MAX_SECONDS_SINCE_LAST_UPDATE 3 * 60
+#define WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE 3 * 60 * 60
+
 static const char *TAG = "display_control";
 
 // Define a mapping of Czech characters to ASCII equivalents
@@ -183,63 +187,182 @@ void update_display(DisplayData *data)
         display.drawRect(0, DISPLAY_TIME_ICON_YPOS + 3 * TIME_OF_DAY_ICON_SIZE, TIME_OF_DAY_ICON_SIZE, TIME_OF_DAY_ICON_SIZE, EPD_BLACK);
     }
 
-    sprintf(string_buffer, "%.1f", data->weather.temperature.real_morning);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f", data->weather.temperature.real_morning);
+    }
     display.draw_aligned_text(&FreeSans15pt7b, 50, DISPLAY_TIME_ICON_YPOS + 0 * TIME_OF_DAY_ICON_SIZE, 85, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.1f", data->weather.temperature.real_day);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f", data->weather.temperature.real_day);
+    }
     display.draw_aligned_text(&FreeSans15pt7b, 50, DISPLAY_TIME_ICON_YPOS + 1 * TIME_OF_DAY_ICON_SIZE, 85, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.1f", data->weather.temperature.real_evening);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f", data->weather.temperature.real_evening);
+    }
     display.draw_aligned_text(&FreeSans15pt7b, 50, DISPLAY_TIME_ICON_YPOS + 2 * TIME_OF_DAY_ICON_SIZE, 85, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.1f", data->weather.temperature.real_evening);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f", data->weather.temperature.real_evening);
+    }
     display.draw_aligned_text(&FreeSans15pt7b, 50, DISPLAY_TIME_ICON_YPOS + 3 * TIME_OF_DAY_ICON_SIZE, 85, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
-    sprintf(string_buffer, "%.1f", data->weather.temperature.feel_morning);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f", data->weather.temperature.feel_morning);
+    }
     display.draw_aligned_text(&FreeSans15pt7b, 140, DISPLAY_TIME_ICON_YPOS + 0 * TIME_OF_DAY_ICON_SIZE, 95, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.1f", data->weather.temperature.feel_day);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f", data->weather.temperature.feel_day);
+    }
     display.draw_aligned_text(&FreeSans15pt7b, 140, DISPLAY_TIME_ICON_YPOS + 1 * TIME_OF_DAY_ICON_SIZE, 95, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.1f", data->weather.temperature.feel_evening);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f", data->weather.temperature.feel_evening);
+    }
     display.draw_aligned_text(&FreeSans15pt7b, 140, DISPLAY_TIME_ICON_YPOS + 2 * TIME_OF_DAY_ICON_SIZE, 95, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.1f", data->weather.temperature.feel_evening);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f", data->weather.temperature.feel_evening);
+    }
     display.draw_aligned_text(&FreeSans15pt7b, 140, DISPLAY_TIME_ICON_YPOS + 3 * TIME_OF_DAY_ICON_SIZE, 95, TIME_OF_DAY_ICON_SIZE, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
     display.drawLine(0, DISPLAY_VSEC0_HEIGHT + 8 * DISPLAY_TEXT_12PT_YOFFSET, GDEY075T7_WIDTH / 2, DISPLAY_VSEC0_HEIGHT + 8 * 30, EPD_BLACK); // horizontal line in the weather section separating temperatures and other weather data
 
-    sprintf(string_buffer, "%.0f %%%%", data->weather.humidity);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- %%%%");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.0f %%%%", data->weather.humidity);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, 0, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Vlhkost:");
     display.draw_aligned_text(&FreeSans10pt7b, 0, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
-    sprintf(string_buffer, "%.1f mm", data->weather.rain);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- mm");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f mm", data->weather.rain);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Dest:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
-    sprintf(string_buffer, "%.0f %%%%", 100.0 * data->weather.pop);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- %%%%");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.0f %%%%", 100.0 * data->weather.pop);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, 0, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "%% srazek:");
     display.draw_aligned_text(&FreeSans10pt7b, 0, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
-    sprintf(string_buffer, "%.1f mm", data->weather.snow);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- mm");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f mm", data->weather.snow);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Snih:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
-    sprintf(string_buffer, "%.0f %%%%", data->weather.clouds);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- %%%%");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.0f %%%%", data->weather.clouds);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, 0, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Oblacnost:");
     display.draw_aligned_text(&FreeSans10pt7b, 0, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
-    sprintf(string_buffer, "%.1f / %.1f m/s", data->weather.wind_avg, data->weather.wind_gust);
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- / -- m/s");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f / %.1f m/s", data->weather.wind_avg, data->weather.wind_gust);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Vitr:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
     display.drawLine((GDEY075T7_WIDTH / 4), DISPLAY_VSEC0_HEIGHT + 8 * 30, (GDEY075T7_WIDTH / 4), 429, EPD_BLACK); // vertical line in the middle of weather section
     display.drawLine(0, 429, (GDEY075T7_WIDTH / 2), 429, EPD_BLACK);                                               // last horizontal line in the weather section
 
-    print_weather_summary(&display, string(data->weather.weather_summary));
+    if (data->weather.timestamp.tv_sec + WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        print_weather_summary(&display, "Up to date weather data not available!");
+    }
+    else
+    {
+        print_weather_summary(&display, string(data->weather.weather_summary));
+    }
 
     display.draw_aligned_text(&FreeSansBold12pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC0_HEIGHT, 130, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Misto");
     display.draw_aligned_text(&FreeSansBold12pt7b, ((GDEY075T7_WIDTH * 5) / 8) + 5, DISPLAY_VSEC0_HEIGHT, 135, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, "Teplota");
     display.draw_aligned_text(&FreeSansBold12pt7b, 670, DISPLAY_VSEC0_HEIGHT, 130, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, "Vlhkost");
 
     display.draw_aligned_text(&FreeSans12pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC0_HEIGHT + 1 * DISPLAY_TEXT_12PT_YOFFSET, 130, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Obyvak");
-    sprintf(string_buffer, "%.2f *C", data->hub.temperature);
+    if (data->hub.temperature_humidity_status != 0 || data->hub.temperature_humidity_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- *C");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.2f *C", data->hub.temperature);
+    }
     display.draw_aligned_text(&FreeSans12pt7b, ((GDEY075T7_WIDTH * 5) / 8) + 5, DISPLAY_VSEC0_HEIGHT + 1 * DISPLAY_TEXT_12PT_YOFFSET, 135, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f *C", data->hub.humidity);
+    if (data->hub.temperature_humidity_status != 0 || data->hub.temperature_humidity_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- %%%%");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.2f %%%%", data->hub.humidity);
+    }
     display.draw_aligned_text(&FreeSans12pt7b, 670, DISPLAY_VSEC0_HEIGHT + 1 * DISPLAY_TEXT_12PT_YOFFSET, 130, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
     for (int i = 0; i < NODE_COUNT; i++)
@@ -281,19 +404,50 @@ void update_display(DisplayData *data)
 
     display.drawLine((GDEY075T7_WIDTH * 3) / 4, DISPLAY_VSEC0_HEIGHT + 8 * DISPLAY_TEXT_12PT_YOFFSET, (GDEY075T7_WIDTH * 3) / 4, GDEY075T7_HEIGHT, EPD_BLACK);
 
-    sprintf(string_buffer, "%.1f", data->hub.pressure_hPa);
+    if (data->hub.pressure_status != 0 || data->hub.pressure_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.1f", data->hub.pressure_hPa);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Tlak:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "hPa");
-    sprintf(string_buffer, "%d", data->hub.co2);
+
+    if (data->hub.co2_status != 0 || data->hub.co2_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%d", data->hub.co2);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "CO2:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "ppm");
-    sprintf(string_buffer, "%ld", data->hub.voc_index);
+
+    if (data->hub.gas_index_status != 0 || data->hub.gas_index_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%ld", data->hub.voc_index);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "VOC index:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "/100");
-    sprintf(string_buffer, "%ld", data->hub.nox_index);
+
+    if (data->hub.gas_index_status != 0 || data->hub.gas_index_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "--");
+    }
+    else
+    {
+        sprintf(string_buffer, "%ld", data->hub.nox_index);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "NOx index:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "/1");
@@ -310,19 +464,54 @@ void update_display(DisplayData *data)
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "*C");
 
-    sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_1_0);
+    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- ug/m^3");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_1_0);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM 1.0:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_2_5);
+    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- ug/m^3");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_2_5);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM 2.5:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_4_0);
+    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- ug/m^3");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_4_0);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM 4.0:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_10_0);
+    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- ug/m^3");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_10_0);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM 10:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    sprintf(string_buffer, "%.2f nm", data->hub.pm_typical_size);
+    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    {
+        sprintf(string_buffer, "-- nm");
+    }
+    else
+    {
+        sprintf(string_buffer, "%.2f nm", data->hub.pm_typical_size);
+    }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM size:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
