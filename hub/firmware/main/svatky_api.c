@@ -181,7 +181,6 @@ int8_t request_svatkyapi_data(SvatkyApiData *data)
         .url = url_buffer,
         .event_handler = _http_event_handler,
         .cert_pem = svatkyapicz_cert_pem_start,
-        //.crt_bundle_attach = esp_crt_bundle_attach,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_err_t err = esp_http_client_perform(client);

@@ -46,8 +46,10 @@ This is a task list for HAMS project.
         - [x] Display startup sequence debug info
         - [x] Implement node timestamp checking
         - [x] Implement 24h minimum temperature logic for particular node
-        - [ ] Implement logic for long holiday names
+        - [x] Implement logic for long holiday names
         - [x] Implement debug display view based on GPIO button toggle
+        - [ ] Clean up code
+        - [ ] Show sensor status codes in debug mode
 
 ## To do
 
