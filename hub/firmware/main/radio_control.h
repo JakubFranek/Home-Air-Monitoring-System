@@ -17,7 +17,7 @@ extern "C"
     {
         char node_name[NODE_NAME_MAX_LENGTH];
         uint8_t node_id;
-        int32_t rx_count;
+        int32_t rx_count; // Number of received packets
 
         int8_t app_status;
         int8_t sht4x_status;

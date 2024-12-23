@@ -196,7 +196,7 @@ bool is_wifi_connected(void)
     return (xEventGroupGetBits(s_wifi_event_group) & WIFI_CONNECTED_BIT) & !(xEventGroupGetBits(s_wifi_event_group) & WIFI_FAIL_BIT);
 }
 
-void get_wifi_ap_record(DisplayData *data)
+void get_wifi_ap_record(DebugData *data)
 {
     wifi_ap_record_t ap_record;
     esp_err_t err = esp_wifi_sta_get_ap_info(&ap_record);

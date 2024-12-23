@@ -3,22 +3,12 @@ extern "C"
 {
 #endif
 
-#define SVATKY_MAX_STRING_LENGTH 64
-
 #ifndef __SVATKY_API_H__
 #define __SVATKY_API_H__
 
-    typedef struct SvatkyApiData
-    {
-        char day_in_week[SVATKY_MAX_STRING_LENGTH];
-        char name[SVATKY_MAX_STRING_LENGTH];
-        bool is_holiday;
-        char holiday_name[SVATKY_MAX_STRING_LENGTH];
-        struct timeval timestamp;
-        int32_t update_count;
-    } SvatkyApiData;
+#include "calendar_data.h"
 
-    int8_t request_svatkyapi_data(SvatkyApiData *data);
+    int8_t request_calendar_data(CalendarData *data);
 
 #endif /* __SVATKY_API_H__ */
 

@@ -44,6 +44,7 @@ using namespace std;
 
 // TODO: move these defines elsewhere
 #define HUB_MAX_SECONDS_SINCE_LAST_UPDATE 3 * 60
+#define CO2_MAX_SECONDS_SINCE_LAST_UPDATE 3 * 5 * 60
 #define WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE 3 * 60 * 60
 
 static const char *TAG = "display_control";
@@ -76,7 +77,7 @@ static char string_buffer[512] = {0};
 static void print_weather_summary(Gdey075T7 *display, string weather_summary);
 static void replace_czech_characters(char *buffer);
 static void get_timestamp_string(struct timeval *timestamp, char *buffer);
-static void print_holiday(DisplayData *data, struct tm *time_info);
+static void print_holiday(HamsData *data, struct tm *time_info);
 
 /**
  * @brief Initializes the display and clears it.
@@ -145,10 +146,10 @@ void print_line(const char *format, ...)
 /**
  * @brief Updates the display with the current time, date, weather information, and sensor data.
  *
- * @param data Pointer to the DisplayData structure containing time, weather, and sensor information.
+ * @param data Pointer to the HamsData structure containing time, weather, and sensor information.
  */
 
-void update_display(DisplayData *data)
+void update_display(HamsData *data)
 {
     if (display_counter > 0)
     {
@@ -346,22 +347,22 @@ void update_display(DisplayData *data)
     display.draw_aligned_text(&FreeSansBold12pt7b, 670, DISPLAY_VSEC0_HEIGHT, 130, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, "Vlhkost");
 
     display.draw_aligned_text(&FreeSans12pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC0_HEIGHT + 1 * DISPLAY_TEXT_12PT_YOFFSET, 130, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Obyvak");
-    if (data->hub.temperature_humidity_status != 0 || data->hub.temperature_humidity_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.temperature_humidity_status != 0 || data->hub_sensors.temperature_humidity_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "-- *C");
     }
     else
     {
-        sprintf(string_buffer, "%.2f *C", data->hub.temperature);
+        sprintf(string_buffer, "%.2f *C", data->hub_sensors.temperature);
     }
     display.draw_aligned_text(&FreeSans12pt7b, ((GDEY075T7_WIDTH * 5) / 8) + 5, DISPLAY_VSEC0_HEIGHT + 1 * DISPLAY_TEXT_12PT_YOFFSET, 135, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    if (data->hub.temperature_humidity_status != 0 || data->hub.temperature_humidity_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.temperature_humidity_status != 0 || data->hub_sensors.temperature_humidity_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "-- %%%%");
     }
     else
     {
-        sprintf(string_buffer, "%.2f %%%%", data->hub.humidity);
+        sprintf(string_buffer, "%.2f %%%%", data->hub_sensors.humidity);
     }
     display.draw_aligned_text(&FreeSans12pt7b, 670, DISPLAY_VSEC0_HEIGHT + 1 * DISPLAY_TEXT_12PT_YOFFSET, 130, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
@@ -404,49 +405,49 @@ void update_display(DisplayData *data)
 
     display.drawLine((GDEY075T7_WIDTH * 3) / 4, DISPLAY_VSEC0_HEIGHT + 8 * DISPLAY_TEXT_12PT_YOFFSET, (GDEY075T7_WIDTH * 3) / 4, GDEY075T7_HEIGHT, EPD_BLACK);
 
-    if (data->hub.pressure_status != 0 || data->hub.pressure_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.pressure_status != 0 || data->hub_sensors.pressure_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "--");
     }
     else
     {
-        sprintf(string_buffer, "%.1f", data->hub.pressure_hPa);
+        sprintf(string_buffer, "%.1f", data->hub_sensors.pressure_hPa);
     }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "Tlak:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "hPa");
 
-    if (data->hub.co2_status != 0 || data->hub.co2_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.co2_status != 0 || data->hub_sensors.co2_timestamp.tv_sec + CO2_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "--");
     }
     else
     {
-        sprintf(string_buffer, "%d", data->hub.co2);
+        sprintf(string_buffer, "%d", data->hub_sensors.co2);
     }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "CO2:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "ppm");
 
-    if (data->hub.gas_index_status != 0 || data->hub.gas_index_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.gas_index_status != 0 || data->hub_sensors.gas_index_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "--");
     }
     else
     {
-        sprintf(string_buffer, "%ld", data->hub.voc_index);
+        sprintf(string_buffer, "%ld", data->hub_sensors.voc_index);
     }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "VOC index:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "/100");
 
-    if (data->hub.gas_index_status != 0 || data->hub.gas_index_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.gas_index_status != 0 || data->hub_sensors.gas_index_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "--");
     }
     else
     {
-        sprintf(string_buffer, "%ld", data->hub.nox_index);
+        sprintf(string_buffer, "%ld", data->hub_sensors.nox_index);
     }
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "NOx index:");
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
@@ -464,53 +465,53 @@ void update_display(DisplayData *data)
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "*C");
 
-    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.pm_status != 0 || data->hub_sensors.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "-- ug/m^3");
     }
     else
     {
-        sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_1_0);
+        sprintf(string_buffer, "%.2f ug/m^3", data->hub_sensors.pm_1_0);
     }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM 1.0:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 0 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.pm_status != 0 || data->hub_sensors.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "-- ug/m^3");
     }
     else
     {
-        sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_2_5);
+        sprintf(string_buffer, "%.2f ug/m^3", data->hub_sensors.pm_2_5);
     }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM 2.5:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 1 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.pm_status != 0 || data->hub_sensors.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "-- ug/m^3");
     }
     else
     {
-        sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_4_0);
+        sprintf(string_buffer, "%.2f ug/m^3", data->hub_sensors.pm_4_0);
     }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM 4.0:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 2 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.pm_status != 0 || data->hub_sensors.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "-- ug/m^3");
     }
     else
     {
-        sprintf(string_buffer, "%.2f ug/m^3", data->hub.pm_10_0);
+        sprintf(string_buffer, "%.2f ug/m^3", data->hub_sensors.pm_10_0);
     }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM 10:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    if (data->hub.pm_status != 0 || data->hub.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
+    if (data->hub_sensors.pm_status != 0 || data->hub_sensors.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "-- nm");
     }
     else
     {
-        sprintf(string_buffer, "%.2f nm", data->hub.pm_typical_size);
+        sprintf(string_buffer, "%.2f nm", data->hub_sensors.pm_typical_size);
     }
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "PM size:");
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
@@ -603,26 +604,26 @@ void print_weather_summary(Gdey075T7 *display, string weather_summary)
     display->draw_aligned_text(&FreeSans10pt7b, 0, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, GDEY075T7_WIDTH / 2, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, line_2.c_str());
 }
 
-void print_holiday(DisplayData *data, struct tm *time_info)
+void print_holiday(HamsData *data, struct tm *time_info)
 {
-    uint16_t y_height = (data->svatky.is_holiday) ? (DISPLAY_VSEC0_HEIGHT) / 3 : (DISPLAY_VSEC0_HEIGHT) / 2;
+    uint16_t y_height = (data->calendar.is_holiday) ? (DISPLAY_VSEC0_HEIGHT) / 3 : (DISPLAY_VSEC0_HEIGHT) / 2;
 
     char date_buffer[16];
-    sprintf(string_buffer, "%s", data->svatky.day_in_week);
+    sprintf(string_buffer, "%s", data->calendar.day_in_week);
     replace_czech_characters(string_buffer);
     strftime(date_buffer, sizeof(date_buffer), " %d.%m.%Y", time_info);
     strcat(string_buffer, date_buffer);
     display.draw_aligned_text(&FreeSansBold18pt7b, GDEY075T7_WIDTH / 2, 0, GDEY075T7_WIDTH / 2, y_height, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
-    sprintf(string_buffer, "%s", data->svatky.name);
+    sprintf(string_buffer, "%s", data->calendar.name);
     replace_czech_characters(string_buffer);
     display.draw_aligned_text(&FreeSansBold16pt7b, GDEY075T7_WIDTH / 2, y_height, GDEY075T7_WIDTH / 2, y_height, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
-    if (data->svatky.is_holiday)
+    if (data->calendar.is_holiday)
     {
         int16_t x, y;
         uint16_t w, h;
-        sprintf(string_buffer, "%s", data->svatky.holiday_name);
+        sprintf(string_buffer, "%s", data->calendar.holiday_name);
         replace_czech_characters(string_buffer);
 
         display.setFont(&FreeSansBold16pt7b);
@@ -716,7 +717,7 @@ static void replace_czech_characters(char *buffer)
  *
  * @param data The structure containing all the debug information.
  */
-void show_debug_info(DisplayData *data)
+void show_debug_info(HamsData *data)
 {
     clear_screen();
 
@@ -726,11 +727,11 @@ void show_debug_info(DisplayData *data)
     char timestamp_buffer_1[64], timestamp_buffer_2[64];
 
     // Print start and current time
-    get_timestamp_string(&data->start_time, timestamp_buffer_1);
+    get_timestamp_string(&data->debug.start_time, timestamp_buffer_1);
     struct timeval current_time;
     gettimeofday(&current_time, NULL);
     get_timestamp_string(&current_time, timestamp_buffer_2);
-    sprintf(string_buffer, "Start time = %s, current time = %s, app_status = %d\n", timestamp_buffer_1, timestamp_buffer_2, data->app_status);
+    sprintf(string_buffer, "Start time = %s, current time = %s, app_status = %d\n", timestamp_buffer_1, timestamp_buffer_2, data->debug.app_status);
     display.print(string_buffer);
 
     // Print display update counts
@@ -741,17 +742,17 @@ void show_debug_info(DisplayData *data)
 
     // Print Wi-Fi AP record
     sprintf(string_buffer, "Wi-Fi AP: status = %s, SSID = %s, RSSI = %d, successful connections = %ld\n",
-            data->wifi_status, data->wifi_ssid, data->wifi_rssi, data->wifi_connection_count);
+            data->debug.wifi_status, data->debug.wifi_ssid, data->debug.wifi_rssi, data->debug.wifi_connection_count);
     display.print(string_buffer);
 
     // Print SNTP last sync time and count
-    get_timestamp_string(&data->sntp_last_sync, timestamp_buffer_1);
-    sprintf(string_buffer, "SNTP: last sync = %s, count = %ld\n", timestamp_buffer_1, data->sntp_sync_count);
+    get_timestamp_string(&data->debug.sntp_last_sync, timestamp_buffer_1);
+    sprintf(string_buffer, "SNTP: last sync = %s, count = %ld\n", timestamp_buffer_1, data->debug.sntp_sync_count);
     display.print(string_buffer);
 
     // Print last svatkyapi request timestamp
-    get_timestamp_string(&data->svatky.timestamp, timestamp_buffer_1);
-    sprintf(string_buffer, "SvatkyAPI: last request = %s, count = %ld\n", timestamp_buffer_1, data->svatky.update_count);
+    get_timestamp_string(&data->calendar.timestamp, timestamp_buffer_1);
+    sprintf(string_buffer, "SvatkyAPI: last request = %s, count = %ld\n", timestamp_buffer_1, data->calendar.update_count);
     display.print(string_buffer);
 
     // Print last openweathermap request timestamp
@@ -762,29 +763,29 @@ void show_debug_info(DisplayData *data)
     display.print("\n");
 
     // Print timestamps of last measurements of all hub sensors
-    get_timestamp_string(&data->hub.temperature_humidity_timestamp, timestamp_buffer_1);
+    get_timestamp_string(&data->hub_sensors.temperature_humidity_timestamp, timestamp_buffer_1);
     sprintf(string_buffer, "SHT40: last measurement = %s, measurements = %ld, errors = %ld\n",
-            timestamp_buffer_1, data->hub.temperature_humidity_measurements, data->hub.temperature_humidity_errors);
+            timestamp_buffer_1, data->hub_sensors.temperature_humidity_measurements, data->hub_sensors.temperature_humidity_errors);
     display.print(string_buffer);
 
-    get_timestamp_string(&data->hub.gas_index_timestamp, timestamp_buffer_1);
+    get_timestamp_string(&data->hub_sensors.gas_index_timestamp, timestamp_buffer_1);
     sprintf(string_buffer, "SGP41: last measurement = %s, measurements = %ld, errors = %ld\n",
-            timestamp_buffer_1, data->hub.gas_index_measurements, data->hub.gas_index_errors);
+            timestamp_buffer_1, data->hub_sensors.gas_index_measurements, data->hub_sensors.gas_index_errors);
     display.print(string_buffer);
 
-    get_timestamp_string(&data->hub.pressure_timestamp, timestamp_buffer_1);
+    get_timestamp_string(&data->hub_sensors.pressure_timestamp, timestamp_buffer_1);
     sprintf(string_buffer, "BME280: last measurement = %s, measurements = %ld, errors = %ld\n",
-            timestamp_buffer_1, data->hub.pressure_measurements, data->hub.pressure_errors);
+            timestamp_buffer_1, data->hub_sensors.pressure_measurements, data->hub_sensors.pressure_errors);
     display.print(string_buffer);
 
-    get_timestamp_string(&data->hub.pm_timestamp, timestamp_buffer_1);
+    get_timestamp_string(&data->hub_sensors.pm_timestamp, timestamp_buffer_1);
     sprintf(string_buffer, "SPS30: last measurement = %s, measurements = %ld, errors = %ld\n",
-            timestamp_buffer_1, data->hub.pm_measurements, data->hub.pm_errors);
+            timestamp_buffer_1, data->hub_sensors.pm_measurements, data->hub_sensors.pm_errors);
     display.print(string_buffer);
 
-    get_timestamp_string(&data->hub.co2_timestamp, timestamp_buffer_1);
+    get_timestamp_string(&data->hub_sensors.co2_timestamp, timestamp_buffer_1);
     sprintf(string_buffer, "SCD41: last measurement = %s, measurements = %ld, errors = %ld\n",
-            timestamp_buffer_1, data->hub.co2_measurements, data->hub.co2_errors);
+            timestamp_buffer_1, data->hub_sensors.co2_measurements, data->hub_sensors.co2_errors);
     display.print(string_buffer);
 
     display.print("\n");

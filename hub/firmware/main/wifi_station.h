@@ -5,13 +5,13 @@ extern "C"
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "esp_wifi.h"
-#include "display_control.h"
+
+#include "hams_data.h"
 
     int8_t setup_wifi(void);
     int8_t connect_wifi(void);
     bool is_wifi_connected(void);
-    void get_wifi_ap_record(DisplayData *data);
+    void get_wifi_ap_record(DebugData *data);
 
 #ifdef __cplusplus
 }

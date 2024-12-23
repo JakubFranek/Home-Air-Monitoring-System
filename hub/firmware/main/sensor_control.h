@@ -9,7 +9,7 @@ extern "C"
 #include <time.h>
 #include <sys/time.h>
 
-    typedef struct SensorHubData
+    typedef struct HubSensorData
     {
         float pressure_hPa;
         struct timeval pressure_timestamp;
@@ -46,9 +46,9 @@ extern "C"
         int32_t temperature_humidity_measurements;
         int8_t temperature_humidity_status;
         int32_t temperature_humidity_errors;
-    } SensorHubData;
+    } HubSensorData;
 
-    extern SensorHubData sensor_hub_data;
+    extern HubSensorData sensor_hub_data;
 
     int8_t setup_i2c_bus(void);
     int8_t setup_sht4x(void);

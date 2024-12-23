@@ -1,10 +1,10 @@
+// Set log level to debug
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
-
-// Set log level to debug
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 
 #include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
@@ -45,8 +45,8 @@ static struct timeval current_time;
 static struct tm time_info;
 static int8_t status_code;
 
-SemaphoreHandle_t display_data_mutex;
-static DisplayData display_data;
+SemaphoreHandle_t hams_data_mutex;
+static HamsData hams_data;
 
 static bool debug_mode = false;
 
@@ -57,8 +57,8 @@ static TaskHandle_t task_handle_poll_button;
 static void task_display_update(void *pvParameters);
 static void task_poll_button(void *pvParameters);
 static void update_display_data(void);
-static void take_display_data_mutex(void);
-static void give_display_data_mutex(void);
+static void take_hams_data_mutex(void);
+static void give_hams_data_mutex(void);
 
 /**
  * @brief Main entry point of the application.
@@ -67,9 +67,9 @@ static void give_display_data_mutex(void);
  */
 void app_main(void)
 {
-    display_data_mutex = xSemaphoreCreateMutex();
+    hams_data_mutex = xSemaphoreCreateMutex();
 
-    take_display_data_mutex();
+    take_hams_data_mutex();
 
     ESP_ERROR_CHECK(gpio_reset_pin(LED_PIN));
     ESP_ERROR_CHECK(gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT));
@@ -93,20 +93,20 @@ void app_main(void)
     status_code = setup_wifi();
     if (status_code == 0) // If connection is successful
     {
-        display_data.wifi_connection_count++;
+        hams_data.debug.wifi_connection_count++;
     }
     print_line("done (%d).\nInitializing SNTP... ", status_code);
     status_code = initialize_sntp();
     print_line("done (%d).\nInitializing timezone... ", status_code);
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
     tzset();
-    gettimeofday(&display_data.start_time, NULL);
+    gettimeofday(&hams_data.debug.start_time, NULL);
     print_line("done.\n");
 
     print_line("Requesting data from svatkyapi.cz... ");
-    status_code = request_svatkyapi_data(&display_data.svatky);
+    status_code = request_calendar_data(&hams_data.calendar);
     print_line("done (%d).\nRequesting data from openweathermap.org... ", status_code);
-    status_code = request_weather_data(&display_data.weather);
+    status_code = request_weather_data(&hams_data.weather);
     print_line("done (%d).\n", status_code);
 
     print_line("Fan turned off.\n");
@@ -143,9 +143,9 @@ void app_main(void)
 
     clear_screen();
     update_display_data();
-    update_display(&display_data);
+    update_display(&hams_data);
 
-    give_display_data_mutex();
+    give_hams_data_mutex();
 
     xTaskCreatePinnedToCore(task_display_update, "display_update", 4096, NULL, 1, &task_handle_display_update, APP_CPU_NUM);
     xTaskCreatePinnedToCore(task_poll_button, "poll_button", 1024, NULL, 1, &task_handle_poll_button, APP_CPU_NUM);
@@ -156,7 +156,7 @@ void app_main(void)
     {
         TickType_t xLastWakeTime = xTaskGetTickCount();
 
-        take_display_data_mutex();
+        take_hams_data_mutex();
 
         ESP_ERROR_CHECK(gpio_set_level(FAN_SWITCH_PIN, 1));
         ESP_LOGI(TAG, "Fan ON"); // Turn on the fan for 5 seconds to forcefully refresh the air inside the enclosure
@@ -166,20 +166,20 @@ void app_main(void)
             ESP_LOGI(TAG, "Attempting to connect to Wi-Fi...");
             if (connect_wifi() == 0) // If connection was successful
             {
-                display_data.wifi_connection_count++;
+                hams_data.debug.wifi_connection_count++;
 
                 synchronize_time();
 
-                // If svatky data has not been successfully initialized yet, request immediately
-                if (display_data.svatky.timestamp.tv_sec == 0)
+                // If calendar data has not been successfully initialized yet, request immediately
+                if (hams_data.calendar.timestamp.tv_sec == 0)
                 {
-                    request_svatkyapi_data(&display_data.svatky);
+                    request_calendar_data(&hams_data.calendar);
                 }
 
                 // If weather data has not been successfully initialized yet, request immediately
-                if (display_data.weather.timestamp.tv_sec == 0)
+                if (hams_data.weather.timestamp.tv_sec == 0)
                 {
-                    request_weather_data(&display_data.weather);
+                    request_weather_data(&hams_data.weather);
                 }
             }
         }
@@ -187,20 +187,20 @@ void app_main(void)
         gettimeofday(&current_time, NULL);             // Get the current time
         localtime_r(&current_time.tv_sec, &time_info); // Convert seconds to local time
 
-        // If svatky data or weather forecast are from previous day, request them again
+        // If calendar data or weather forecast are from previous day, request them again
         struct tm svatky_timeinfo;
-        localtime_r(&display_data.svatky.timestamp.tv_sec, &svatky_timeinfo);
+        localtime_r(&hams_data.calendar.timestamp.tv_sec, &svatky_timeinfo);
         if (svatky_timeinfo.tm_mday != time_info.tm_mday)
         {
-            request_svatkyapi_data(&display_data.svatky);
-            request_weather_data(&display_data.weather);
+            request_calendar_data(&hams_data.calendar);
+            request_weather_data(&hams_data.weather);
         }
 
-        if (display_data.weather.timestamp.tv_sec + WEATHER_UPDATE_PERIOD_S < current_time.tv_sec)
+        if (hams_data.weather.timestamp.tv_sec + WEATHER_UPDATE_PERIOD_S < current_time.tv_sec)
         {
-            request_weather_data(&display_data.weather); // update weather at least once per hour
+            request_weather_data(&hams_data.weather); // update weather at least once per hour
         }
-        give_display_data_mutex();
+        give_hams_data_mutex();
 
         xTaskDelayUntil(&xLastWakeTime, FAN_TOGGLE_PERIOD_S * 1000 / portTICK_PERIOD_MS);
 
@@ -213,15 +213,14 @@ void app_main(void)
         measure_bme280();
         measure_sps30();
 
-        take_display_data_mutex();
-
-        if (display_data.hub.co2_timestamp.tv_sec + CO2_MEASUREMENT_PERIOD_S < current_time.tv_sec)
+        take_hams_data_mutex();
+        if (hams_data.hub_sensors.co2_timestamp.tv_sec + CO2_MEASUREMENT_PERIOD_S < current_time.tv_sec)
         {
             measure_scd4x(); // the SCD41 algorithm expects 5 minute sampling period
         }
         update_display_data();
 
-        give_display_data_mutex();
+        give_hams_data_mutex();
 
         xTaskNotify(task_handle_display_update, NOTIFY_DISPLAY_UPDATE, eSetValueWithOverwrite);
 
@@ -248,30 +247,30 @@ static void task_display_update(void *pvParameters)
 
         if ((notification == NOTIFY_DISPLAY_UPDATE) && !debug_mode)
         {
-            take_display_data_mutex();
+            take_hams_data_mutex();
 
-            update_display(&display_data);
+            update_display(&hams_data);
 
-            give_display_data_mutex();
+            give_hams_data_mutex();
         }
         else if (notification == NOTIFY_ENTER_DEBUG_MODE && debug_mode)
         {
-            take_display_data_mutex();
+            take_hams_data_mutex();
 
             update_display_data();
-            show_debug_info(&display_data);
+            show_debug_info(&hams_data);
 
-            give_display_data_mutex();
+            give_hams_data_mutex();
         }
         else if (notification == NOTIFY_EXIT_DEBUG_MODE && !debug_mode)
         {
-            take_display_data_mutex();
+            take_hams_data_mutex();
 
             clear_screen();
             update_display_data();
-            update_display(&display_data);
+            update_display(&hams_data);
 
-            give_display_data_mutex();
+            give_hams_data_mutex();
         }
     }
 }
@@ -295,6 +294,8 @@ static void task_poll_button(void *pvParameters)
         button_history[0] = button_history[1];
         button_history[1] = button_history[2];
         button_history[2] = gpio_get_level(BUTTON_DEBUG_PIN);
+
+        // If the button has been pressed for the last two polls, toggle debug mode
         if (button_history[0] == false && button_history[1] == true && button_history[2] == true)
         {
             debug_mode = !debug_mode;
@@ -302,7 +303,7 @@ static void task_poll_button(void *pvParameters)
             xTaskNotify(task_handle_display_update, notification, eSetValueWithOverwrite);
         }
 
-        xTaskDelayUntil(&xLastWakeTime, 100 / portTICK_PERIOD_MS);
+        xTaskDelayUntil(&xLastWakeTime, 100 / portTICK_PERIOD_MS); // Poll at 10 Hz
     }
 }
 
@@ -315,28 +316,28 @@ static void task_poll_button(void *pvParameters)
 
 static void update_display_data(void)
 {
-    get_wifi_ap_record(&display_data);
-    display_data.hub = sensor_hub_data;
-    display_data.app_status = get_node_data(display_data.nodes);
-    display_data.sntp_last_sync = sntp_last_sync;
-    display_data.sntp_sync_count = sntp_sync_count;
+    get_wifi_ap_record(&hams_data.debug);
+    hams_data.hub_sensors = sensor_hub_data;
+    hams_data.debug.app_status = get_node_data(hams_data.nodes);
+    hams_data.debug.sntp_last_sync = sntp_last_sync;
+    hams_data.debug.sntp_sync_count = sntp_sync_count;
 }
 
-static void take_display_data_mutex(void)
+static void take_hams_data_mutex(void)
 {
-    if (xSemaphoreTake(display_data_mutex, portMAX_DELAY) != pdPASS)
+    if (xSemaphoreTake(hams_data_mutex, portMAX_DELAY) != pdPASS)
     {
-        ESP_LOGE(TAG, "Failed to take display_data_mutex, task = %s", pcTaskGetName(xTaskGetCurrentTaskHandle()));
+        ESP_LOGE(TAG, "Failed to take hams_data_mutex, task = %s", pcTaskGetName(xTaskGetCurrentTaskHandle()));
         abort();
     }
     else
     {
-        ESP_LOGD(TAG, "Taken display_data_mutex, task = %s", pcTaskGetName(xTaskGetCurrentTaskHandle()));
+        ESP_LOGD(TAG, "Taken hams_data_mutex, task = %s", pcTaskGetName(xTaskGetCurrentTaskHandle()));
     }
 }
 
-static void give_display_data_mutex(void)
+static void give_hams_data_mutex(void)
 {
-    ESP_LOGD(TAG, "Given display_data_mutex, task = %s", pcTaskGetName(xTaskGetCurrentTaskHandle()));
-    xSemaphoreGive(display_data_mutex);
+    ESP_LOGD(TAG, "Given hams_data_mutex, task = %s", pcTaskGetName(xTaskGetCurrentTaskHandle()));
+    xSemaphoreGive(hams_data_mutex);
 }

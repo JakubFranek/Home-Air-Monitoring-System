@@ -161,7 +161,7 @@ static struct timeval current_time;
 
 /* ---------- Sensor Data Struct ---------- */
 
-SensorHubData sensor_hub_data;
+HubSensorData sensor_hub_data;
 
 /* ---------- Functions ---------- */
 
@@ -350,16 +350,17 @@ int8_t measure_scd4x(void)
         else if (retry_count == SCD4X_MAX_RETRY_COUNT)
         {
             ESP_LOGE(TAG, "[SCD4x] Data not ready after %d retries", retry_count);
+            sensor_hub_data.co2_errors++;
             return -10;
         }
         retry_count++;
         vTaskDelay(SCD4X_RETRY_PERIOD_MS / portTICK_PERIOD_MS);
     }
 
+    scd4x_data_ready = false;
     scd4x_status = scd4x_read_measurement(&scd4x_device, &scd4x_data);
     ESP_LOGI(TAG, "[SCD4x] Read Data, CO2 concentration = %d ppm, Temperature = %.2f °C, Rel. humidity = %.2f %% status = %d",
              scd4x_data.co2_ppm, scd4x_data.temperature / 100.0, scd4x_data.relative_humidity / 100.0, scd4x_status);
-    scd4x_data_ready = false;
     RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
 
     sensor_hub_data.co2 = scd4x_data.co2_ppm;

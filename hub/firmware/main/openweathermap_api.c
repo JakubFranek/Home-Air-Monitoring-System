@@ -238,12 +238,17 @@ int8_t request_weather_data(WeatherData *data)
 
                 CJSON_CHECK_ERROR_RETURN(set_float_from_cjson(daily_0, "humidity", &data->humidity));
                 CJSON_CHECK_ERROR_RETURN(set_float_from_cjson(daily_0, "clouds", &data->clouds));
-                set_float_from_cjson(daily_0, "rain", &data->rain); // rain and snow are not always present in the JSON, which is OK
-                set_float_from_cjson(daily_0, "snow", &data->snow);
+
+                // rain and snow are not always present in the JSON, which is OK (but have to be reset if so)
+                if (set_float_from_cjson(daily_0, "rain", &data->rain) != 0)
+                    data->rain = 0.0;
+                if (set_float_from_cjson(daily_0, "snow", &data->snow) != 0)
+                    data->snow = 0.0;
+
                 CJSON_CHECK_ERROR_RETURN(set_float_from_cjson(daily_0, "wind_speed", &data->wind_avg));
                 CJSON_CHECK_ERROR_RETURN(set_float_from_cjson(daily_0, "wind_gust", &data->wind_gust));
                 CJSON_CHECK_ERROR_RETURN(set_float_from_cjson(daily_0, "pop", &data->pop));
-                CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(daily_0, "summary", data->weather_summary, OPENWEATHERMAP_SUMMARY_STRING_LENGTH));
+                CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(daily_0, "summary", data->weather_summary, WEATHER_SUMMARY_STRING_LENGTH));
 
                 cJSON *weather = cJSON_GetObjectItem(daily_0, "weather");
                 if (weather != NULL)
@@ -251,7 +256,7 @@ int8_t request_weather_data(WeatherData *data)
                     cJSON *weather_0 = cJSON_GetArrayItem(weather, 0);
                     if (weather_0 != NULL)
                     {
-                        CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(weather_0, "icon", data->weather_icon, OPENWEATHERMAP_ICON_STRING_LENGTH));
+                        CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(weather_0, "icon", data->weather_icon, WEATHER_ICON_STRING_LENGTH));
                     }
                 }
             }

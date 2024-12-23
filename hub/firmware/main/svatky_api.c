@@ -167,7 +167,7 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
-int8_t request_svatkyapi_data(SvatkyApiData *data)
+int8_t request_calendar_data(CalendarData *data)
 {
     ESP_LOGI(TAG, "Requesting svatkyapi data...");
 
@@ -232,7 +232,7 @@ int8_t request_svatkyapi_data(SvatkyApiData *data)
         data->timestamp = current_time;
         data->update_count++;
 
-        ESP_LOGI(TAG, "SvatkyApiData received, day_in_week = %s, name = %s, is_holiday = %d, holiday_name = %s",
+        ESP_LOGI(TAG, "CalendarData received, day_in_week = %s, name = %s, is_holiday = %d, holiday_name = %s",
                  data->day_in_week, data->name, data->is_holiday, data->holiday_name);
         return 0;
     }
