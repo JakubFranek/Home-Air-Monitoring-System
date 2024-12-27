@@ -34,7 +34,7 @@ extern "C"
         float pm_2_5;
         float pm_4_0;
         float pm_10_0;
-        float pm_typical_size;
+        float pm_typical_size; // in micrometers
         struct timeval pm_timestamp;
         int32_t pm_measurements;
         int8_t pm_status;

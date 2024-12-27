@@ -157,31 +157,31 @@ void task_nrf24_control(void *pvParameters)
     ESP_ERROR_CHECK(spi_bus_add_device(SPI3_HOST, &nrf24_spi_device_config, &nrf24_spi_handle));
 
     nrf24_status = nrf24l01p_init_prx(&nrf24_device);
-    ESP_LOGI(TAG, "[nRF24] init_prx: status = %d", nrf24_status);
+    ESP_LOGI(TAG, "init_prx: status = %d", nrf24_status);
 
     nrf24_status = nrf24l01p_clear_status_flags(&nrf24_device,
                                                 (uint8_t)NRF24L01P_REG_STATUS_RX_DR |
                                                     NRF24L01P_REG_STATUS_TX_DS |
                                                     NRF24L01P_REG_STATUS_MAX_RT);
-    ESP_LOGI(TAG, "[nRF24] clear status flags: status = %d", nrf24_status);
+    ESP_LOGI(TAG, "clear_status_flags: status = %d", nrf24_status);
 
     nrf24_status = nrf24l01p_power_up(&nrf24_device);
-    ESP_LOGI(TAG, "[nRF24] power_up: status = %d", nrf24_status);
+    ESP_LOGI(TAG, "power_up: status = %d", nrf24_status);
 
     vTaskDelay(20 / portTICK_PERIOD_MS);
 
     nrf24l01p_set_ce(1);
 
-    while (1)
+    while (true)
     {
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
 
         if (nrf24_irq_flag)
         {
             nrf24_irq_flag = false;
 
             nrf24_status = nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources);
-            ESP_LOGI(TAG, "[nRF24] irq flags: MAX_RT = %d, RX_DR = %d, TX_DS = %d, status = %d",
+            ESP_LOGI(TAG, "irq flags: MAX_RT = %d, RX_DR = %d, TX_DS = %d, status = %d",
                      nrf24_irq_sources.max_rt, nrf24_irq_sources.rx_dr, nrf24_irq_sources.tx_ds, nrf24_status);
 
             if (nrf24_irq_sources.rx_dr)
@@ -189,7 +189,7 @@ void task_nrf24_control(void *pvParameters)
                 while (true)
                 {
                     nrf24_status = nrf24l01p_is_rx_fifo_empty(&nrf24_device, &rx_fifo_empty);
-                    ESP_LOGI(TAG, "[nRF24] is_rx_fifo_empty = %d, status = %d", rx_fifo_empty, nrf24_status);
+                    ESP_LOGI(TAG, "is_rx_fifo_empty = %d, status = %d", rx_fifo_empty, nrf24_status);
 
                     if (rx_fifo_empty)
                     {
@@ -197,7 +197,7 @@ void task_nrf24_control(void *pvParameters)
                     }
 
                     nrf24_status = nrf24l01p_rx_receive(&nrf24_device, rx_payload);
-                    ESP_LOGI(TAG, "[nRF24] rx_receive: status = %d", nrf24_status);
+                    ESP_LOGI(TAG, "rx_receive: status = %d", nrf24_status);
                     decode_payload(rx_payload);
                 }
             }
@@ -306,7 +306,7 @@ static int8_t decode_payload(uint8_t *payload)
         // Release mutex
         xSemaphoreGive(node_data_set_mutex);
 
-        ESP_LOGI(TAG, "[nRF24] Decoded payload: node = %d, temperature = %.2f °C, humidity = %.2f %%, voltage = %.3f V, "
+        ESP_LOGI(TAG, "Decoded payload: node = %d, temperature = %.2f °C, humidity = %.2f %%, voltage = %.3f V, "
                       "app_status = %d, sht4x_status = %d, nrf24_status = %d",
                  node_id, node_data_set[node_id].temperature_celsius, node_data_set[node_id].humidity_pct, node_data_set[node_id].vdda_v,
                  node_data_set[node_id].app_status, node_data_set[node_id].sht4x_status, node_data_set[node_id].nrf24_status);

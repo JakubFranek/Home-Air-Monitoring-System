@@ -71,7 +71,7 @@ void app_main(void)
 
     set_fan_state(true);
 
-    print_line("E-paper display initialized.\nFan turned on.\nInitializing Wi-Fi... ");
+    print_line("GPIO initialized.\nE-paper display initialized.\nFan turned on.\nInitializing Wi-Fi... ");
     status_code = setup_wifi();
     print_line("done (%d).\nInitializing SNTP... ", status_code);
     status_code = initialize_sntp();
@@ -91,7 +91,7 @@ void app_main(void)
     print_line("Fan turned off.\n");
 
     print_line("Starting nRF24L01+ receiver task...");
-    status_code = xTaskCreatePinnedToCore(task_nrf24_control, "nrf24_receive", 4096, NULL, 1, &task_handle_nrf24_receive, APP_CPU_NUM);
+    status_code = xTaskCreatePinnedToCore(task_nrf24_control, "nrf24_receive", 4096, NULL, 1, &task_handle_nrf24_receive, PRO_CPU_NUM);
     print_line("done (%d).\n", !status_code); // success = pdTRUE = 1, but HAMS convention is success = 0
 
     setup_sensors(true, &print_line);
