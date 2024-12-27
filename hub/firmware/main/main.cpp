@@ -1,6 +1,3 @@
-// Set log level to debug
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
-
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
@@ -12,6 +9,7 @@
 #include "esp_log.h"
 #include "driver/gpio.h"
 
+#include "hams_defines.h"
 #include "display_control.h"
 #include "wifi_station.h"
 #include "sntp_api.h"
@@ -28,11 +26,6 @@
 #define NOTIFY_DISPLAY_UPDATE 1
 #define NOTIFY_ENTER_DEBUG_MODE 2
 #define NOTIFY_EXIT_DEBUG_MODE 3
-
-#define WEATHER_UPDATE_PERIOD_S 60 * 60 // 1 hour
-#define MAIN_LOOP_PERIOD_S 60           // 1 minute
-#define CO2_MEASUREMENT_PERIOD_S 5 * 60 // 5 minutes
-#define FAN_TOGGLE_PERIOD_S 5           // 5 seconds
 
 static const char *TAG = "main";
 
@@ -152,7 +145,7 @@ void app_main(void)
 
     vTaskDelay(60 * 1000 / portTICK_PERIOD_MS); // Wait for 60 seconds to maintain cca 1 minute interval between measurement/update cycles
 
-    while (true)
+    while (true) // Main loop (period = 1 minute)
     {
         TickType_t xLastWakeTime = xTaskGetTickCount();
 

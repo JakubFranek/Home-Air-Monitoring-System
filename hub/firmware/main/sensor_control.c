@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
 #include "freertos/FreeRTOS.h"
@@ -11,6 +12,7 @@
 #include "sps30_i2c.h"
 
 #include "sensor_control.h"
+
 static const char *TAG = "sensor_control";
 
 #define RETURN_IF_NOT_ZERO(status, data, error_counter) \
@@ -27,15 +29,13 @@ static int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t l
 static int8_t sht4x_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
 static int8_t sgp41_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
 static int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
-static int8_t sgp41_delay_ms(uint16_t ms);
 static int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
 static int8_t bme280_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
 static int8_t scd4x_i2c_write(uint8_t address, const uint8_t *payload, size_t length);
 static int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length);
-static int8_t scd4x_delay_ms(uint16_t ms);
 static int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
 static int8_t sps30_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
-static int8_t sps30_delay_ms(uint16_t ms);
+static int8_t delay_ms(uint16_t ms);
 
 /* ---------- I2C ---------- */
 
@@ -81,7 +81,7 @@ static i2c_master_dev_handle_t sgp41_device_handle;
 static Sgp41Device sgp41_device = {
     .i2c_write = &sgp41_i2c_write,
     .i2c_read = &sgp41_i2c_read,
-    .delay_ms = &sgp41_delay_ms,
+    .delay_ms = &delay_ms,
     .sampling_period_s = SGP41_SAMPLING_INTERVAL_S};
 static uint64_t sgp41_serial_number;
 static Sgp41Status sgp41_status;
@@ -125,7 +125,7 @@ static i2c_master_dev_handle_t scd4x_device_handle;
 static Scd4xDevice scd4x_device = {
     .i2c_write = &scd4x_i2c_write,
     .i2c_read = &scd4x_i2c_read,
-    .delay_ms = &scd4x_delay_ms};
+    .delay_ms = &delay_ms};
 static Scd4xStatus scd4x_status;
 static Scd4xData scd4x_data;
 static bool scd4x_data_ready = false;
@@ -146,7 +146,7 @@ static i2c_master_dev_handle_t sps30_device_handle;
 static Sps30Device sps30_device = {
     .i2c_write = &sps30_i2c_write,
     .i2c_read = &sps30_i2c_read,
-    .delay_ms = &sps30_delay_ms};
+    .delay_ms = &delay_ms};
 static Sps30Status sps30_status;
 static Sps30FirmwareVersion sps30_version;
 static char sps30_product_type[8] = {'\0'};
@@ -164,17 +164,6 @@ static struct timeval current_time;
 HubSensorData sensor_hub_data;
 
 /* ---------- Functions ---------- */
-
-/*void setup_sensors(void)
-{
-    setup_i2c_bus();
-
-    setup_sht4x();
-    setup_sgp41();
-    setup_bme280();
-    setup_scd4x();
-    setup_sps30();
-}*/
 
 int8_t setup_i2c_bus(void)
 {
@@ -416,6 +405,7 @@ int8_t measure_sps30(void)
         else if (retry_count == SPS30_MAX_RETRY_COUNT)
         {
             ESP_LOGE(TAG, "[SPS30] Data not ready after %d retries", retry_count);
+            sensor_hub_data.pm_errors++;
             return -10;
         }
         retry_count++;
@@ -474,15 +464,6 @@ static int8_t sgp41_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
     return err == ESP_OK ? 0 : -1;
 }
 
-static int8_t sgp41_delay_ms(uint16_t ms)
-{
-    if (ms < 10)
-        ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
-
-    vTaskDelay(ms / portTICK_PERIOD_MS);
-    return 0;
-}
-
 static int8_t bme280_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
     (void)address; // Address not necessary
@@ -513,15 +494,6 @@ static int8_t scd4x_i2c_read(uint8_t address, uint8_t *payload, size_t length)
     return err == ESP_OK ? 0 : -1;
 }
 
-static int8_t scd4x_delay_ms(uint16_t ms)
-{
-    if (ms < 10)
-        ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz
-
-    vTaskDelay(ms / portTICK_PERIOD_MS);
-    return 0;
-}
-
 static int8_t sps30_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length)
 {
 
@@ -537,7 +509,7 @@ static int8_t sps30_i2c_read(uint8_t address, uint8_t *payload, uint8_t length)
     return err == ESP_OK ? 0 : -1;
 }
 
-static int8_t sps30_delay_ms(uint16_t ms)
+static int8_t delay_ms(uint16_t ms)
 {
     if (ms < 10)
         ms = 10; // Minimum 10 ms delay due to FreeRTOS tick rate being 100 Hz

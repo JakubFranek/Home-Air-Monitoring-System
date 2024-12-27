@@ -3,8 +3,8 @@
 #include <iostream>
 #include <unordered_map>
 #include <cstring>
-#include "sdkconfig.h"
 
+#include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
@@ -18,13 +18,13 @@
 #include "Fonts/FreeSansBold18pt7b.h"
 #include "Fonts/FreeSansBold72pt7b.h"
 #include "Fonts/FreeSans8pt7b.h"
-#include "Fonts/FreeSans9pt7b.h"
 #include "Fonts/FreeSans10pt7b.h"
 #include "Fonts/FreeSans12pt7b.h"
 #include "Fonts/FreeSans15pt7b.h"
 
 #include "displays/goodisplay/gdey075T7.h"
 
+#include "hams_defines.h"
 #include "weather_icons.h"
 #include "time_of_day_icons.h"
 #include "nodes.h"
@@ -42,14 +42,9 @@ using namespace std;
 #define DISPLAY_TIME_ICON_YPOS 142
 #define DISPLAY_VSEC2_TEXT_YPOS DISPLAY_TIME_ICON_YPOS + 4 * TIME_OF_DAY_ICON_SIZE + 20
 
-// TODO: move these defines elsewhere
-#define HUB_MAX_SECONDS_SINCE_LAST_UPDATE 3 * 60
-#define CO2_MAX_SECONDS_SINCE_LAST_UPDATE 3 * 5 * 60
-#define WEATHER_MAX_SECONDS_SINCE_LAST_UPDATE 3 * 60 * 60
-
 static const char *TAG = "display_control";
 
-// Define a mapping of Czech characters to ASCII equivalents
+// Define a mapping of Czech characters to ASCII equivalents, as Adafruit_GFX doesn't support UTF-8
 static unordered_map<string, char> cz_to_ascii = {
     {"á", 'a'}, {"č", 'c'}, {"ď", 'd'}, {"é", 'e'}, {"ě", 'e'}, {"í", 'i'}, {"ň", 'n'}, {"ó", 'o'}, {"ř", 'r'}, {"š", 's'}, {"ť", 't'}, {"ú", 'u'}, {"ů", 'u'}, {"ý", 'y'}, {"ž", 'z'}, {"Á", 'A'}, {"Č", 'C'}, {"Ď", 'D'}, {"É", 'E'}, {"Ě", 'E'}, {"Í", 'I'}, {"Ň", 'N'}, {"Ó", 'O'}, {"Ř", 'R'}, {"Š", 'S'}, {"Ť", 'T'}, {"Ú", 'U'}, {"Ů", 'U'}, {"Ý", 'Y'}, {"Ž", 'Z'}};
 
