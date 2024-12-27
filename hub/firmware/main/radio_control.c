@@ -10,7 +10,7 @@
 
 #include "nrf24l01p.h"
 #include "radio_control.h"
-#include "nodes.h"
+#include "node_constants.h"
 
 #define NRF24_CE_PIN 25
 #define NRF24_IRQ_PIN 26
@@ -317,6 +317,16 @@ static int8_t decode_payload(uint8_t *payload)
     return -1;
 }
 
+/**
+ * @brief Copies the current node data into the target array.
+ *
+ * @param target_array Pointer to an array of `NodeData` that can hold `NODE_COUNT` elements.
+ *
+ * @return 0 on success, -1 if the target_array pointer is invalid.
+ *
+ * @note This function is thread-safe. It uses a mutex to protect the `node_data_set` array.
+ *          If the mutex can't be acquired (which shouldn't happen with `portMAX_DELAY`), the function returns -1.
+ */
 int8_t get_node_data(NodeData target_array[NODE_COUNT])
 {
     if (target_array == NULL)

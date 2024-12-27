@@ -270,10 +270,10 @@ static uint8_t sht4x_calculate_checksum_default(uint8_t data[2])
 /**
  * @brief Checks whether the provided `Sht4xDevice` struct contains valid pointers.
  *
- * Returns -1 if the `device`pointer is NULL, or if the `i2c_write`, `i2c_read` or
- * `delay_ms` function pointers are `NULL`.
+ * Returns -1 if the `device`pointer is `NULL`, or if the `i2c_write` or `i2c_read`
+ * function pointers are `NULL`.
  *
- * WARNING: This function does not check whether the function pointers are
+ * @warning This function does not check whether the function pointers are
  * pointing to valid functions.
  *
  * @param[in] device The `Sht4xDevice` struct to be checked.

@@ -1,46 +1,51 @@
-#include "wifi_station.h"
-
 #include <string.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
+
 #include "esp_log.h"
 #include "esp_system.h"
-#include "freertos/event_groups.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
 #include "nvs_flash.h"
 
+#include "wifi_station_control.h"
+
 #include "secrets.h" // WiFi SSID and Password macros
 
 #define CONFIG_ESP_MAXIMUM_RETRY 5
 
-/* FreeRTOS event group to signal when we are connected*/
-static EventGroupHandle_t s_wifi_event_group;
-
-/* The event group allows multiple bits for each event, but we only care about two events:
+/* FreeRTOS event group to signal when we are connected
+ * The event group allows multiple bits for each event, but we only care about two events:
  * - we are connected to the AP with an IP
  * - we failed to connect after the maximum amount of retries */
+static EventGroupHandle_t wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 
-static const char *TAG = "wifi station";
+static const char *TAG = "wifi station control";
 
-static int s_retry_num = 0;
+static unsigned int retries = 0;
+static unsigned int wifi_connections = 0;
 
 /**
  * @brief WiFi event handler.
  *
  * Handles the following events:
+ *
  *  - `WIFI_EVENT_STA_START`: Triggered when the Wi-Fi station starts.
  *    In response, attempt to connect to the AP.
+ *
  *  - `WIFI_EVENT_STA_DISCONNECTED`: Triggered when the Wi-Fi station disconnects
  *    from the AP. Attempt to reconnect to the AP up to the maximum number of
- *    retries. If the maximum number of retries is exceeded, set the WIFI_FAIL_BIT
+ *    retries. If the maximum number of retries is exceeded, set the `WIFI_FAIL_BIT`
  *    in the event group.
+ *
  *  - `IP_EVENT_STA_GOT_IP`: Triggered when the Wi-Fi station gets an IP address.
- *    Reset the retry counter and set the WIFI_CONNECTED_BIT in the event group.
+ *    Reset the retry counter and set the `WIFI_CONNECTED_BIT` in the event group.
  */
 static void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data)
@@ -52,15 +57,15 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     }
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
-        if (s_retry_num < CONFIG_ESP_MAXIMUM_RETRY)
+        if (retries < CONFIG_ESP_MAXIMUM_RETRY)
         {
             esp_wifi_connect();
-            s_retry_num++;
-            ESP_LOGW(TAG, "Retrying connection to the AP... (%d/%d)", s_retry_num, CONFIG_ESP_MAXIMUM_RETRY);
+            retries++;
+            ESP_LOGW(TAG, "Retrying connection to the AP... (%d/%d)", retries, CONFIG_ESP_MAXIMUM_RETRY);
         }
         else
         {
-            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+            xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
             esp_wifi_stop();
             ESP_LOGW(TAG, "Connection to the AP failed");
         }
@@ -69,8 +74,8 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "Received IP:" IPSTR, IP2STR(&event->ip_info.ip));
-        s_retry_num = 0;
-        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        retries = 0;
+        xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
@@ -84,13 +89,13 @@ static void event_handler(void *arg, esp_event_base_t event_base,
  * connected to the AP or the maximum number of retries is reached.
  *
  * If the connection is successful, the function will return and the
- * bits WIFI_CONNECTED_BIT will be set in the event group. If the
+ * bits `WIFI_CONNECTED_BIT` will be set in the event group. If the
  * maximum number of retries is reached, the function will return and
- * the bits WIFI_FAIL_BIT will be set in the event group.
+ * the bits `WIFI_FAIL_BIT` will be set in the event group.
  */
 int8_t wifi_init_sta(void)
 {
-    s_wifi_event_group = xEventGroupCreate();
+    wifi_event_group = xEventGroupCreate();
 
     esp_netif_create_default_wifi_sta();
 
@@ -152,16 +157,29 @@ int8_t setup_wifi(void)
     return wifi_init_sta();
 }
 
+/**
+ * @brief Attempts to connect to the WiFi network.
+ *
+ * This function will clear the event group bits, start the WiFi driver, and
+ * wait until either the connection is established or connection failed for
+ * the maximum number of re-tries.
+ *
+ * @return `int8_t` Returns 0 on successful connection to the WiFi network,
+ * otherwise returns -1 if the connection could not be established, or -2 if
+ * an unexpected event occurs.
+ */
 int8_t connect_wifi(void)
 {
-    s_retry_num = 0;
+    ESP_LOGI(TAG, "Connecting to SSID: %s", CONFIG_ESP_WIFI_SSID);
 
-    xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT); // Clear event group bits
+    retries = 0;
+
+    xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT); // Clear event group bits
     ESP_ERROR_CHECK(esp_wifi_start());
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
-    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
+    EventBits_t bits = xEventGroupWaitBits(wifi_event_group,
                                            WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
                                            pdFALSE,
                                            pdFALSE,
@@ -172,6 +190,7 @@ int8_t connect_wifi(void)
     if (bits & WIFI_CONNECTED_BIT)
     {
         ESP_LOGI(TAG, "Connected to AP SSID: %s ", CONFIG_ESP_WIFI_SSID);
+        wifi_connections++;
         return 0;
     }
     else if (bits & WIFI_FAIL_BIT)
@@ -193,13 +212,27 @@ int8_t connect_wifi(void)
  */
 bool is_wifi_connected(void)
 {
-    return (xEventGroupGetBits(s_wifi_event_group) & WIFI_CONNECTED_BIT) & !(xEventGroupGetBits(s_wifi_event_group) & WIFI_FAIL_BIT);
+    return (xEventGroupGetBits(wifi_event_group) & WIFI_CONNECTED_BIT) & !(xEventGroupGetBits(wifi_event_group) & WIFI_FAIL_BIT);
 }
 
-void get_wifi_ap_record(DebugData *data)
+/**
+ * @brief Fill in the Wi-Fi AP record in the DebugData structure.
+ *
+ * @param[in] data Pointer to the DebugData structure to fill in.
+ *
+ * @return `int8_t` Returns 0 on success, -1 if input data is `NULL`.
+ */
+int8_t get_wifi_ap_record(DebugData *data)
 {
+    if (data == NULL)
+    {
+        return -1;
+    }
+
     wifi_ap_record_t ap_record;
     esp_err_t err = esp_wifi_sta_get_ap_info(&ap_record);
+
+    data->wifi_connection_count = wifi_connections;
 
     if (err == ESP_OK)
     {
@@ -219,4 +252,6 @@ void get_wifi_ap_record(DebugData *data)
         strncpy(data->wifi_ssid, "--", sizeof(data->wifi_ssid));
         data->wifi_rssi = 0;
     }
+
+    return 0;
 }

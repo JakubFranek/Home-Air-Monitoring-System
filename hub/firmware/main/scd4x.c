@@ -144,7 +144,7 @@ Scd4xStatus scd4x_read_measurement(Scd4xDevice *device, Scd4xData *data)
 /**
  * @brief Stops the periodic measurement mode.
  *
- * WARNING: Do not issue any commands after calling this function for 500 milliseconds.
+ * @warning Do not issue any commands after calling this function for 500 milliseconds.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  *
@@ -165,7 +165,7 @@ Scd4xStatus scd4x_stop_periodic_measurement(Scd4xDevice *device)
  * Recommended values are between 0 and 20 degrees Celsius. Default value is 4 degrees Celsius.
  * To save the setting to the non-volatile EEPROM, call `scd4x_persist_settings`.
  *
- * WARNING: Do not issue any commands after calling this function for 1 millisecond.
+ * @warning Do not issue any commands after calling this function for 1 millisecond.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  * @param[in] offset The temperature offset to set, in degrees Celsius, of type `float`.
@@ -231,7 +231,7 @@ Scd4xStatus scd4x_get_temperature_offset(Scd4xDevice *device, float *offset_degC
  * The altitude is used to correct the measured CO2 concentration. To save the setting to
  * the non-volatile EEPROM, call `scd4x_persist_settings`.
  *
- * WARNING: Do not issue any commands after calling this function for 1 millisecond.
+ * @warning Do not issue any commands after calling this function for 1 millisecond.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  * @param[in] altitude The sensor altitude in meters, of type `uint16_t`.
@@ -293,7 +293,7 @@ Scd4xStatus scd4x_get_sensor_altitude(Scd4xDevice *device, uint16_t *altitude_m)
  * The ambient pressure is used to correct the measured CO2 concentration. To save the setting to
  * the non-volatile EEPROM, call `scd4x_persist_settings`.
  *
- * WARNING: Do not issue any commands after calling this function for 1 millisecond.
+ * @warning Do not issue any commands after calling this function for 1 millisecond.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  * @param[in] pressure_hPa The ambient pressure in hecto Pascals, of type `uint16_t`.
@@ -407,7 +407,7 @@ Scd4xStatus scd4x_perform_forced_recalibration(Scd4xDevice *device, uint16_t tar
  *
  * To save the setting to the non-volatile EEPROM, call `scd4x_persist_settings`.
  *
- * WARNING: Do not issue any commands after calling this function for 1 millisecond.
+ * @warning Do not issue any commands after calling this function for 1 millisecond.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  * @param[in] enabled Set to `true` to enable ASC, or `false` to disable ASC.
@@ -471,7 +471,7 @@ Scd4xStatus scd4x_get_automatic_self_calibration_enabled(Scd4xDevice *device, bo
  *
  * To save the setting to the non-volatile EEPROM, call `scd4x_persist_settings`.
  *
- * WARNING: Do not issue any commands after calling this function for 1 millisecond.
+ * @warning Do not issue any commands after calling this function for 1 millisecond.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  * @param[in] target_co2_ppm The target CO2 concentration in parts per million,
@@ -587,9 +587,9 @@ Scd4xStatus scd4x_get_data_ready_status(Scd4xDevice *device, bool *ready)
  *
  * Call this function after configuring all settings that need to be retained after a power cycle.
  *
- * WARNING: Do not issue any commands after calling this function for 800 milliseconds.
+ * @warning Do not issue any commands after calling this function for 800 milliseconds.
  *
- * WARNING: The EEPROM is guaranteed to withstand only 2000 write cycles.
+ * @warning The EEPROM is guaranteed to withstand only 2000 write cycles.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  *
@@ -652,7 +652,7 @@ Scd4xStatus scd4x_get_serial_number(Scd4xDevice *device, uint64_t *serial_number
 /**
  * @brief Perform a self-test on the sensor.
  *
- * WARNING: This function contains a wait time of 10 seconds!
+ * @warning This function contains a wait time of 10 seconds!
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  *
@@ -687,7 +687,7 @@ Scd4xStatus scd4x_perform_self_test(Scd4xDevice *device)
  * This function resets all configuration settings stored in the EEPROM and erases
  * the FRC and ASC algorithm history.
  *
- * WARNING: Do not issue any commands after calling this function for 1200 milliseconds.
+ * @warning Do not issue any commands after calling this function for 1200 milliseconds.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  *
@@ -704,7 +704,7 @@ Scd4xStatus scd4x_perform_factory_reset(Scd4xDevice *device)
 /**
  * @brief Reinitializes the sensor user settings from EEPROM.
  *
- * WARNING: Do not issue any commands after calling this function for 30 milliseconds.
+ * @warning Do not issue any commands after calling this function for 30 milliseconds.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  *
@@ -761,7 +761,7 @@ Scd4xStatus scd4x_get_sensor_variant(Scd4xDevice *device, Scd4xSensorVariant *va
  * result is available. The sampling interval is approximately 5 seconds.
  * The measurement result can then be retrieved using the `scd41_get_measurement` function.
  *
- * WARNING: Do not issue any commands after calling this function for 5 seconds.
+ * @warning Do not issue any commands after calling this function for 5 seconds.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  *
@@ -783,7 +783,7 @@ Scd4xStatus scd41_measure_single_shot(Scd4xDevice *device)
  * The measurement result can then be retrieved using the `scd41_get_measurement` function.
  * CO2 output is returned as 0 ppm.
  *
- * WARNING: Do not issue any commands after calling this function for 50 milliseconds.
+ * @warning Do not issue any commands after calling this function for 50 milliseconds.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  *
@@ -802,7 +802,7 @@ Scd4xStatus scd41_measure_single_shot_rht_only(Scd4xDevice *device)
  *
  * To wake up the device from power down mode, call `scd41_wake_up`.
  *
- * WARNING: Do not issue any commands after calling this function for 1 millisecond.
+ * @warning Do not issue any commands after calling this function for 1 millisecond.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  *
@@ -821,7 +821,7 @@ Scd4xStatus scd41_power_down(Scd4xDevice *device)
  *
  * To verify that the sensor is awake, call `scd41_get_serial_number`.
  *
- * WARNING: Do not issue any commands after calling this function for 30 millisecond.
+ * @warning Do not issue any commands after calling this function for 30 millisecond.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  *
@@ -851,7 +851,7 @@ Scd4xStatus scd41_wake_up(Scd4xDevice *device)
  * (e.g. for a 10-minute measurement interval,
  * the scaled parameter value is obtained by multiplying the intended period in hours by 0.5).
  *
- * WARNING: Do not issue any commands after calling this function for 1 millisecond.
+ * @warning Do not issue any commands after calling this function for 1 millisecond.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  * @param[in] period The initial period in multiples of 4 hours, of type `uint16_t`.
@@ -913,7 +913,7 @@ Scd4xStatus scd41_get_automatic_self_calibration_initial_period(Scd4xDevice *dev
  *
  * To save the setting to the non-volatile EEPROM, call `scd4x_persist_settings`.
  *
- * WARNING: Do not issue any commands after calling this function for 1 millisecond.
+ * @warning Do not issue any commands after calling this function for 1 millisecond.
  *
  * @param[in] device The `Scd4xDevice` struct containing the I2C functions.
  * @param[in] period_4hrs The standard period in multiples of 4 hours, of type `uint16_t`.
@@ -1053,10 +1053,10 @@ static uint8_t scd4x_calculate_checksum_default(uint8_t data[2])
 /**
  * @brief Checks whether the provided `Scd4xDevice` struct contains valid pointers.
  *
- * Returns -1 if the `device`pointer is NULL, or if the `i2c_write`, `i2c_read` or
+ * Returns `SCD4X_POINTER_NULL` if the `device`pointer is `NULL`, or if the `i2c_write`, `i2c_read` or
  * `delay_ms` function pointers are `NULL`.
  *
- * WARNING: This function does not check whether the function pointers are
+ * @warning This function does not check whether the function pointers are
  * pointing to valid functions.
  *
  * @param[in] device The `Scd4xDevice` struct to be checked.

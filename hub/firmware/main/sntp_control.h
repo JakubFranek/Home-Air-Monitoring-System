@@ -7,11 +7,9 @@ extern "C"
 #include <time.h>
 #include <sys/time.h>
 
-    extern struct timeval sntp_last_sync;
-    extern uint32_t sntp_sync_count;
-
     int8_t initialize_sntp(void);
     int8_t synchronize_time(void);
+    int8_t get_sntp_stats(struct timeval *last_sync, uint32_t *sync_count);
 
 #ifdef __cplusplus
 }

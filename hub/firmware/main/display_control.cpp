@@ -27,7 +27,7 @@
 #include "hams_defines.h"
 #include "weather_icons.h"
 #include "time_of_day_icons.h"
-#include "nodes.h"
+#include "node_constants.h"
 
 #include "display_control.h"
 
@@ -512,8 +512,6 @@ void update_display(HamsData *data)
     display.draw_aligned_text(&FreeSans10pt7b, ((GDEY075T7_WIDTH * 3) / 4) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 195, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
 
     string weather_icon_key = string(data->weather.weather_icon);
-    ESP_LOGI(TAG, "weather_icon_key: %s", weather_icon_key.c_str());
-
     if (weather_icons.find(weather_icon_key) == weather_icons.end()) // Test if key is in map
     {
         ESP_LOGE(TAG, "weather_icon_key not found in map");

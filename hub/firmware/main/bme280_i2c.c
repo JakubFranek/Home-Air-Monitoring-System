@@ -385,10 +385,10 @@ static uint32_t bme280_compensate_H_int32(Bme280Device *device, int32_t adc_H)
 /**
  * @brief Checks whether the provided `Bme280Device` struct contains valid pointers.
  *
- * Returns -1 if the `device`pointer is NULL, or if the `i2c_write` or `i2c_read`
- * function pointers are `NULL`.
+ * Returns `BME280_POINTER_NULL` if the `device`pointer is `NULL`, or if the `i2c_write`
+ *  or `i2c_read` function pointers are `NULL`.
  *
- * WARNING: This function does not check whether the function pointers are
+ * @warning This function does not check whether the function pointers are
  * pointing to valid functions.
  *
  * @param[in] device The `Bme280Device` struct to be checked.

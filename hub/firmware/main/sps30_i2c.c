@@ -430,7 +430,7 @@ Sps30Status sps30_set_auto_cleaning_interval(Sps30Device *device, uint32_t inter
 /**
  * @brief Reads the product type from the SPS30 sensor.
  *
- * The product type is an 8-byte array of ASCII characters. The product type is null-terminated.
+ * The product type is an 8-byte array of ASCII characters. The product type is `NULL`-terminated.
  *
  * @param[in] device The `Sps30Device` struct containing the I2C communication
  * functions.
@@ -732,10 +732,10 @@ static uint8_t sps30_calculate_crc8(uint8_t data[2])
 /**
  * @brief Checks whether the provided `Sps30Device` struct contains valid pointers.
  *
- * Returns -1 if the `device`pointer is NULL, or if the `i2c_write` or `i2c_read`
- * function pointers are `NULL`.
+ * Returns `SPS30_POINTER_NULL` if the `device`pointer is `NULL`, or if the `i2c_write`
+ * or `i2c_read` function pointers are `NULL`.
  *
- * WARNING: This function does not check whether the function pointers are
+ * @warning This function does not check whether the function pointers are
  * pointing to valid functions.
  *
  * @param[in] device The `Sps30Device` struct to be checked.

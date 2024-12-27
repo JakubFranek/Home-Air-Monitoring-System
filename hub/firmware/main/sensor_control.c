@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
@@ -11,9 +12,18 @@
 #include "scd4x.h"
 #include "sps30_i2c.h"
 
+#include "hams_defines.h"
 #include "sensor_control.h"
 
+#define CO2_MEASUREMENT_MODULO CO2_MEASUREMENT_PERIOD_S / MAIN_LOOP_PERIOD_S
+
 static const char *TAG = "sensor_control";
+
+#define IF_TRUE(condition, statement) \
+    if (condition)                    \
+    {                                 \
+        statement;                    \
+    }
 
 #define RETURN_IF_NOT_ZERO(status, data, error_counter) \
     data = status;                                      \
@@ -24,6 +34,19 @@ static const char *TAG = "sensor_control";
     }
 
 /* ---------- Static Prototypes ---------- */
+
+static int8_t setup_i2c_bus(void);
+static int8_t setup_sht4x(void);
+static int8_t setup_sgp41(void);
+static int8_t setup_bme280(void);
+static int8_t setup_scd4x(void);
+static int8_t setup_sps30(void);
+
+static int8_t measure_sht4x(void);
+static int8_t measure_sgp41(void);
+static int8_t measure_bme280(void);
+static int8_t measure_scd4x(void);
+static int8_t measure_sps30(void);
 
 static int8_t sht4x_i2c_write(uint8_t address, const uint8_t *payload, uint8_t length);
 static int8_t sht4x_i2c_read(uint8_t address, uint8_t *payload, uint8_t length);
@@ -157,21 +180,18 @@ static bool sps30_data_ready = false;
 
 /* ---------- Other static variables ---------- */
 
+static HubSensorData sensor_hub_data;
 static struct timeval current_time;
-
-/* ---------- Sensor Data Struct ---------- */
-
-HubSensorData sensor_hub_data;
 
 /* ---------- Functions ---------- */
 
-int8_t setup_i2c_bus(void)
+static int8_t setup_i2c_bus(void)
 {
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_config, &bus));
     return 0;
 }
 
-int8_t setup_sht4x(void)
+static int8_t setup_sht4x(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &sht4x_config, &sht4x_device_handle));
 
@@ -188,7 +208,7 @@ int8_t setup_sht4x(void)
     return 0;
 }
 
-int8_t measure_sht4x(void)
+static int8_t measure_sht4x(void)
 {
     sht4x_status = sht4x_start_measurement(&sht4x_device, SHT4X_I2C_CMD_MEAS_HIGH_PREC);
     ESP_LOGI(TAG, "[SHT4x] Start Measurement, status = %d", sht4x_status);
@@ -211,7 +231,7 @@ int8_t measure_sht4x(void)
     return 0;
 }
 
-int8_t setup_sgp41(void)
+static int8_t setup_sgp41(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &sgp41_config, &sgp41_device_handle));
 
@@ -240,7 +260,7 @@ int8_t setup_sgp41(void)
     return 0;
 }
 
-int8_t measure_sgp41(void)
+static int8_t measure_sgp41(void)
 {
     sgp41_status = sgp41_measure_raw_signals(&sgp41_device, NULL, NULL);
     ESP_LOGI(TAG, "[SGP41] Measure Raw Signals, status = %d", sgp41_status);
@@ -262,7 +282,7 @@ int8_t measure_sgp41(void)
     return 0;
 }
 
-int8_t setup_bme280(void)
+static int8_t setup_bme280(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &bme280_config, &bme280_device_handle));
 
@@ -279,7 +299,7 @@ int8_t setup_bme280(void)
     return 0;
 }
 
-int8_t measure_bme280(void)
+static int8_t measure_bme280(void)
 {
     bme280_status = bme280_set_mode(&bme280_device, BME280_MODE_FORCED);
     ESP_LOGI(TAG, "[BME280] Set Forced Mode, status = %d", bme280_status);
@@ -300,7 +320,7 @@ int8_t measure_bme280(void)
     return 0;
 }
 
-int8_t setup_scd4x(void)
+static int8_t setup_scd4x(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &scd4x_config, &scd4x_device_handle));
 
@@ -317,7 +337,7 @@ int8_t setup_scd4x(void)
     return 0;
 }
 
-int8_t measure_scd4x(void)
+static int8_t measure_scd4x(void)
 {
     scd4x_status = scd41_measure_single_shot(&scd4x_device);
     ESP_LOGI(TAG, "[SCD4x] Measure Single Shot, status = %d", scd4x_status);
@@ -361,7 +381,7 @@ int8_t measure_scd4x(void)
     return 0;
 }
 
-int8_t setup_sps30(void)
+static int8_t setup_sps30(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &sps30_config, &sps30_device_handle));
 
@@ -389,7 +409,7 @@ int8_t setup_sps30(void)
     return 0;
 }
 
-int8_t measure_sps30(void)
+static int8_t measure_sps30(void)
 {
     uint8_t retry_count = 0;
     while (true)
@@ -516,4 +536,104 @@ static int8_t delay_ms(uint16_t ms)
 
     vTaskDelay(ms / portTICK_PERIOD_MS);
     return 0;
+}
+
+/**
+ * @brief Get the current sensor data
+ *
+ * Copies the current sensor data from the internal struct to the provided pointer.
+ *
+ * @param data Pointer to a HubSensorData struct to store the data in
+ *
+ * @return 0 on success, -1 if data is `NULL`
+ */
+int8_t get_sensor_data(HubSensorData *data)
+{
+    if (data == NULL)
+    {
+        return -1;
+    }
+
+    memcpy(data, &sensor_hub_data, sizeof(HubSensorData));
+    return 0;
+}
+
+/**
+ * @brief Set up all hub sensors
+ *
+ * This function sets up all sensors by calling their respective setup functions.
+ * If `debug_print` is true, it prints the status of each setup function to the
+ * console using the debug_print_fn function.
+ *
+ * @param debug_print If `true`, print status of each setup function
+ * @param debug_print_fn Function to print debug messages with
+ *
+ * @return 0 on success, otherwise failure
+ */
+int8_t setup_sensors(bool debug_print, printf_like_t debug_print_fn)
+{
+    int8_t status = 0;
+
+    IF_TRUE(debug_print, debug_print_fn("Initializing I2C bus... "));
+    status = setup_i2c_bus() || status;
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing SHT40... ", status));
+    status = setup_sht4x() || status;
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing SGP41 (cca 10 s)... ", status));
+    status = setup_sgp41() || status;
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing BME280... ", status));
+    status = setup_bme280() || status;
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing SCD41 (cca 10 s)... ", status));
+    status = setup_scd4x() || status;
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing SPS30... ", status));
+    status = setup_sps30() || status;
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\n", status));
+
+    return status;
+}
+
+/**
+ * @brief Measure data from all sensors
+ *
+ * This function triggers measurements from various sensors (SHT4x, SGP41,
+ * BME280, and SPS30) and updates the internal data structure with the
+ * results. Every `CO2_MEASUREMENT_MODULO` calls, it also performs a
+ * measurement using the SCD4x sensor. If `debug_print` is true, it logs
+ * the status of each measurement using the provided `debug_print_fn`.
+ *
+ * @param debug_print If `true`, print status of each measurement
+ * @param debug_print_fn Function to print debug messages with
+ *
+ * @return 0 on success, otherwise failure
+ */
+int8_t measure_sensors(bool debug_print, printf_like_t debug_print_fn)
+{
+    static unsigned int count = 0; // Keeps track of the number of measurements
+
+    if (debug_print && debug_print_fn == NULL)
+    {
+        return -1;
+    }
+
+    int8_t status = 0;
+
+    IF_TRUE(debug_print, debug_print_fn("Making SHT4x measurement... ", status));
+    status = measure_sht4x() || status;
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking SGP41 measurement... ", status));
+    status = measure_sgp41() || status;
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking BME280 measurement... ", status));
+    status = measure_bme280() || status;
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking SPS30 measurement... ", status));
+    status = measure_sps30() || status;
+
+    if (count % CO2_MEASUREMENT_MODULO == 0)
+    {
+        IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking SCD4x measurement (cca 5 s)... ", status));
+        status = measure_scd4x() || status;
+    }
+
+    IF_TRUE(debug_print, debug_print_fn("done (%d).\n", status));
+
+    count++;
+
+    return status;
 }

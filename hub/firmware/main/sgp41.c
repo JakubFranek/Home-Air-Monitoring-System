@@ -390,10 +390,10 @@ static uint8_t sgp41_calculate_checksum_default(uint8_t data[2])
 /**
  * @brief Checks whether the provided `Sgp41Device` struct contains valid pointers.
  *
- * Returns -1 if the `device`pointer is NULL, or if the `i2c_write`, `i2c_read` or
- * `delay_ms` function pointers are `NULL`.
+ * Returns `SGP41_POINTER_NULL` if the `device`pointer is `NULL`, or if the `i2c_write`
+ *  or `i2c_read` function pointers are `NULL`.
  *
- * WARNING: This function does not check whether the function pointers are
+ * @warningThis function does not check whether the function pointers are
  * pointing to valid functions.
  *
  * @param[in] device The `Sgp41Device` struct to be checked.

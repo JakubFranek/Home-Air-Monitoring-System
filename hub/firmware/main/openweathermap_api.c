@@ -19,6 +19,7 @@
 #include "openweathermap_api.h"
 #include "secrets.h"
 #include "cjson_parsing.h"
+#include "hams_defines.h"
 
 #define REQUEST_TIMEOUT_MS 10000
 #define MAX_HTTP_OUTPUT_BUFFER 8192 - 1
@@ -28,7 +29,7 @@
     if (expr != 0)                         \
     {                                      \
         ESP_LOGE(TAG, "cJSON hard error"); \
-        return -1;                         \
+        return -4;                         \
     }
 
 extern const char openweathermaporg_cert_pem_start[] asm("_binary_openweathermaporg_cert_pem_start");
@@ -161,8 +162,36 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
+/**
+ * @brief Requests weather data from the OpenWeatherMap service and stores it in the provided structure.
+ *
+ * If the data is already up to date, the function returns 0 without making a new request.
+ *
+ * @param data `WeatherData` struct to store the weather data in.
+ *
+ * @retval 0 on success
+ * @retval -1 if the provided struct is `NULL`
+ * @retval -2 if the request failed
+ * @retval -3 if the request timed out
+ * @retval -4 if the JSON parsing failed
+ */
 int8_t request_weather_data(WeatherData *data)
 {
+    if (data == NULL)
+    {
+        ESP_LOGE(TAG, "Provided struct is NULL.");
+        return -1;
+    }
+
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+
+    if (data->timestamp.tv_sec + WEATHER_UPDATE_PERIOD_S > current_time.tv_sec)
+    {
+        ESP_LOGI(TAG, "Weather data is up to date already.");
+        return 0; // No need to request sooner than the update period
+    }
+
     ESP_LOGI(TAG, "Requesting weather data...");
 
     char url[200];
@@ -189,7 +218,7 @@ int8_t request_weather_data(WeatherData *data)
     else
     {
         ESP_LOGE(TAG, "Error performing HTTP request %s", esp_err_to_name(err));
-        return -1;
+        return -2;
     }
 
     esp_http_client_cleanup(client);
@@ -205,7 +234,7 @@ int8_t request_weather_data(WeatherData *data)
         if (diff > REQUEST_TIMEOUT_MS / portTICK_PERIOD_MS) // Check for timeout
         {
             ESP_LOGE(TAG, "Request timed out.");
-            return -1;
+            return -3;
         }
     }
 
@@ -275,6 +304,6 @@ int8_t request_weather_data(WeatherData *data)
     else
     {
         ESP_LOGE(TAG, "Failed to parse JSON");
-        return -1;
+        return -4;
     }
 }

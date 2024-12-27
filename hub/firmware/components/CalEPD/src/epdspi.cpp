@@ -6,11 +6,14 @@
  * as permitted under the Apache License, Version 2.0.
  */
 
-#include <epdspi.h>
+#include <algorithm>
 #include <string.h>
+
+#include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-#include <algorithm>
+
+#include "epdspi.h"
 
 /**
  * @brief Initializes the SPI interface for the EPD.

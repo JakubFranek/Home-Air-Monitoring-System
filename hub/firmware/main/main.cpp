@@ -11,12 +11,12 @@
 
 #include "hams_defines.h"
 #include "display_control.h"
-#include "wifi_station.h"
-#include "sntp_api.h"
-#include "svatky_api.h"
-#include "openweathermap_api.h"
+#include "wifi_station_control.h"
+#include "sntp_control.h"
 #include "sensor_control.h"
 #include "radio_control.h"
+#include "svatky_api.h"
+#include "openweathermap_api.h"
 
 #define LED_PIN GPIO_NUM_27
 #define FAN_SWITCH_PIN GPIO_NUM_32
@@ -27,18 +27,16 @@
 #define NOTIFY_ENTER_DEBUG_MODE 2
 #define NOTIFY_EXIT_DEBUG_MODE 3
 
-static const char *TAG = "main";
-
 extern "C"
 {
     void app_main(void);
 }
 
-static struct timeval current_time;
-static struct tm time_info;
+static const char *TAG = "main";
+
 static int8_t status_code;
 
-SemaphoreHandle_t hams_data_mutex;
+static SemaphoreHandle_t hams_data_mutex;
 static HamsData hams_data;
 
 static bool debug_mode = false;
@@ -49,9 +47,13 @@ static TaskHandle_t task_handle_poll_button;
 
 static void task_display_update(void *pvParameters);
 static void task_poll_button(void *pvParameters);
+
 static void update_display_data(void);
 static void take_hams_data_mutex(void);
 static void give_hams_data_mutex(void);
+
+static void set_fan_state(bool on);
+static void initialize_gpio(void);
 
 /**
  * @brief Main entry point of the application.
@@ -64,30 +66,13 @@ void app_main(void)
 
     take_hams_data_mutex();
 
-    ESP_ERROR_CHECK(gpio_reset_pin(LED_PIN));
-    ESP_ERROR_CHECK(gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT));
-    ESP_ERROR_CHECK(gpio_set_pull_mode(LED_PIN, GPIO_FLOATING));
-    ESP_ERROR_CHECK(gpio_set_level(LED_PIN, 0));
-
-    ESP_ERROR_CHECK(gpio_reset_pin(FAN_SWITCH_PIN));
-    ESP_ERROR_CHECK(gpio_set_direction(FAN_SWITCH_PIN, GPIO_MODE_OUTPUT));
-    ESP_ERROR_CHECK(gpio_set_pull_mode(FAN_SWITCH_PIN, GPIO_FLOATING));
-
-    ESP_ERROR_CHECK(gpio_set_direction(ESPINK_VSENSOR_ENA_PIN, GPIO_MODE_OUTPUT));
-    ESP_ERROR_CHECK(gpio_set_pull_mode(ESPINK_VSENSOR_ENA_PIN, GPIO_FLOATING));
-    ESP_ERROR_CHECK(gpio_set_level(ESPINK_VSENSOR_ENA_PIN, 1));
-
-    ESP_ERROR_CHECK(gpio_set_direction(BUTTON_DEBUG_PIN, GPIO_MODE_INPUT));
-    ESP_ERROR_CHECK(gpio_set_pull_mode(BUTTON_DEBUG_PIN, GPIO_FLOATING));
-
+    initialize_gpio();
     setup_display();
-    ESP_ERROR_CHECK(gpio_set_level(FAN_SWITCH_PIN, 1));
+
+    set_fan_state(true);
+
     print_line("E-paper display initialized.\nFan turned on.\nInitializing Wi-Fi... ");
     status_code = setup_wifi();
-    if (status_code == 0) // If connection is successful
-    {
-        hams_data.debug.wifi_connection_count++;
-    }
     print_line("done (%d).\nInitializing SNTP... ", status_code);
     status_code = initialize_sntp();
     print_line("done (%d).\nInitializing timezone... ", status_code);
@@ -102,35 +87,17 @@ void app_main(void)
     status_code = request_weather_data(&hams_data.weather);
     print_line("done (%d).\n", status_code);
 
+    set_fan_state(false);
     print_line("Fan turned off.\n");
-    ESP_ERROR_CHECK(gpio_set_level(FAN_SWITCH_PIN, 0));
 
-    print_line("Starting nRF24L01+ receiver task... ");
-    xTaskCreatePinnedToCore(task_nrf24_control, "nrf24_receive", 4096, NULL, 1, &task_handle_nrf24_receive, APP_CPU_NUM);
+    print_line("Starting nRF24L01+ receiver task...");
+    status_code = xTaskCreatePinnedToCore(task_nrf24_control, "nrf24_receive", 4096, NULL, 1, &task_handle_nrf24_receive, APP_CPU_NUM);
+    print_line("done (%d).\n", !status_code); // success = pdTRUE = 1, but HAMS convention is success = 0
 
-    print_line("Initializing I2C bus... ");
-    status_code = setup_i2c_bus();
-    print_line("done (%d).\nInitializing SHT40... ", status_code);
-    status_code = setup_sht4x();
-    print_line("done (%d).\nInitializing SGP41 (cca 10 s)... ", status_code);
-    status_code = setup_sgp41();
-    print_line("done (%d).\nInitializing BME280... ", status_code);
-    status_code = setup_bme280();
-    print_line("done (%d).\nInitializing SCD41 (cca 10 s)... ", status_code);
-    status_code = setup_scd4x();
-    print_line("done (%d).\nInitializing SPS30... ", status_code);
-    status_code = setup_sps30();
-    print_line("done (%d).\nMaking SHT4x measurement... ", status_code);
-    status_code = measure_sht4x();
-    print_line("done (%d).\nMaking SGP41 measurement... ", status_code);
-    status_code = measure_sgp41();
-    print_line("done (%d).\nMaking BME280 measurement... ", status_code);
-    status_code = measure_bme280();
-    print_line("done (%d).\nMaking SPS30 measurement... ", status_code);
-    status_code = measure_sps30();
-    print_line("done (%d).\nMaking SCD41 measurement (cca 5 s)... ", status_code);
-    status_code = measure_scd4x();
-    print_line("done (%d).\nClearing screen and entering main loop...\n", status_code);
+    setup_sensors(true, &print_line);
+    measure_sensors(true, &print_line);
+
+    print_line("Clearing screen and entering main loop...\n");
 
     vTaskDelay(1000 / portTICK_PERIOD_MS); // Wait for 1 second to allow user to read the last message
 
@@ -143,76 +110,35 @@ void app_main(void)
     xTaskCreatePinnedToCore(task_display_update, "display_update", 4096, NULL, 1, &task_handle_display_update, APP_CPU_NUM);
     xTaskCreatePinnedToCore(task_poll_button, "poll_button", 1024, NULL, 1, &task_handle_poll_button, APP_CPU_NUM);
 
-    vTaskDelay(60 * 1000 / portTICK_PERIOD_MS); // Wait for 60 seconds to maintain cca 1 minute interval between measurement/update cycles
+    vTaskDelay(MAIN_LOOP_PERIOD_S * 1000 / portTICK_PERIOD_MS); // Wait to maintain interval between measurement/update cycles
 
-    while (true) // Main loop (period = 1 minute)
+    while (true) // Main loop
     {
         TickType_t xLastWakeTime = xTaskGetTickCount();
 
+        set_fan_state(true);
+
         take_hams_data_mutex();
 
-        ESP_ERROR_CHECK(gpio_set_level(FAN_SWITCH_PIN, 1));
-        ESP_LOGI(TAG, "Fan ON"); // Turn on the fan for 5 seconds to forcefully refresh the air inside the enclosure
-
-        if (!is_wifi_connected())
+        if (!is_wifi_connected() && connect_wifi() == 0) // If Wi-Fi is not connected and connection is successful
         {
-            ESP_LOGI(TAG, "Attempting to connect to Wi-Fi...");
-            if (connect_wifi() == 0) // If connection was successful
-            {
-                hams_data.debug.wifi_connection_count++;
-
-                synchronize_time();
-
-                // If calendar data has not been successfully initialized yet, request immediately
-                if (hams_data.calendar.timestamp.tv_sec == 0)
-                {
-                    request_calendar_data(&hams_data.calendar);
-                }
-
-                // If weather data has not been successfully initialized yet, request immediately
-                if (hams_data.weather.timestamp.tv_sec == 0)
-                {
-                    request_weather_data(&hams_data.weather);
-                }
-            }
+            synchronize_time(); // Forcefully synchronize time
         }
 
-        gettimeofday(&current_time, NULL);             // Get the current time
-        localtime_r(&current_time.tv_sec, &time_info); // Convert seconds to local time
+        request_calendar_data(&hams_data.calendar);
+        request_weather_data(&hams_data.weather);
 
-        // If calendar data or weather forecast are from previous day, request them again
-        struct tm svatky_timeinfo;
-        localtime_r(&hams_data.calendar.timestamp.tv_sec, &svatky_timeinfo);
-        if (svatky_timeinfo.tm_mday != time_info.tm_mday)
-        {
-            request_calendar_data(&hams_data.calendar);
-            request_weather_data(&hams_data.weather);
-        }
-
-        if (hams_data.weather.timestamp.tv_sec + WEATHER_UPDATE_PERIOD_S < current_time.tv_sec)
-        {
-            request_weather_data(&hams_data.weather); // update weather at least once per hour
-        }
         give_hams_data_mutex();
 
-        xTaskDelayUntil(&xLastWakeTime, FAN_TOGGLE_PERIOD_S * 1000 / portTICK_PERIOD_MS);
+        xTaskDelayUntil(&xLastWakeTime, FAN_TOGGLE_PERIOD_S * 1000 / portTICK_PERIOD_MS); // Wait until the fan period elapses
+        set_fan_state(false);
 
-        ESP_ERROR_CHECK(gpio_set_level(FAN_SWITCH_PIN, 0));
-        ESP_LOGI(TAG, "Fan OFF");
         vTaskDelay(FAN_TOGGLE_PERIOD_S * 1000 / portTICK_PERIOD_MS); // Wait for 5 seconds after turning off the fan for sensors to stabilize
 
-        measure_sht4x();
-        measure_sgp41();
-        measure_bme280();
-        measure_sps30();
+        measure_sensors(false, NULL); // Measure sensors without printing to the display
 
         take_hams_data_mutex();
-        if (hams_data.hub_sensors.co2_timestamp.tv_sec + CO2_MEASUREMENT_PERIOD_S < current_time.tv_sec)
-        {
-            measure_scd4x(); // the SCD41 algorithm expects 5 minute sampling period
-        }
         update_display_data();
-
         give_hams_data_mutex();
 
         xTaskNotify(task_handle_display_update, NOTIFY_DISPLAY_UPDATE, eSetValueWithOverwrite);
@@ -305,17 +231,27 @@ static void task_poll_button(void *pvParameters)
  *
  * This function fetches the latest Wi-Fi access point record and sensor hub data,
  * updates the node data, and synchronizes the SNTP last sync time and sync count.
+ *
+ * @warning This function is not thread-safe, taking the `hams_data_mutex` before
+ * calling this is required.
  */
-
 static void update_display_data(void)
 {
-    get_wifi_ap_record(&hams_data.debug);
-    hams_data.hub_sensors = sensor_hub_data;
-    hams_data.debug.app_status = get_node_data(hams_data.nodes);
-    hams_data.debug.sntp_last_sync = sntp_last_sync;
-    hams_data.debug.sntp_sync_count = sntp_sync_count;
+    int8_t status = 0;
+
+    // If any of the function calls returns any number other than zero, the status will be set to that number
+
+    status = (get_wifi_ap_record(&hams_data.debug) || status);
+    status = (get_sensor_data(&hams_data.hub_sensors) || status);
+    status = (get_node_data(hams_data.nodes) || status);
+    status = (get_sntp_stats(&hams_data.debug.sntp_last_sync, &hams_data.debug.sntp_sync_count) || status);
+
+    hams_data.debug.app_status = status;
 }
 
+/**
+ * @brief Tries to take the hams_data_mutex semaphore.
+ */
 static void take_hams_data_mutex(void)
 {
     if (xSemaphoreTake(hams_data_mutex, portMAX_DELAY) != pdPASS)
@@ -329,8 +265,41 @@ static void take_hams_data_mutex(void)
     }
 }
 
+/**
+ * @brief Releases the hams_data_mutex semaphore
+ */
 static void give_hams_data_mutex(void)
 {
     ESP_LOGD(TAG, "Given hams_data_mutex, task = %s", pcTaskGetName(xTaskGetCurrentTaskHandle()));
     xSemaphoreGive(hams_data_mutex);
+}
+
+/**
+ * @brief Set the state of the fan.
+ *
+ * @param on `true` to turn the fan on, `false` to turn it off.
+ */
+static void set_fan_state(bool on)
+{
+    ESP_ERROR_CHECK(gpio_set_level(FAN_SWITCH_PIN, (uint32_t)on));
+    ESP_LOGI(TAG, "Fan turned %s", on ? "on" : "off");
+}
+
+static void initialize_gpio(void)
+{
+    ESP_ERROR_CHECK(gpio_reset_pin(LED_PIN));
+    ESP_ERROR_CHECK(gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT));
+    ESP_ERROR_CHECK(gpio_set_pull_mode(LED_PIN, GPIO_FLOATING));
+    ESP_ERROR_CHECK(gpio_set_level(LED_PIN, 0));
+
+    ESP_ERROR_CHECK(gpio_reset_pin(FAN_SWITCH_PIN));
+    ESP_ERROR_CHECK(gpio_set_direction(FAN_SWITCH_PIN, GPIO_MODE_OUTPUT));
+    ESP_ERROR_CHECK(gpio_set_pull_mode(FAN_SWITCH_PIN, GPIO_FLOATING));
+
+    ESP_ERROR_CHECK(gpio_set_direction(ESPINK_VSENSOR_ENA_PIN, GPIO_MODE_OUTPUT));
+    ESP_ERROR_CHECK(gpio_set_pull_mode(ESPINK_VSENSOR_ENA_PIN, GPIO_FLOATING));
+    ESP_ERROR_CHECK(gpio_set_level(ESPINK_VSENSOR_ENA_PIN, 1));
+
+    ESP_ERROR_CHECK(gpio_set_direction(BUTTON_DEBUG_PIN, GPIO_MODE_INPUT));
+    ESP_ERROR_CHECK(gpio_set_pull_mode(BUTTON_DEBUG_PIN, GPIO_FLOATING));
 }

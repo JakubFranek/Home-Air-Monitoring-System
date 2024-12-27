@@ -6,7 +6,7 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
-#include "sntp_api.h"
+#include "sntp_control.h"
 
 #include <string.h>
 #include "esp_system.h"
@@ -22,12 +22,10 @@
 #define CONFIG_SNTP_TIME_SERVER "0.cz.pool.ntp.org"
 #define SNTP_RETRY_COUNT 10
 
-static const char *TAG = "sntp_api";
+static const char *TAG = "sntp_control";
 
-/* --- Public variables --- */
-struct timeval sntp_last_sync;
-uint32_t sntp_sync_count = 0;
-
+static struct timeval sntp_last_sync;
+static uint32_t sntp_sync_count = 0;
 static struct tm timeinfo;
 
 static int8_t wait_for_sync(void);
@@ -40,11 +38,13 @@ static int8_t wait_for_sync(void);
  *
  * @param tv Pointer to the current time.
  */
-void time_sync_notification_cb(struct timeval *tv)
+void time_sync_notification_callback(struct timeval *tv)
 {
     gettimeofday(&sntp_last_sync, NULL);
     localtime_r(&sntp_last_sync.tv_sec, &timeinfo);
+
     sntp_sync_count++;
+
     ESP_LOGI(TAG, "Time synchronized with NTP server at %02d:%02d:%02d (count = %ld)",
              timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, sntp_sync_count);
 }
@@ -67,13 +67,20 @@ int8_t initialize_sntp(void)
 
     esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(CONFIG_SNTP_TIME_SERVER);
 
-    config.sync_cb = time_sync_notification_cb; // Note: This is only needed if we want
+    config.sync_cb = time_sync_notification_callback; // Note: this is an optional callback
 
     esp_netif_sntp_init(&config);
 
     return wait_for_sync();
 }
 
+/**
+ * @brief Synchronizes the system time using SNTP
+ *
+ * This function "manually" forces the system time to be synchronized with the NTP server.
+ *
+ * @return 0 on success, -1 if the system time could not be set within 15 attempts
+ */
 int8_t synchronize_time(void)
 {
     ESP_LOGI(TAG, "Attempting to synchronize time via SNTP...");
@@ -81,6 +88,16 @@ int8_t synchronize_time(void)
     return wait_for_sync();
 }
 
+/**
+ * @brief Waits for the system time to be synchronized.
+ *
+ * This function repeatedly checks if the system time has been set by the SNTP client.
+ * It logs the progress and continues to retry until the system time is set or the maximum
+ * number of retries is reached.
+ *
+ * @return 0 on success when the system time is set, -1 if the system time could not be set
+ * within the defined number of retry attempts.
+ */
 static int8_t wait_for_sync(void)
 {
     int retry = 0;
@@ -101,6 +118,27 @@ static int8_t wait_for_sync(void)
         }
         retry++;
     }
+
+    return 0;
+}
+
+/**
+ * @brief Get the last SNTP synchronization time and the number of successful synchronizations
+ *
+ * @param[out] last_sync Pointer to a `struct timeval` to store the last synchronization time
+ * @param[out] sync_count Pointer to an `uint32_t` to store the number of successful synchronizations
+ *
+ * @return 0 on success, -1 if either of the pointers is `NULL`
+ */
+int8_t get_sntp_stats(struct timeval *last_sync, uint32_t *sync_count)
+{
+    if (last_sync == NULL || sync_count == NULL)
+    {
+        return -1;
+    }
+
+    *last_sync = sntp_last_sync;
+    *sync_count = sntp_sync_count;
 
     return 0;
 }

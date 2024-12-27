@@ -11,7 +11,7 @@ extern "C"
     int8_t setup_wifi(void);
     int8_t connect_wifi(void);
     bool is_wifi_connected(void);
-    void get_wifi_ap_record(DebugData *data);
+    int8_t get_wifi_ap_record(DebugData *data);
 
 #ifdef __cplusplus
 }

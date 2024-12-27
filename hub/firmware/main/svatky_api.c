@@ -22,6 +22,13 @@
 #define REQUEST_TIMEOUT_MS 10000
 #define MAX_HTTP_OUTPUT_BUFFER 2048 - 1
 
+#define CJSON_CHECK_ERROR_RETURN(expr)     \
+    if (expr != 0)                         \
+    {                                      \
+        ESP_LOGE(TAG, "cJSON hard error"); \
+        return -4;                         \
+    }
+
 extern const char svatkyapicz_cert_pem_start[] asm("_binary_svatkyapicz_cert_pem_start");
 extern const char svatkyapicz_cert_pem_end[] asm("_binary_svatkyapicz_cert_pem_end");
 
@@ -167,16 +174,46 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
+/**
+ * @brief Requests calendar data from the svatkyapi.cz service and stores it in the provided structure.
+ *
+ * If the data is already up to date, the function returns 0 without making a new request.
+ *
+ * @param data `CalendarData` struct to store the calendar data in.
+ *
+ * @retval 0 on success
+ * @retval -1 if the provided struct is `NULL`
+ * @retval -2 if the request failed
+ * @retval -3 if the request timed out
+ * @retval -4 if the JSON parsing failed
+ */
 int8_t request_calendar_data(CalendarData *data)
 {
+    if (data == NULL)
+    {
+        ESP_LOGE(TAG, "Provided struct is NULL.");
+        return -1;
+    }
+
+    struct timeval current_time;
+    struct tm time_info;
+    gettimeofday(&current_time, NULL);             // Get the current time
+    localtime_r(&current_time.tv_sec, &time_info); // Convert seconds to local time
+
+    struct tm calendar_time_info;
+    localtime_r(&data->timestamp.tv_sec, &calendar_time_info);
+
+    if (calendar_time_info.tm_mday == time_info.tm_mday &&
+        calendar_time_info.tm_mon == time_info.tm_mon &&
+        calendar_time_info.tm_year == time_info.tm_year)
+    {
+        ESP_LOGI(TAG, "Weather data is up to date already.");
+        return 0; // No need to request if the data is from today
+    }
+
     ESP_LOGI(TAG, "Requesting svatkyapi data...");
 
     char url_buffer[64] = {0};
-    struct timeval current_time;
-    struct tm time_info;
-    gettimeofday(&current_time, NULL);
-    localtime_r(&current_time.tv_sec, &time_info);
-
     sprintf(url_buffer, "https://svatkyapi.cz/api/day/%d-%d-%d", time_info.tm_year + 1900, time_info.tm_mon + 1, time_info.tm_mday);
 
     esp_http_client_config_t config = {
@@ -196,6 +233,7 @@ int8_t request_calendar_data(CalendarData *data)
     else
     {
         ESP_LOGE(TAG, "Error perform HTTP request %s", esp_err_to_name(err));
+        return -2;
     }
     esp_http_client_cleanup(client);
 
@@ -210,19 +248,19 @@ int8_t request_calendar_data(CalendarData *data)
         if (diff > REQUEST_TIMEOUT_MS / portTICK_PERIOD_MS) // Check for timeout
         {
             ESP_LOGE(TAG, "Request timed out");
-            return -1;
+            return -3;
         }
     }
 
     cJSON *json = cJSON_Parse(received_data); // Watch out, this contains dynamic memory allocation
     if (json != NULL)
     {
-        set_string_from_cjson(json, "dayInWeek", data->day_in_week, SVATKY_MAX_STRING_LENGTH);
-        set_string_from_cjson(json, "name", data->name, SVATKY_MAX_STRING_LENGTH);
-        set_bool_from_cjson(json, "isHoliday", &data->is_holiday);
+        CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(json, "dayInWeek", data->day_in_week, SVATKY_MAX_STRING_LENGTH));
+        CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(json, "name", data->name, SVATKY_MAX_STRING_LENGTH));
+        CJSON_CHECK_ERROR_RETURN(set_bool_from_cjson(json, "isHoliday", &data->is_holiday));
         if (data->is_holiday)
         {
-            set_string_from_cjson(json, "holidayName", data->holiday_name, SVATKY_MAX_STRING_LENGTH);
+            CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(json, "holidayName", data->holiday_name, SVATKY_MAX_STRING_LENGTH));
         }
 
         cJSON_Delete(json); // Deallocate the JSON object
@@ -239,6 +277,6 @@ int8_t request_calendar_data(CalendarData *data)
     else
     {
         ESP_LOGE(TAG, "Failed to parse JSON");
-        return -1;
+        return -4;
     }
 }

@@ -48,20 +48,11 @@ extern "C"
         int32_t temperature_humidity_errors;
     } HubSensorData;
 
-    extern HubSensorData sensor_hub_data;
+    typedef void (*printf_like_t)(const char *format, ...);
 
-    int8_t setup_i2c_bus(void);
-    int8_t setup_sht4x(void);
-    int8_t setup_sgp41(void);
-    int8_t setup_bme280(void);
-    int8_t setup_scd4x(void);
-    int8_t setup_sps30(void);
-
-    int8_t measure_sht4x(void);
-    int8_t measure_sgp41(void);
-    int8_t measure_bme280(void);
-    int8_t measure_scd4x(void);
-    int8_t measure_sps30(void);
+    int8_t setup_sensors(bool debug_print, printf_like_t debug_print_fn);
+    int8_t measure_sensors(bool debug_print, printf_like_t debug_print_fn);
+    int8_t get_sensor_data(HubSensorData *data);
 
 #endif /* __SENSOR_CONTROL_H__ */
 

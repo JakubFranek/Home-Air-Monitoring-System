@@ -14,13 +14,13 @@ typedef struct DebugData
     struct timeval start_time; // Timestamp of the start of the application
     int8_t app_status;         // Status of the application
 
-    char wifi_status[32];          // "connected", "disconnected" or "unitialized"
-    char wifi_ssid[33];            // Name of the Wi-Fi access point
-    int8_t wifi_rssi;              // Wi-Fi signal strength as dBm (less negative = better)
-    int32_t wifi_connection_count; // Number of successful connection attempts
+    char wifi_status[32];           // "connected", "disconnected" or "unitialized"
+    char wifi_ssid[33];             // Name of the Wi-Fi access point
+    int8_t wifi_rssi;               // Wi-Fi signal strength as dBm (less negative = better)
+    uint32_t wifi_connection_count; // Number of successful connection attempts
 
     struct timeval sntp_last_sync; // Last SNTP sync time
-    int32_t sntp_sync_count;       // Number of successful SNTP sync attempts
+    uint32_t sntp_sync_count;      // Number of successful SNTP sync attempts
 } DebugData;
 
 typedef struct HamsData
