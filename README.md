@@ -33,7 +33,7 @@ The system consists of a **central hub** and **six wireless sensor nodes** to me
 ```plaintext
 ├── docs                         # Documentation for project setup, usage, etc.
 ├── utilities                    # Various auxiliary scripts, tools etc.
-│   └── sht_sensor_calibration   # PlatformIO Arduino-based project for calibrating temp. and humidity sensors
+│   └── sht_sensor_calibration   # PlatformIO Arduino-based project for calibrating SHT40 sensors
 ├── hub
 │   ├── firmware                 # Firmware for the ESP32-based central hub
 │   └── 3D_models                # 3D models for the hub's enclosure
