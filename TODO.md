@@ -4,7 +4,76 @@ This is a task list for HAMS project.
 
 ## Work in progress
 
-- [ ] Hub firmware v0.1
+- [ ] SHT40 sensor burn-in and calibration
+    - [x] [Create a calibration program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_calibration)
+    - [ ] Burn-in SHT40 sensors to remove VOC contaminants
+    - [ ] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
+  
+- [ ] Node hardware
+    - [ ] Node schematic
+        - [ ] QFP32 breakout board test
+            - [ ] test programming with ST-LINK V3 MINIE
+            - [ ] test RTC quartz
+        - [ ] decide whether to use LDO or not
+        - [ ] decide whether to support USB power supply as well
+        - [ ] choose batteries & protection (possibly LiSOCl2)
+        - [ ] bring out SPI, I2C & SWD nodes for programming & debug
+        - [ ] bring out unused GPIO just in case
+        - [ ] implement supply current measurement jumpers
+        - [ ] draw schematic in KiCAD
+    - [ ] Node PCB layout
+    - [ ] Node 3D enclosure design
+        - [ ] interior enclosure
+            - [ ] design
+            - [ ] test print
+            - [ ] final print (5x)
+        - [ ] exterior enclosure
+            - [ ] design
+            - [ ] print (1x)
+    - [ ] Node assembly
+        - [ ] 5x interior nodes
+        - [ ] 1x exterior node
+    - [ ] Flash nodes
+    - [ ] Test nodes
+    - [ ] Cover exterior nodes in protective plastic coating
+
+## To do
+
+
+
+- [ ] Hub hardware
+    - [ ] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (test current capability)
+    - [ ] Create hub connector board (perfboard?)
+    - [ ] Consider red LED error indicator for errors which prevent use of e-ink display
+    - [ ] Hub 3D enclosure
+        - [ ] determine layout of ESPink + sensors + fan + power connector board
+        - [ ] determine debug display button location
+        - [ ] design
+        - [ ] print
+    - [ ] Assemble hub
+  
+- [ ] Create documentation
+    - [ ] Document node software incl. flowchart
+    - [ ] Document hub software incl. FreeRTOS tasks and flowchart
+    - [ ] Take photos of assembled nodes and hub incl. display interface
+
+## Backlog
+
+- [ ] Hub firmware: Upload data from hub to Google Sheets or elsewhere online
+- [ ] Hub firmware: Replace Adafruit_GFX with C-based graphical library to remove C++ altogether
+
+## Done
+
+- [x] Node firmware v0.1
+    - [x] Test firmware components in separate projects
+        - [x] [Create and test nRF24L01+ driver](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/nRF24L01p_TX_RX_L031K6_LL)
+        - [x] [Create and test SHT40 driver, incl. utilizing dedicated HW for CRC verification](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/SHT40_L031K6_LL) 
+        - [x] [Test stop mode (incl. current consumption measurement)](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/Stop_mode_L031K6_LL)
+        - [x] [Test ADC usage for supply voltage measurement](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/ADC_LL_L031K6)
+        - [x] [Test scheduled wake-up from low power mode using RTC](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/RTC_wakeup_L031K6_LL)
+    - [x] [Assemble all firmware components into one codebase](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/node/firmware/STM32L031K6)
+
+- [x] Hub firmware v0.1
     - [x] Test firmware components in separate projects
         - [x] [Create and test SGP41 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SGP41)
         - [x] [Create and test SPS30 driver](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/I2C_SPS30)
@@ -48,70 +117,5 @@ This is a task list for HAMS project.
         - [x] Implement 24h minimum temperature logic for particular node
         - [x] Implement logic for long holiday names
         - [x] Implement debug display view based on GPIO button toggle
-        - [ ] Clean up code
+        - [x] Clean up code
         - [x] Show sensor status codes in debug mode
-
-## To do
-
-- [ ] Burn-in SHT40 sensors to remove VOC contaminants
-- [ ] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
-  
-- [ ] Node hardware
-    - [ ] Node schematic
-        - [ ] QFP32 breakout board test
-            - [ ] test programming with ST-LINK V3 MINIE
-            - [ ] test RTC quartz
-        - [ ] decide whether to use LDO or not
-        - [ ] decide whether to support USB power supply as well
-        - [ ] choose batteries & protection (possibly LiSOCl2)
-        - [ ] bring out SPI, I2C & SWD nodes for programming & debug
-        - [ ] bring out unused GPIO just in case
-        - [ ] implement supply current measurement jumpers
-        - [ ] draw schematic in KiCAD
-    - [ ] Node PCB layout
-    - [ ] Node 3D enclosure design
-        - [ ] interior enclosure
-            - [ ] design
-            - [ ] test print
-            - [ ] final print (5x)
-        - [ ] exterior enclosure
-            - [ ] design
-            - [ ] print (1x)
-    - [ ] Node assembly
-        - [ ] 5x interior nodes
-        - [ ] 1x exterior node
-    - [ ] Flash nodes
-    - [ ] Test nodes
-    - [ ] Cover exterior nodes in protective plastic coating
-
-- [ ] Hub hardware
-    - [ ] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (test current capability)
-    - [ ] Create hub connector board (perfboard?)
-    - [ ] Consider red LED error indicator for errors which prevent use of e-ink display
-    - [ ] Hub 3D enclosure
-        - [ ] determine layout of ESPink + sensors + fan + power connector board
-        - [ ] determine debug display button location
-        - [ ] design
-        - [ ] print
-    - [ ] Assemble hub
-  
-- [ ] Create documentation
-    - [ ] Document node software incl. flowchart
-    - [ ] Document hub software incl. FreeRTOS tasks and flowchart
-    - [ ] Take photos of assembled nodes and hub incl. display interface
-
-## Backlog
-
-- [ ] Hub firmware: Upload data from hub to Google Sheets or elsewhere online
-- [ ] Hub firmware: Replace Adafruit_GFX with C-based graphical library to remove C++ altogether
-
-## Done
-
-- [x] Node firmware v0.1
-    - [x] Test firmware components in separate projects
-        - [x] [Create and test nRF24L01+ driver](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/nRF24L01p_TX_RX_L031K6_LL)
-        - [x] [Create and test SHT40 driver, incl. utilizing dedicated HW for CRC verification](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/SHT40_L031K6_LL) 
-        - [x] [Test stop mode (incl. current consumption measurement)](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/Stop_mode_L031K6_LL)
-        - [x] [Test ADC usage for supply voltage measurement](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/ADC_LL_L031K6)
-        - [x] [Test scheduled wake-up from low power mode using RTC](https://github.com/JakubFranek/STM32/tree/master/NUCLEO-L031K6/RTC_wakeup_L031K6_LL)
-    - [x] [Assemble all firmware components into one codebase](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/node/firmware/STM32L031K6)

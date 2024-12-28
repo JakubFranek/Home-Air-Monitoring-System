@@ -71,7 +71,7 @@ void app_main(void)
 
     set_fan_state(true);
 
-    print_line("GPIO initialized.\nE-paper display initialized.\nFan turned on.\nInitializing Wi-Fi... ");
+    print_line("GPIO & e-paper display initialized.\nFan turned on.\nInitializing Wi-Fi... ");
     status_code = setup_wifi();
     print_line("done (%d).\nInitializing SNTP... ", status_code);
     status_code = initialize_sntp();
@@ -285,6 +285,19 @@ static void set_fan_state(bool on)
     ESP_LOGI(TAG, "Fan turned %s", on ? "on" : "off");
 }
 
+/**
+ * @brief Initializes the GPIO pins.
+ *
+ * Sets the GPIO pins to the following modes:
+ *
+ *  - `LED_PIN`: Output, floating pull mode, initially set to 0
+ *
+ *  - `FAN_SWITCH_PIN`: Output, floating pull mode, initially set to 0
+ *
+ *  - `ESPINK_VSENSOR_ENA_PIN`: Output, floating pull mode, initially set to 1
+ *
+ *  - `BUTTON_DEBUG_PIN`: Input, floating pull mode
+ */
 static void initialize_gpio(void)
 {
     ESP_ERROR_CHECK(gpio_reset_pin(LED_PIN));
@@ -295,6 +308,7 @@ static void initialize_gpio(void)
     ESP_ERROR_CHECK(gpio_reset_pin(FAN_SWITCH_PIN));
     ESP_ERROR_CHECK(gpio_set_direction(FAN_SWITCH_PIN, GPIO_MODE_OUTPUT));
     ESP_ERROR_CHECK(gpio_set_pull_mode(FAN_SWITCH_PIN, GPIO_FLOATING));
+    ESP_ERROR_CHECK(gpio_set_level(FAN_SWITCH_PIN, 0));
 
     ESP_ERROR_CHECK(gpio_set_direction(ESPINK_VSENSOR_ENA_PIN, GPIO_MODE_OUTPUT));
     ESP_ERROR_CHECK(gpio_set_pull_mode(ESPINK_VSENSOR_ENA_PIN, GPIO_FLOATING));

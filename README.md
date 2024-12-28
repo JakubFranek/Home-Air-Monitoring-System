@@ -11,14 +11,14 @@ The system consists of a **central hub** and **six wireless sensor nodes** to me
 - Atmospheric Pressure
 - Particulate Matter
 - Volatile Organic Compounds (VOCs)
-- CO₂
 - NOₓ
+- CO₂
 
 ### Components
 
 - **Central Hub**
    - **ESP32-based**; mains-powered.
-   - Connects to the internet for weather updates and data upload.
+   - Connects to the internet for weather updates.
    - Displays real-time data on a large e-ink screen.
    - Contains sensors for all previously listed quantities.
 
@@ -31,12 +31,15 @@ The system consists of a **central hub** and **six wireless sensor nodes** to me
 ## Repository Structure
 
 ```plaintext
-├── docs                 # Documentation for project setup, usage, etc.
+├── docs                         # Documentation for project setup, usage, etc.
+├── utilities                    # Various auxiliary scripts, tools etc.
+│   └── sht_sensor_calibration   # PlatformIO Arduino-based project for calibrating temp. and humidity sensors
 ├── hub
-│   ├── firmware         # Firmware for the ESP32-based central hub
-│   └── 3D_models        # 3D models for the hub's custom enclosure
+│   ├── firmware                 # Firmware for the ESP32-based central hub
+│   └── 3D_models                # 3D models for the hub's enclosure
 ├── node
-│   ├── firmware         # Firmware for the STM32-based sensor nodes
-│   ├── hardware         # PCB designs and schematics for nodes
-│   └── 3D_models        # 3D models for the nodes' enclosures
-├── README.md            # Project overview (you are reading this now!)
+│   ├── firmware                 # Firmware for the STM32-based sensor nodes
+│   ├── hardware                 # PCB designs and schematics for nodes
+│   └── 3D_models                # 3D models for the nodes' enclosures
+├── README.md                    # Project overview (you are reading this now!)
+└── TODO.md                      # Project task list
