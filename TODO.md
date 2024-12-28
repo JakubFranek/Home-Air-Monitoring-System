@@ -11,12 +11,10 @@ This is a task list for HAMS project.
   
 - [ ] Node hardware
     - [ ] Node schematic
-        - [ ] QFP32 breakout board test
-            - [ ] test programming with ST-LINK V3 MINIE
-            - [ ] test RTC quartz
+        - [ ] QFP32 breakout board test (test programmability with ST-LINK V3 MINIE)
         - [ ] decide whether to use LDO or not
         - [ ] decide whether to support USB power supply as well
-        - [ ] choose batteries & protection (possibly LiSOCl2)
+        - [ ] choose batteries & protection (possibly LiFePO4)
         - [ ] bring out SPI, I2C & SWD nodes for programming & debug
         - [ ] bring out unused GPIO just in case
         - [ ] implement supply current measurement jumpers
@@ -97,7 +95,7 @@ This is a task list for HAMS project.
         - [x] Create display interface layout ([implemented in GDEY075T7 test project](https://github.com/JakubFranek/ESP32/tree/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo))
         - [x] [Prepare a set of weather icon byte arrays for openweatherapi weather codes](https://github.com/JakubFranek/ESP32/blob/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo/main/weather_icons.h)
         - [x] [Prepare a set of small morning / day / eve / night icons for temperatures](https://github.com/JakubFranek/ESP32/blob/master/ESP-ink/Epaper_GDEY075T7_CalEPD_Demo/main/time_of_day_icons.h)
-    - [ ] [Assemble all firmware components together into one codebase](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/hub/firmware)
+    - [x] [Assemble all firmware components together into one codebase](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/hub/firmware)
         - [x] Implement e-ink display driver
         - [x] Implement WiFi connectivity
         - [x] Implement SNTP
