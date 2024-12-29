@@ -64,3 +64,11 @@ secrets.h
 
 # PlatformIO files
 .pio
+
+# KiCad files
+fp-info-cache
+**/hardware/**/*-backups/*.zip
+*.lck
+\#auto_saved_files\#
+**/*_autosave*
+**/*.kicad_prl
