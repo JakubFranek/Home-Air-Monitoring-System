@@ -4,20 +4,21 @@ This is a task list for HAMS project.
 
 ## Work in progress
 
-- [ ] SHT40 sensor burn-in and calibration
-    - [x] [Create a calibration program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_calibration)
+- [ ] SHT40 sensor burn-in and calibration    
+    - [x] [Create a burn-in program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_burn_in)
     - [ ] Burn-in SHT40 sensors to remove VOC contaminants
+    - [x] [Create a calibration program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_calibration)
     - [ ] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
   
 - [ ] Node hardware
     - [ ] Node schematic
         - [ ] QFP32 breakout board test (test programmability with ST-LINK V3 MINIE)
-        - [ ] decide whether to use LDO or not
-        - [ ] decide whether to support USB power supply as well
+        - [x] decide whether to use LDO or not (decided to not use LDO, will be created as a separate board if needed)
+        - [x] decide whether to support USB power supply as well (decided not to use USB, will be created as a separate board if needed)
         - [ ] choose batteries & protection (possibly LiFePO4)
-        - [ ] bring out SPI, I2C & SWD nodes for programming & debug
+        - [x] bring out SPI, I2C & SWD nodes for programming & debug
         - [ ] bring out unused GPIO just in case
-        - [ ] implement supply current measurement jumpers
+        - [x] implement supply current measurement jumpers
         - [ ] draw schematic in KiCAD
     - [ ] Node PCB layout
     - [ ] Node 3D enclosure design
@@ -36,8 +37,6 @@ This is a task list for HAMS project.
     - [ ] Cover exterior nodes in protective plastic coating
 
 ## To do
-
-
 
 - [ ] Hub hardware
     - [ ] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (test current capability)

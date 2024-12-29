@@ -33,6 +33,7 @@ The system consists of a **central hub** and **six wireless sensor nodes** to me
 ```plaintext
 ├── docs                         # Documentation for project setup, usage, etc.
 ├── utilities                    # Various auxiliary scripts, tools etc.
+│   ├── sht_sensor_burn_in       # PlatformIO Arduino project for SHT40 sensor burn-in
 │   └── sht_sensor_calibration   # PlatformIO Arduino project for SHT40 sensor calibration
 ├── hub
 │   ├── firmware                 # Firmware for the ESP32-based central hub
