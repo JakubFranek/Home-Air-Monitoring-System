@@ -87,6 +87,8 @@ void select_sht(uint8_t index);
 
 /*----End I2C Switch-----*/
 
+#define MOSFET_GATE_PIN 10 // MOSFET for draining current to keep power bank from switching off
+
 void setup()
 {
   Serial.begin(115200);
@@ -109,6 +111,10 @@ void setup()
   setupAHT10();
 
   setup_lcd();
+
+  // set pin mode
+  pinMode(MOSFET_GATE_PIN, OUTPUT);
+  digitalWrite(MOSFET_GATE_PIN, LOW);
 }
 
 void loop()
@@ -145,7 +151,11 @@ void loop()
     }
   }
 
-  delay(2000);
+  digitalWrite(MOSFET_GATE_PIN, HIGH);
+  delay(1000);
+  digitalWrite(MOSFET_GATE_PIN, LOW);
+
+  delay(1000);
 
   lcd.clear();
   for (int i = 0; i < 12; i++)
