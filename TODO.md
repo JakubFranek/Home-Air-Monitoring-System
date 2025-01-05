@@ -15,11 +15,11 @@ This is a task list for HAMS project.
         - [ ] QFP32 breakout board test (test programmability with ST-LINK V3 MINIE)
         - [x] decide whether to use LDO or not (decided to not use LDO, will be created as a separate board if needed)
         - [x] decide whether to support USB power supply as well (decided not to use USB, will be created as a separate board if needed)
-        - [ ] choose batteries & protection (possibly LiFePO4)
+        - [x] choose batteries & protection (CR2032 & LiFePO4)
         - [x] bring out SPI, I2C & SWD nodes for programming & debug
-        - [ ] bring out unused GPIO just in case
+        - [x] bring out unused GPIO just in case
         - [x] implement supply current measurement jumpers
-        - [ ] draw schematic in KiCAD
+        - [x] draw schematic in KiCAD
     - [ ] Node PCB layout
     - [ ] Node 3D enclosure design
         - [ ] interior enclosure

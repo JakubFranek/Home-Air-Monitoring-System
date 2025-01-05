@@ -63,7 +63,7 @@ void setup()
     }
 
     unsigned long milliseconds = millis();
-    unsigned long reference = (90UL * 60UL * 1000UL) + milliseconds;
+    unsigned long reference = (3UL * 60UL * 60UL * 1000UL) + milliseconds;
 
     while (humidity >= 5.0 && millis() < reference)
     {
