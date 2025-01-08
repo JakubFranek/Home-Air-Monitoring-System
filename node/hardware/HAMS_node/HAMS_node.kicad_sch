@@ -5092,16 +5092,8 @@
 		(uuid "0196eeed-13d6-4694-b664-326ad38fc83e")
 	)
 	(no_connect
-		(at 48.26 86.36)
-		(uuid "05c9a790-58ec-4033-8eff-04bd2c5ea512")
-	)
-	(no_connect
 		(at 177.8 55.88)
 		(uuid "1f317649-a594-46bb-845d-1f90cd64d3c3")
-	)
-	(no_connect
-		(at 177.8 60.96)
-		(uuid "26853642-751e-4382-9226-fe6b6e4bd406")
 	)
 	(no_connect
 		(at 60.96 71.12)
@@ -5124,16 +5116,8 @@
 		(uuid "92ec29b2-3937-4ed6-bac0-22cd17f5d4c6")
 	)
 	(no_connect
-		(at 60.96 86.36)
-		(uuid "9edf9d4f-cb99-412b-bea8-75442c09c18f")
-	)
-	(no_connect
 		(at 60.96 81.28)
 		(uuid "a1c0cab3-6203-4c72-9c53-8bc2c52523f2")
-	)
-	(no_connect
-		(at 177.8 63.5)
-		(uuid "a65b4ead-4dcf-483b-af61-89114de2817b")
 	)
 	(no_connect
 		(at 177.8 58.42)
@@ -5200,6 +5184,16 @@
 			(type default)
 		)
 		(uuid "0c66b358-b899-4068-98b1-b97986932129")
+	)
+	(wire
+		(pts
+			(xy 39.37 86.36) (xy 48.26 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0dcf354d-f4ca-4986-a56c-20770bbfadd2")
 	)
 	(wire
 		(pts
@@ -5743,6 +5737,16 @@
 	)
 	(wire
 		(pts
+			(xy 177.8 63.5) (xy 187.96 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "62288e0a-3767-426b-81d5-e71092b439d7")
+	)
+	(wire
+		(pts
 			(xy 82.55 111.76) (xy 190.5 111.76)
 		)
 		(stroke
@@ -5883,6 +5887,16 @@
 	)
 	(wire
 		(pts
+			(xy 60.96 86.36) (xy 71.12 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7b5d02cd-0589-40d1-996e-ae2850131dfe")
+	)
+	(wire
+		(pts
 			(xy 34.29 83.82) (xy 48.26 83.82)
 		)
 		(stroke
@@ -5980,6 +5994,16 @@
 			(type default)
 		)
 		(uuid "893f5577-9504-43d7-9f8f-7e052097ed4e")
+	)
+	(wire
+		(pts
+			(xy 177.8 60.96) (xy 187.96 60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8cca7fe6-30b0-49fe-a9a5-4e13012ff276")
 	)
 	(wire
 		(pts
@@ -6961,25 +6985,6 @@
 		)
 		(uuid d380fed4-1b73-4b00-bfd0-46e519065d3d)
 	)
-	(text_box "TO DO: UART pins"
-		(exclude_from_sim no)
-		(at 46.99 92.71 0)
-		(size 27.94 6.35)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(fill
-			(type none)
-		)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "972f9a43-b96a-4438-aaba-bbf891433904")
-	)
 	(text "nRF24 THT module\n(secondary option)"
 		(exclude_from_sim no)
 		(at 25.908 145.796 0)
@@ -7267,6 +7272,17 @@
 		)
 		(uuid "24f8e1b7-725c-4d57-8fc0-63b6246881b4")
 	)
+	(label "VCP_TX"
+		(at 180.34 60.96 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "27923e27-d637-4209-a3af-c82a42d3484e")
+	)
 	(label "SPI_MISO"
 		(at 20.32 165.1 0)
 		(fields_autoplaced yes)
@@ -7277,6 +7293,17 @@
 			(justify left bottom)
 		)
 		(uuid "2b99ec31-172c-4485-ae48-6f02b8a315d6")
+	)
+	(label "VCP_RX"
+		(at 180.34 63.5 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "2d468ebb-64d0-4087-b543-c1c9f67f986d")
 	)
 	(label "I2C_SCL"
 		(at 209.55 129.54 0)
@@ -7432,6 +7459,17 @@
 		)
 		(uuid "64fa43ff-4999-444c-9535-353c29a78043")
 	)
+	(label "VCP_TX"
+		(at 63.5 86.36 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "653adfa4-56e7-42ba-a1d9-ef2d80468ffc")
+	)
 	(label "nRF24_CSN"
 		(at 20.32 170.18 0)
 		(fields_autoplaced yes)
@@ -7486,6 +7524,17 @@
 			(justify left bottom)
 		)
 		(uuid "70b3f22f-b538-4d9f-8c5c-0412d2f64278")
+	)
+	(label "VCP_RX"
+		(at 39.37 86.36 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "7612d17f-2a5b-4e40-b206-e1f481a86cf3")
 	)
 	(label "nRF24_CE"
 		(at 146.05 86.36 180)

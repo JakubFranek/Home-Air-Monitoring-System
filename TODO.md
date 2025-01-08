@@ -12,7 +12,7 @@ This is a task list for HAMS project.
   
 - [ ] Node hardware
     - [ ] Node schematic
-        - [ ] QFP32 breakout board test (test programmability with ST-LINK V3 MINIE)
+        - [x] QFP32 breakout board test (test programmability with ST-LINK V3 MINIE)
         - [x] decide whether to use LDO or not (decided to not use LDO, will be created as a separate board if needed)
         - [x] decide whether to support USB power supply as well (decided not to use USB, will be created as a separate board if needed)
         - [x] choose batteries & protection (CR2032 & LiFePO4)
@@ -20,6 +20,7 @@ This is a task list for HAMS project.
         - [x] bring out unused GPIO just in case
         - [x] implement supply current measurement jumpers
         - [x] draw schematic in KiCAD
+        - [ ] double check all connections
     - [ ] Node PCB layout
     - [ ] Node 3D enclosure design
         - [ ] interior enclosure
@@ -58,6 +59,8 @@ This is a task list for HAMS project.
 
 - [ ] Hub firmware: Upload data from hub to Google Sheets or elsewhere online
 - [ ] Hub firmware: Replace Adafruit_GFX with C-based graphical library to remove C++ altogether
+- [ ] Node firmware: RX/TX node to increase maximum possible amount of nodes above 6
+- [ ] Node firmware: Support for SCD41 (possibly with MCU-driven ASC to minimize consumption)
 
 ## Done
 
