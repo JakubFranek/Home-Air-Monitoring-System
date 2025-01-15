@@ -572,20 +572,27 @@ int8_t get_sensor_data(HubSensorData *data)
  */
 int8_t setup_sensors(bool debug_print, printf_like_t debug_print_fn)
 {
+    int8_t return_status = 0;
     int8_t status = 0;
 
     IF_TRUE(debug_print, debug_print_fn("Initializing I2C bus... "));
-    status = setup_i2c_bus() || status;
+    status = setup_i2c_bus();
+    return_status |= status;
     IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing SHT40... ", status));
-    status = setup_sht4x() || status;
+    status = setup_sht4x();
+    return_status |= status;
     IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing SGP41 (cca 10 s)... ", status));
-    status = setup_sgp41() || status;
+    status = setup_sgp41();
+    return_status |= status;
     IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing BME280... ", status));
-    status = setup_bme280() || status;
+    status = setup_bme280();
+    return_status |= status;
     IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing SCD41 (cca 10 s)... ", status));
-    status = setup_scd4x() || status;
+    status = setup_scd4x();
+    return_status |= status;
     IF_TRUE(debug_print, debug_print_fn("done (%d).\nInitializing SPS30... ", status));
-    status = setup_sps30() || status;
+    status = setup_sps30();
+    return_status |= status;
     IF_TRUE(debug_print, debug_print_fn("done (%d).\n", status));
 
     return status;
@@ -614,21 +621,27 @@ int8_t measure_sensors(bool debug_print, printf_like_t debug_print_fn)
         return -1;
     }
 
+    int8_t return_status = 0;
     int8_t status = 0;
 
     IF_TRUE(debug_print, debug_print_fn("Making SHT4x measurement... ", status));
-    status = measure_sht4x() || status;
+    status = measure_sht4x();
+    return_status |= status;
     IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking SGP41 measurement... ", status));
-    status = measure_sgp41() || status;
+    status = measure_sgp41();
+    return_status |= status;
     IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking BME280 measurement... ", status));
-    status = measure_bme280() || status;
+    status = measure_bme280();
+    return_status |= status;
     IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking SPS30 measurement... ", status));
-    status = measure_sps30() || status;
+    status = measure_sps30();
+    return_status |= status;
 
     if (count % CO2_MEASUREMENT_MODULO == 0)
     {
         IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking SCD4x measurement (cca 5 s)... ", status));
-        status = measure_scd4x() || status;
+        status = measure_scd4x();
+        return_status |= status;
     }
 
     IF_TRUE(debug_print, debug_print_fn("done (%d).\n", status));
