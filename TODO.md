@@ -40,9 +40,10 @@ This is a task list for HAMS project.
 ## To do
 
 - [ ] Hub hardware
-    - [ ] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (test current capability)
-    - [ ] Create hub connector board (perfboard?)
-    - [ ] Consider red LED error indicator for errors which prevent use of e-ink display
+    - [x] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (ESPink hacked to provide 5 Volt power out of VIN pin)
+    - [ ] Hub sensor board schematic
+        - [ ] Add blue LED error indicator for errors which prevent use of e-ink display
+        - [ ] Add SPI & I2C debug headers
     - [ ] Hub 3D enclosure
         - [ ] determine layout of ESPink + sensors + fan + power connector board
         - [ ] determine debug display button location
