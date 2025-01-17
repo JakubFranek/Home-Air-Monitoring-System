@@ -37,19 +37,18 @@ This is a task list for HAMS project.
     - [ ] Test nodes
     - [ ] Cover exterior nodes in protective plastic coating
 
-## To do
-
 - [ ] Hub hardware
     - [x] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (ESPink hacked to provide 5 Volt power out of VIN pin)
     - [ ] Hub sensor board schematic
-        - [ ] Add blue LED error indicator for errors which prevent use of e-ink display
-        - [ ] Add SPI & I2C debug headers
+        - [x] Add SPI & I2C debug headers
     - [ ] Hub 3D enclosure
         - [ ] determine layout of ESPink + sensors + fan + power connector board
         - [ ] determine debug display button location
         - [ ] design
         - [ ] print
     - [ ] Assemble hub
+
+## To do
   
 - [ ] Create documentation
     - [ ] Document node software incl. flowchart
