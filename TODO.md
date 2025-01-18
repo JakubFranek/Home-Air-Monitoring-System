@@ -11,7 +11,7 @@ This is a task list for HAMS project.
     - [ ] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
   
 - [ ] Node hardware
-    - [ ] Node schematic
+    - [x] Node schematic
         - [x] QFP32 breakout board test (test programmability with ST-LINK V3 MINIE)
         - [x] decide whether to use LDO or not (decided to not use LDO, will be created as a separate board if needed)
         - [x] decide whether to support USB power supply as well (decided not to use USB, will be created as a separate board if needed)
@@ -20,8 +20,8 @@ This is a task list for HAMS project.
         - [x] bring out unused GPIO just in case
         - [x] implement supply current measurement jumpers
         - [x] draw schematic in KiCAD
-        - [ ] double check all connections
-    - [ ] Node PCB layout
+        - [x] double check all connections
+    - [x] Node PCB layout
     - [ ] Node 3D enclosure design
         - [ ] interior enclosure
             - [ ] design
@@ -39,7 +39,7 @@ This is a task list for HAMS project.
 
 - [ ] Hub hardware
     - [x] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (ESPink hacked to provide 5 Volt power out of VIN pin)
-    - [ ] Hub sensor board schematic
+    - [x] Hub sensor board schematic
         - [x] Add SPI & I2C debug headers
     - [ ] Hub 3D enclosure
         - [ ] determine layout of ESPink + sensors + fan + power connector board
