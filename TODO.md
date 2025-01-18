@@ -6,7 +6,7 @@ This is a task list for HAMS project.
 
 - [ ] SHT40 sensor burn-in and calibration    
     - [x] [Create a burn-in program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_burn_in)
-    - [ ] Burn-in SHT40 sensors to remove VOC contaminants
+    - [x] Burn-in SHT40 sensors to remove VOC contaminants
     - [x] [Create a calibration program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_calibration)
     - [ ] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
   
@@ -22,6 +22,8 @@ This is a task list for HAMS project.
         - [x] draw schematic in KiCAD
         - [x] double check all connections
     - [x] Node PCB layout
+    - [ ] Order PCBs
+    - [ ] Order components
     - [ ] Node 3D enclosure design
         - [ ] interior enclosure
             - [ ] design
@@ -41,12 +43,16 @@ This is a task list for HAMS project.
     - [x] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (ESPink hacked to provide 5 Volt power out of VIN pin)
     - [x] Hub sensor board schematic
         - [x] Add SPI & I2C debug headers
+    - [ ] Order PCBs
+    - [ ] Order components
     - [ ] Hub 3D enclosure
-        - [ ] determine layout of ESPink + sensors + fan + power connector board
-        - [ ] determine debug display button location
+        - [x] determine layout of ESPink + sensors + fan + power connector board
+        - [x] determine debug display button location
         - [ ] design
         - [ ] print
     - [ ] Assemble hub
+
+
 
 ## To do
   
