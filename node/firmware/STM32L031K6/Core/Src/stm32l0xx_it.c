@@ -148,7 +148,6 @@ void RTC_IRQHandler(void)
   /* USER CODE BEGIN RTC_IRQn 0 */
 	RTC_WAKEUP_IRQ_callback();
   /* USER CODE END RTC_IRQn 0 */
-
   /* USER CODE BEGIN RTC_IRQn 1 */
 
   /* USER CODE END RTC_IRQn 1 */
@@ -177,6 +176,26 @@ void EXTI0_1_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles EXTI line 4 to 15 interrupts.
+  */
+void EXTI4_15_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI4_15_IRQn 0 */
+
+  /* USER CODE END EXTI4_15_IRQn 0 */
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_6) != RESET)
+  {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_6);
+    /* USER CODE BEGIN LL_EXTI_LINE_6 */
+    GPIO_EXTI6_IRQ_callback();	// defined in "app"
+    /* USER CODE END LL_EXTI_LINE_6 */
+  }
+  /* USER CODE BEGIN EXTI4_15_IRQn 1 */
+
+  /* USER CODE END EXTI4_15_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM21 global interrupt.
   */
 void TIM21_IRQHandler(void)
@@ -189,6 +208,21 @@ void TIM21_IRQHandler(void)
   /* USER CODE BEGIN TIM21_IRQn 1 */
 
   /* USER CODE END TIM21_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM22 global interrupt.
+  */
+void TIM22_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM22_IRQn 0 */
+
+	TIM_IRQ_callback(TIM22);	// defined in "tim_custom"
+
+  /* USER CODE END TIM22_IRQn 0 */
+  /* USER CODE BEGIN TIM22_IRQn 1 */
+
+  /* USER CODE END TIM22_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

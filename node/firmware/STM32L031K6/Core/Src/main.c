@@ -105,6 +105,7 @@ int main(void)
   MX_TIM21_Init();
   MX_RTC_Init();
   MX_ADC_Init();
+  MX_TIM22_Init();
   /* USER CODE BEGIN 2 */
   app_setup();		// see app.h/c
   /* USER CODE END 2 */

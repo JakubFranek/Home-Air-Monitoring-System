@@ -9,6 +9,8 @@
 #include "crc_custom.h"
 #include "adc_custom.h"
 
+#include <stdbool.h>
+
 /* ---------------- Macros --------------------*/
 #define NRF24_CHECK_ERROR_RETURN(expr, error)  \
 	do                                         \
@@ -93,7 +95,8 @@ typedef enum AppEvent
 	EVENT_NONE = 0,
 	EVENT_PHASE1_DONE = 1,
 	EVENT_PHASE2_DONE = 2,
-	EVENT_RADIO_IRQ = 3
+	EVENT_RADIO_IRQ = 3,
+	EVENT_RTC_WAKEUP = 4
 } AppEvent;
 
 typedef enum AppError
@@ -167,18 +170,19 @@ static uint8_t tx_payload[NRF24_DATA_LENGTH] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 volatile static AppEvent event = EVENT_NONE; // changes value during ISRs
 static AppState state = STATE_IDLE;
 static AppError app_status = ERROR_NONE;
+volatile static bool leds_on = false;
+volatile static bool button_pending = false;
 
 /* ---------------- Prototypes --------------------*/
 AppState dispatch_states(AppState state, volatile AppEvent *event);
 void GPIO_EXTI1_IRQ_callback(void);
 void irs_phase1_done(void);
 void irs_phase2_done(void);
+void irs_check_led_button(void);
 void build_payload(uint8_t *payload);
 
 /**
  * @brief Application setup function
- *
- * This function is called once at startup (presumably within the main()).
  *
  * @param None
  * @retval None
@@ -211,14 +215,18 @@ void app_setup(void)
 /**
  * @brief Application loop function
  *
- * This function is called in an endless loop (presumably within the main()).
- *
  * @param None
  * @retval None
  */
 void app_loop(void)
 {
 	state = dispatch_states(state, &event);
+
+	if (leds_on && app_status != ERROR_NONE)
+		LL_GPIO_SetOutputPin(LED_ERROR_GPIO_Port, LED_ERROR_Pin);
+	else
+		LL_GPIO_ResetOutputPin(LED_ERROR_GPIO_Port, LED_ERROR_Pin);
+
 }
 
 AppState handle_state_idle(volatile AppEvent *event)
@@ -302,37 +310,45 @@ AppState handle_state_awaiting_ack(volatile AppEvent *event)
 
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device), ERROR_AWAITING_ACK);
 
+	app_status = ERROR_NONE; // clear error
+
 	return STATE_SLEEP;
 }
 
 AppState handle_state_sleep(volatile AppEvent *event)
 {
-	// for some reason turning SPI MISO hi-Z really lowers the IDD
-	set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL & ~nRF24_CE_Pin);
-	set_pins_to_analog_mode(GPIOB, LL_GPIO_PIN_ALL);
-	set_pins_to_analog_mode(GPIOC, LL_GPIO_PIN_ALL);
+	if (!button_pending)
+	{
+		// for some reason turning SPI MISO hi-Z really lowers the IDD
+		set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL & ~nRF24_CE_Pin & ~LED_STATUS_Pin);
+		set_pins_to_analog_mode(GPIOB, LL_GPIO_PIN_ALL & ~LED_ERROR_Pin & ~BUTTON_LED_Pin);
+		set_pins_to_analog_mode(GPIOC, LL_GPIO_PIN_ALL);
 
-	LL_PWR_EnableUltraLowPower();
-	LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_LOW_POWER);
-	LL_PWR_SetPowerMode(LL_PWR_MODE_STOP);
-	LL_LPM_EnableDeepSleep();
-	__WFI();
+		LL_PWR_EnableUltraLowPower();
+		LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_LOW_POWER);
+		LL_PWR_SetPowerMode(LL_PWR_MODE_STOP);
+		LL_LPM_EnableDeepSleep();
+		__WFI();
 
-	/* --------- Stop mode here --------------*/
+		/* --------- Stop mode here --------------*/
 
-	SystemClock_Config(); // first action after wake up
+		SystemClock_Config(); // first action after wake up
 
-	MX_GPIO_Init();
-	MX_CRC_Init();
-	MX_I2C1_Init();
-	MX_SPI1_Init();
-	MX_TIM2_Init();
-	MX_TIM21_Init();
+		if (LL_PWR_IsActiveFlag_WU())
+			LL_PWR_ClearFlag_WU();
 
-	if (LL_PWR_IsActiveFlag_WU())
-		LL_PWR_ClearFlag_WU();
+		reinitialize_gpio();
+		MX_I2C1_Init();
+		MX_SPI1_Init();
+	}
 
-	return STATE_IDLE;
+	if (*event == EVENT_RTC_WAKEUP)
+	{
+		*event = EVENT_NONE; // clear event flag
+		return STATE_IDLE;
+	}
+
+	return STATE_SLEEP;
 }
 
 AppState handle_state_error(volatile AppEvent *event)
@@ -368,6 +384,12 @@ void GPIO_EXTI1_IRQ_callback(void)
 	event = EVENT_RADIO_IRQ;
 }
 
+void GPIO_EXTI6_IRQ_callback(void)
+{
+	TIMx_schedule_interrupt(TIM22, 20000, &irs_check_led_button);
+	button_pending = true;
+}
+
 void RTC_WAKEUP_IRQ_callback(void)
 {
 	if (LL_RTC_IsActiveFlag_WUT(RTC) != 0)
@@ -375,6 +397,8 @@ void RTC_WAKEUP_IRQ_callback(void)
 
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_20))
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_20); // Clear the EXTI line 20 pending flag (RTC wakeup interrupt)
+
+	event = EVENT_RTC_WAKEUP;
 }
 
 void irs_phase1_done(void)
@@ -385,6 +409,26 @@ void irs_phase1_done(void)
 void irs_phase2_done(void)
 {
 	event = EVENT_PHASE2_DONE;
+}
+
+void irs_check_led_button(void)
+{
+	if ((LL_GPIO_ReadInputPort(BUTTON_LED_GPIO_Port) & BUTTON_LED_Pin) == 0)	// button is still pressed
+	{
+		leds_on = !leds_on;
+
+		if (leds_on)
+		{
+			LL_GPIO_SetOutputPin(LED_STATUS_GPIO_Port, LED_STATUS_Pin);
+		}
+		else
+		{
+			LL_GPIO_ResetOutputPin(LED_STATUS_GPIO_Port, LED_STATUS_Pin);
+			LL_GPIO_ResetOutputPin(LED_ERROR_GPIO_Port, LED_ERROR_Pin);
+		}
+	}
+
+	button_pending = false;
 }
 
 void build_payload(uint8_t *payload)
@@ -404,6 +448,4 @@ void build_payload(uint8_t *payload)
 	payload[7] = (humidity & 0x00FF);
 	payload[8] = (vdda_mv & 0xFF00) >> 8;
 	payload[9] = (vdda_mv & 0x00FF);
-
-	app_status = ERROR_NONE; // clear error
 }

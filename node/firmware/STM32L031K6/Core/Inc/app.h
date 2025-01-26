@@ -8,6 +8,7 @@
 void app_setup(void);
 void app_loop(void);
 void GPIO_EXTI1_IRQ_callback(void);
+void GPIO_EXTI6_IRQ_callback(void);
 void RTC_WAKEUP_IRQ_callback(void);
 
 #endif /* INC_APP_H_ */
