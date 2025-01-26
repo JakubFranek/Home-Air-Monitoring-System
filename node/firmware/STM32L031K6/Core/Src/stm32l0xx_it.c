@@ -154,28 +154,6 @@ void RTC_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles EXTI line 0 and line 1 interrupts.
-  */
-void EXTI0_1_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_1_IRQn 0 */
-
-  /* USER CODE END EXTI0_1_IRQn 0 */
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_1) != RESET)
-  {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_1);
-    /* USER CODE BEGIN LL_EXTI_LINE_1 */
-
-    GPIO_EXTI1_IRQ_callback();	// defined in "app"
-
-    /* USER CODE END LL_EXTI_LINE_1 */
-  }
-  /* USER CODE BEGIN EXTI0_1_IRQn 1 */
-
-  /* USER CODE END EXTI0_1_IRQn 1 */
-}
-
-/**
   * @brief This function handles EXTI line 4 to 15 interrupts.
   */
 void EXTI4_15_IRQHandler(void)
@@ -183,12 +161,19 @@ void EXTI4_15_IRQHandler(void)
   /* USER CODE BEGIN EXTI4_15_IRQn 0 */
 
   /* USER CODE END EXTI4_15_IRQn 0 */
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_6) != RESET)
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET)
   {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_6);
-    /* USER CODE BEGIN LL_EXTI_LINE_6 */
-    GPIO_EXTI6_IRQ_callback();	// defined in "app"
-    /* USER CODE END LL_EXTI_LINE_6 */
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
+    /* USER CODE BEGIN LL_EXTI_LINE_4 */
+    GPIO_EXTI4_IRQ_callback();
+    /* USER CODE END LL_EXTI_LINE_4 */
+  }
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_12) != RESET)
+  {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
+    /* USER CODE BEGIN LL_EXTI_LINE_12 */
+    GPIO_EXTI15_IRQ_callback();	// this will be EXTI line 15 in final application
+    /* USER CODE END LL_EXTI_LINE_12 */
   }
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
 

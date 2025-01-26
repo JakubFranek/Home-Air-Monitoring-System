@@ -175,7 +175,6 @@ volatile static bool button_pending = false;
 
 /* ---------------- Prototypes --------------------*/
 AppState dispatch_states(AppState state, volatile AppEvent *event);
-void GPIO_EXTI1_IRQ_callback(void);
 void irs_phase1_done(void);
 void irs_phase2_done(void);
 void irs_check_led_button(void);
@@ -320,8 +319,8 @@ AppState handle_state_sleep(volatile AppEvent *event)
 	if (!button_pending)
 	{
 		// for some reason turning SPI MISO hi-Z really lowers the IDD
-		set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL & ~nRF24_CE_Pin & ~LED_STATUS_Pin);
-		set_pins_to_analog_mode(GPIOB, LL_GPIO_PIN_ALL & ~LED_ERROR_Pin & ~BUTTON_LED_Pin);
+		set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL & ~LED_STATUS_Pin & ~LED_ERROR_Pin & ~BUTTON_LED_Pin);
+		set_pins_to_analog_mode(GPIOB, LL_GPIO_PIN_ALL);
 		set_pins_to_analog_mode(GPIOC, LL_GPIO_PIN_ALL);
 
 		LL_PWR_EnableUltraLowPower();
@@ -379,12 +378,12 @@ AppState dispatch_states(AppState state, volatile AppEvent *event)
 	}
 }
 
-void GPIO_EXTI1_IRQ_callback(void)
+void GPIO_EXTI15_IRQ_callback(void)
 {
 	event = EVENT_RADIO_IRQ;
 }
 
-void GPIO_EXTI6_IRQ_callback(void)
+void GPIO_EXTI4_IRQ_callback(void)
 {
 	TIMx_schedule_interrupt(TIM22, 20000, &irs_check_led_button);
 	button_pending = true;

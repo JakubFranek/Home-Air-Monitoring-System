@@ -39,10 +39,9 @@ void MX_SPI1_Init(void)
   /* Peripheral clock enable */
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SPI1);
 
-  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
   LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
   /**SPI1 GPIO Configuration
-  PA5   ------> SPI1_SCK
+  PB3   ------> SPI1_SCK
   PB4   ------> SPI1_MISO
   PB5   ------> SPI1_MOSI
   */
