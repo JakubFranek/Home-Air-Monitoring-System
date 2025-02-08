@@ -22,8 +22,8 @@ This is a task list for HAMS project.
         - [x] draw schematic in KiCAD
         - [x] double check all connections
     - [x] Node PCB layout
-    - [ ] Order PCBs
-    - [ ] Order components
+    - [x] Order PCBs
+    - [x] Order components
     - [ ] Node 3D enclosure design
         - [ ] interior enclosure
             - [ ] design
@@ -43,12 +43,12 @@ This is a task list for HAMS project.
     - [x] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (ESPink hacked to provide 5 Volt power out of VIN pin)
     - [x] Hub sensor board schematic
         - [x] Add SPI & I2C debug headers
-    - [ ] Order PCBs
-    - [ ] Order components
+    - [x] Order PCBs
+    - [x] Order components
     - [ ] Hub 3D enclosure
         - [x] determine layout of ESPink + sensors + fan + power connector board
         - [x] determine debug display button location
-        - [ ] design
+        - [x] design
         - [ ] print
     - [ ] Assemble hub
 
