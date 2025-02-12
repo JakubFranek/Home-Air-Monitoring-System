@@ -6859,12 +6859,12 @@
 		(uuid "64fa43ff-4999-444c-9535-353c29a78043")
 	)
 	(label "VCP_TX"
-		(at 63.5 86.36 0)
+		(at 71.12 86.36 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify left bottom)
+			(justify right bottom)
 		)
 		(uuid "653adfa4-56e7-42ba-a1d9-ef2d80468ffc")
 	)

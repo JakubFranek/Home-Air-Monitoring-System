@@ -1,6 +1,6 @@
 # TODO
 
-This is a task list for HAMS project.
+This is a task list for the HAMS project.
 
 ## Work in progress
 
@@ -28,10 +28,7 @@ This is a task list for HAMS project.
         - [ ] interior enclosure
             - [ ] design
             - [ ] test print
-            - [ ] final print (5x)
-        - [ ] exterior enclosure
-            - [ ] design
-            - [ ] print (1x)
+            - [ ] final print (6x)
     - [ ] Node assembly
         - [ ] 5x interior nodes
         - [ ] 1x exterior node
@@ -51,8 +48,6 @@ This is a task list for HAMS project.
         - [x] design
         - [ ] print
     - [ ] Assemble hub
-
-
 
 ## To do
   
