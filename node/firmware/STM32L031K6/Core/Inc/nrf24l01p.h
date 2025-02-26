@@ -1,27 +1,23 @@
+/**
+ * @file nrf24l01p.h
+ * @author Jakub Franek (https://github.com/JakubFranek)
+ * @brief nRF24L01+ driver
+ *
+ * How to use this driver:
+ * 1. Call nrf24l01p_init_ptx or nrf24l01p_init_prx to initialize the nRF24L01+ device.
+ * 2. Clear status flags by calling nrf24l01p_clear_status_flags.
+ * 3. Power up the device by calling nrf24l01p_power_up.
+ * 4. Proceed with the desired operation (e.g., sending or receiving data), depending on PTX or PRX mode.
+ */
+
 #ifndef __NRF24L01P_H__
 #define __NRF24L01P_H__
 
 #include <stdint.h>	 // definition of uint8_t etc
 #include <stdbool.h> // definition of bool
 
-// TODO: double check whether _POS values are correct
-
-/*----------- nRF24L01+ Commands -----------*/
-// TODO: this could be enum
-#define NRF24L01P_CMD_R_REGISTER 0b00000000
-#define NRF24L01P_CMD_W_REGISTER 0b00100000
-#define NRF24L01P_CMD_R_RX_PAYLOAD 0b01100001
-#define NRF24L01P_CMD_W_TX_PAYLOAD 0b10100000
-#define NRF24L01P_CMD_FLUSH_TX 0b11100001
-#define NRF24L01P_CMD_FLUSH_RX 0b11100010
-#define NRF24L01P_CMD_REUSE_TX_PL 0b11100011
-#define NRF24L01P_CMD_R_RX_PL_WID 0b01100000
-#define NRF24L01P_CMD_W_ACK_PAYLOAD 0b10101000
-#define NRF24L01P_CMD_W_TX_PAYLOAD_NOACK 0b10110000
-#define NRF24L01P_CMD_NOP 0b11111111
-
 /*----------- nRF24L01+ Registers -----------*/
-// TODO: this could be enum
+
 #define NRF24L01P_REG_CONFIG 0x00
 #define NRF24L01P_REG_EN_AA 0x01
 #define NRF24L01P_REG_EN_RXADDR 0x02
@@ -50,6 +46,7 @@
 #define NRF24L01P_REG_FEATURE 0x1D
 
 /*----------- nRF24L01+ Register Reset Values -----------*/
+
 #define NRF24L01P_REG_CONFIG_RSTVAL 0x08
 #define NRF24L01P_REG_EN_AA_RSTVAL 0x3F
 #define NRF24L01P_REG_EN_RXADDR_RSTVAL 0x03
@@ -76,7 +73,7 @@
 #define NRF24L01P_REG_FEATURE_RSTVAL 0x00
 
 /*----------- nRF24L01+ Register Bits -----------*/
-// CONFIG
+
 #define NRF24L01P_REG_CONFIG_MASK_RX_DR (1U << 6)
 #define NRF24L01P_REG_CONFIG_MASK_TX_DS (1U << 5)
 #define NRF24L01P_REG_CONFIG_MASK_MAX_RT (1U << 4)
@@ -84,93 +81,103 @@
 #define NRF24L01P_REG_CONFIG_CRCO (1U << 2)
 #define NRF24L01P_REG_CONFIG_PWR_UP (1U << 1)
 #define NRF24L01P_REG_CONFIG_PRIM_RX (1U << 0)
-// EN_AA
+
 #define NRF24L01P_REG_EN_AA_ENAA_P5 (1U << 5)
 #define NRF24L01P_REG_EN_AA_ENAA_P4 (1U << 4)
 #define NRF24L01P_REG_EN_AA_ENAA_P3 (1U << 3)
 #define NRF24L01P_REG_EN_AA_ENAA_P2 (1U << 2)
 #define NRF24L01P_REG_EN_AA_ENAA_P1 (1U << 1)
 #define NRF24L01P_REG_EN_AA_ENAA_P0 (1U << 0)
-// EN_RXADDR
+
 #define NRF24L01P_REG_EN_RXADDR_ERX_P5 (1U << 5)
 #define NRF24L01P_REG_EN_RXADDR_ERX_P4 (1U << 4)
 #define NRF24L01P_REG_EN_RXADDR_ERX_P3 (1U << 3)
 #define NRF24L01P_REG_EN_RXADDR_ERX_P2 (1U << 2)
 #define NRF24L01P_REG_EN_RXADDR_ERX_P1 (1U << 1)
 #define NRF24L01P_REG_EN_RXADDR_ERX_P0 (1U << 0)
-// SETUP_AW
+
 #define NRF24L01P_REG_SETUP_AW_AW_POS (1U << 0)
 #define NRF24L01P_REG_SETUP_AW_AW_MASK (0b11 << 0)
-// SETUP_RETR
+
 #define NRF24L01P_REG_SETUP_RETR_ARD_POS (1U << 4)
 #define NRF24L01P_REG_SETUP_RETR_ARD_MASK (0b1111 << 4)
 #define NRF24L01P_REG_SETUP_RETR_ARC_POS (1U << 0)
 #define NRF24L01P_REG_SETUP_RETR_ARC_MASK (0b1111 << 0)
-// RF_CH
+
 #define NRF24L01P_REG_RF_CH_POS (1U << 0)
 #define NRF24L01P_REG_RF_CH_MASK (0b1111111 << 0)
-// RF_SETUP
+
 #define NRF24L01P_REG_RF_SETUP_CONT_WAVE (1U << 7)
 #define NRF24L01P_REG_RF_SETUP_RF_DR_LOW (1U << 5)
 #define NRF24L01P_REG_RF_SETUP_PLL_LOCK (1U << 4)
 #define NRF24L01P_REG_RF_SETUP_RF_DR_HIGH (1U << 3)
 #define NRF24L01P_REG_RF_SETUP_RF_PWR_POS (1U << 1)
 #define NRF24L01P_REG_RF_SETUP_RF_PWR_MASK (0b11 << 1)
-// RF_STATUS
+
 #define NRF24L01P_REG_STATUS_RX_DR (1U << 6)
 #define NRF24L01P_REG_STATUS_TX_DS (1U << 5)
 #define NRF24L01P_REG_STATUS_MAX_RT (1U << 4)
 #define NRF24L01P_REG_STATUS_RX_P_NO_POS (1U << 1)
 #define NRF24L01P_REG_STATUS_RX_P_NO_MASK (0b111 << 1)
 #define NRF24L01P_REG_STATUS_TX_FULL (1U << 0)
-// OBSERVE_TX
+
 #define NRF24L01P_REG_OBSERVE_TX_PLOS_CNT_POS (1U << 4)
 #define NRF24L01P_REG_OBSERVE_TX_PLOS_CNT_MASK (0b1111 << 4)
 #define NRF24L01P_REG_OBSERVE_TX_ARC_CNT_POS (1U << 0)
 #define NRF24L01P_REG_OBSERVE_TX_ARC_CNT_MASK (0b1111 << 0)
-// RPD
+
 #define NRF24L01P_REG_RPD_RPD (1U << 0)
-// RX_PW_P0
+
 #define NRF24L01P_REG_RX_PW_P0_POS (1U << 0)
 #define NRF24L01P_REG_RX_PW_P0_MASK (0b111111 << 0)
-// RX_PW_P1
+
 #define NRF24L01P_REG_RX_PW_P1_POS (1U << 0)
 #define NRF24L01P_REG_RX_PW_P1_MASK (0b111111 << 0)
-// RX_PW_P2
+
 #define NRF24L01P_REG_RX_PW_P2_POS (1U << 0)
 #define NRF24L01P_REG_RX_PW_P2_MASK (0b111111 << 0)
-// RX_PW_P3
+
 #define NRF24L01P_REG_RX_PW_P3_POS (1U << 0)
 #define NRF24L01P_REG_RX_PW_P3_MASK (0b111111 << 0)
-// RX_PW_P4
+
 #define NRF24L01P_REG_RX_PW_P4_POS (1U << 0)
 #define NRF24L01P_REG_RX_PW_P4_MASK (0b111111 << 0)
-// RX_PW_P5
+
 #define NRF24L01P_REG_RX_PW_P5_POS (1U << 0)
 #define NRF24L01P_REG_RX_PW_P5_MASK (0b111111 << 0)
-// FIFO_STATUS
+
 #define NRF24L01P_REG_FIFO_STATUS_TX_REUSE (1U << 6)
 #define NRF24L01P_REG_FIFO_STATUS_TX_FULL (1U << 5)
 #define NRF24L01P_REG_FIFO_STATUS_TX_EMPTY (1U << 4)
 #define NRF24L01P_REG_FIFO_STATUS_RX_FULL (1U << 1)
 #define NRF24L01P_REG_FIFO_STATUS_RX_EMPTY (1U << 0)
-// DYNPD
+
 #define NRF24L01P_REG_DYNPD_DPL_P5 (1U << 5)
 #define NRF24L01P_REG_DYNPD_DPL_P4 (1U << 4)
 #define NRF24L01P_REG_DYNPD_DPL_P3 (1U << 3)
 #define NRF24L01P_REG_DYNPD_DPL_P2 (1U << 2)
 #define NRF24L01P_REG_DYNPD_DPL_P1 (1U << 1)
 #define NRF24L01P_REG_DYNPD_DPL_P0 (1U << 0)
-// FEATURE
+
 #define NRF24L01P_REG_FEATURE_EN_DPL (1U << 2)
 #define NRF24L01P_REG_FEATURE_EN_ACK_PAY (1U << 1)
 #define NRF24L01P_REG_FEATURE_EN_DYN_ACK (1U << 0)
 
 /*----------- nRF24L01+ Other defines -----------*/
+
 #define NRF24L01P_POWER_UP_DELAY_US 1500 // time between power up command and arrival at Standby-I mode
 #define NRF24L01P_PTX_MIN_CE_PULSE_US 10 // minimum CE = '1' pulse to start transmitting in PTX mode
 
-/*----------- nRF24L01+ Enums, Structs and Function Pointers -----------*/
+/*----------- nRF24L01+ Function Pointers -----------*/
+
+typedef void (*nrf24l01p_set_pin_t)(uint8_t state); // state = 0 -> pin = '0', state = 1 -> pin = '1'
+
+typedef int8_t (*nrf24l01p_spi_tx_t)(const uint8_t *tx_data, uint8_t length);					   // Return 0 for success
+typedef int8_t (*nrf24l01p_spi_rx_t)(uint8_t *rx_data, uint8_t length);							   // Return 0 for success
+typedef int8_t (*nrf24l01p_spi_tx_rx_t)(const uint8_t *tx_data, uint8_t *rx_data, uint8_t length); // Return 0 for success
+
+/*----------- nRF24L01+ Enums, Structs -----------*/
+
 typedef enum Nrf24l01pError
 {
 	NRF24L01P_SUCCESS = 0,
@@ -182,9 +189,9 @@ typedef enum Nrf24l01pError
 
 typedef struct Nrf24l01pIrq
 {
-	bool rx_dr;	 // data received
-	bool tx_ds;	 // transmission successful
-	bool max_rt; // maximum retransmit attempts reached
+	bool rx_dr;	 // Data received
+	bool tx_ds;	 // Transmission successful
+	bool max_rt; // Maximum retransmit attempts reached
 } Nrf24l01pIrq;
 
 typedef struct Nrf24l01p8bitRegRstVals
@@ -206,6 +213,7 @@ extern Nrf24l01p40bitRegRstVals reg_rst_vals_40bit[]; // initialized in .c
 typedef enum Nrf24l01pDataRate
 {
 	// member values reflect physical register map encoding
+
 	NRF24L01P_250KBPS = (1U << 5), // 250 kbps
 	NRF24L01P_1MBPS = 0U,		   // 1 Mbps
 	NRF24L01P_2MBPS = (1U << 3)	   // 2 Mbps
@@ -214,6 +222,7 @@ typedef enum Nrf24l01pDataRate
 typedef enum Nrf24l01pOutputPower
 {
 	// member values reflect physical register map encoding
+
 	NRF24L01P_0DBM = (3U << 1),		// 0 dBm
 	NRF24L01P_NEG6DBM = (2U << 1),	// -6 dBm
 	NRF24L01P_NEG12DBM = (1U << 1), // -12 dBm
@@ -223,32 +232,25 @@ typedef enum Nrf24l01pOutputPower
 typedef enum Nrf24l01pCrcLength
 {
 	// member values reflect physical register map encoding
+
 	NRF24L01P_CRC_1BYTE = (0U << 2),
 	NRF24L01P_CRC_2BYTE = (1U << 2)
 } Nrf24l01pCrcLength;
 
-// Argument state = 0 for low, 1 for high
-typedef void (*nrf24l01p_set_cs_t)(uint8_t state);
-typedef void (*nrf24l01p_set_ce_t)(uint8_t state);
-
-// Return value of following functions is error code, 0 is only accepted success value
-typedef int8_t (*nrf24l01p_spi_tx_t)(const uint8_t *tx_data, uint8_t length);
-typedef int8_t (*nrf24l01p_spi_rx_t)(uint8_t *rx_data, uint8_t length);
-typedef int8_t (*nrf24l01p_spi_tx_rx_t)(const uint8_t *tx_data, uint8_t *rx_data, uint8_t length);
-
+// SPI and GPIO interface
 typedef struct Nrf24l01pInterface
 {
-	nrf24l01p_set_cs_t set_cs;
-	nrf24l01p_set_ce_t set_ce;
+	nrf24l01p_set_pin_t set_cs;
 	nrf24l01p_spi_tx_t spi_tx;
 	nrf24l01p_spi_rx_t spi_rx;
 	nrf24l01p_spi_tx_rx_t spi_tx_rx;
 } Nrf24l01pInterface;
 
+// General configuration
 typedef struct Nrf24l01pConfig
 {
-	uint16_t channel_MHz;  // range 2400 to 2525 MHz
-	uint8_t address_width; // range 3 to 5 bytes
+	uint16_t channel_MHz;  // range 2400 to 2525 [MHz]
+	uint8_t address_width; // range 3 to 5 [bytes]
 	Nrf24l01pDataRate data_rate;
 	Nrf24l01pCrcLength crc_length;
 	bool enable_irq_tx_ds;
@@ -256,6 +258,7 @@ typedef struct Nrf24l01pConfig
 	bool enable_irq_rx_dr;
 } Nrf24l01pConfig;
 
+// Transmitter configuration
 typedef struct Nrf24l01pTxConfig
 {
 	Nrf24l01pOutputPower output_power;
@@ -264,6 +267,7 @@ typedef struct Nrf24l01pTxConfig
 	uint64_t address;					 // exactly address_width bytes (see "General settings")
 } Nrf24l01pTxConfig;
 
+// Receiver configuration
 typedef struct Nrf24l01pRxConfig
 {
 	uint8_t enable_pipes;	// interpreted as binary, 2 MSBs ignored, '1' = pipe enabled
@@ -287,9 +291,14 @@ typedef struct Nrf24l01pDevice
 } Nrf24l01pDevice;
 
 /*----------- High-level API functions -----------*/
+
 Nrf24l01pStatus nrf24l01p_init_prx(Nrf24l01pDevice *device);
 Nrf24l01pStatus nrf24l01p_init_ptx(Nrf24l01pDevice *device);
 
+Nrf24l01pStatus nrf24l01p_set_prx_mode(Nrf24l01pDevice *device);
+Nrf24l01pStatus nrf24l01p_set_ptx_mode(Nrf24l01pDevice *device);
+
+Nrf24l01pStatus nrf24l01p_is_rx_fifo_empty(Nrf24l01pDevice *device, bool *empty);
 Nrf24l01pStatus nrf24l01p_rx_receive(Nrf24l01pDevice *device, uint8_t *rx_payload);
 Nrf24l01pStatus nrf24l01p_tx_transmit(Nrf24l01pDevice *device, uint8_t *tx_payload, uint8_t num_bytes);
 
@@ -303,12 +312,10 @@ Nrf24l01pStatus nrf24l01p_power_up(Nrf24l01pDevice *device);
 Nrf24l01pStatus nrf24l01p_power_down(Nrf24l01pDevice *device);
 
 /*----------- Low-level API functions -----------*/
-Nrf24l01pStatus nrf24l01p_set_prx_mode(Nrf24l01pDevice *device);
-Nrf24l01pStatus nrf24l01p_set_ptx_mode(Nrf24l01pDevice *device);
 
 Nrf24l01pStatus nrf24l01p_get_status(Nrf24l01pDevice *device, uint8_t *status);
 Nrf24l01pStatus nrf24l01p_get_status_and_clear_IRQ_flags(Nrf24l01pDevice *device, uint8_t *status);
-Nrf24l01pStatus nrf24l01p_clear_flag(Nrf24l01pDevice *device, uint8_t flag);
+Nrf24l01pStatus nrf24l01p_clear_status_flags(Nrf24l01pDevice *device, uint8_t flags);
 Nrf24l01pStatus nrf24l01p_get_fifo_status(Nrf24l01pDevice *device, uint8_t *fifo_status);
 
 Nrf24l01pStatus nrf24l01p_read_rx_fifo(Nrf24l01pDevice *device, uint8_t *rx_payload);

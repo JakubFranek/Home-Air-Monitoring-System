@@ -141,7 +141,6 @@ static Nrf24l01pIrq nrf24_irq_sources = {
 static Nrf24l01pDevice nrf24_device = {
 	.interface = {
 		.set_cs = &nrf24l01p_set_cs,
-		.set_ce = &nrf24l01p_set_ce,
 		.spi_tx = &SPI1_transmit,
 		.spi_rx = &SPI1_receive,
 		.spi_tx_rx = &SPI1_transmit_receive,

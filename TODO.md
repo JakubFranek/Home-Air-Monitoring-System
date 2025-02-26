@@ -55,6 +55,7 @@ This is a task list for the HAMS project.
     - [ ] Handle fault where nRF24 does not activate IRQ after transmitting
     - [ ] Update SHT4x and nRF24 drivers (reuse better hub versions)
     - [ ] Add comments / function documentation to app.c and important code elsewhere
+    - [ ] Send UART debug messages only in "debug mode" (when LEDs are on)
 
 ## To do
   
