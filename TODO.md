@@ -26,8 +26,8 @@ This is a task list for the HAMS project.
     - [x] Order components
     - [ ] Node 3D enclosure design
         - [ ] interior enclosure
-            - [ ] design
-            - [ ] test print
+            - [x] design
+            - [x] test print
             - [ ] final print (6x)
     - [ ] Node assembly
         - [ ] 5x interior nodes
@@ -47,7 +47,14 @@ This is a task list for the HAMS project.
         - [x] determine debug display button location
         - [x] design
         - [ ] print
-    - [ ] Assemble hub
+    - [x] Assemble hub PCB
+    - [x] Test hub PCB
+    - [ ] Assemble hub enclosure
+
+- [ ] Node firmware
+    - [ ] Handle fault where nRF24 does not activate IRQ after transmitting
+    - [ ] Update SHT4x and nRF24 drivers (reuse better hub versions)
+    - [ ] Add comments / function documentation to app.c and important code elsewhere
 
 ## To do
   
