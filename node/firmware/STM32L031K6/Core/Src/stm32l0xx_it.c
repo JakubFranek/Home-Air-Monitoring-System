@@ -168,12 +168,12 @@ void EXTI4_15_IRQHandler(void)
     GPIO_EXTI4_IRQ_callback();
     /* USER CODE END LL_EXTI_LINE_4 */
   }
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_12) != RESET)
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_15) != RESET)
   {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
-    /* USER CODE BEGIN LL_EXTI_LINE_12 */
-    GPIO_EXTI15_IRQ_callback();	// this will be EXTI line 15 in final application
-    /* USER CODE END LL_EXTI_LINE_12 */
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_15);
+    /* USER CODE BEGIN LL_EXTI_LINE_15 */
+    GPIO_EXTI15_IRQ_callback();
+    /* USER CODE END LL_EXTI_LINE_15 */
   }
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
 

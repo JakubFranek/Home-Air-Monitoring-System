@@ -2,7 +2,7 @@
 #include "main.h"
 #include "tim_custom.h" // needed for TIM2-based timeout checks
 
-#define SPI_TIMEOUT_US 1000
+#define SPI_TIMEOUT_US 5000
 #define SPI_TIMEOUT_TIMER TIM2
 
 int8_t SPI1_transmit(const uint8_t* tx_data, uint8_t length)

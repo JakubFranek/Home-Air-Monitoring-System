@@ -43,6 +43,7 @@ extern "C" {
 #include "stm32l0xx_ll_rtc.h"
 #include "stm32l0xx_ll_spi.h"
 #include "stm32l0xx_ll_tim.h"
+#include "stm32l0xx_ll_usart.h"
 #include "stm32l0xx_ll_gpio.h"
 
 #if defined(USE_FULL_ASSERT)
@@ -88,22 +89,18 @@ void SystemClock_Config(void);
 #define LSE_IN_GPIO_Port GPIOC
 #define LSE_OUT_Pin LL_GPIO_PIN_15
 #define LSE_OUT_GPIO_Port GPIOC
-#define LED_ERROR_Pin LL_GPIO_PIN_2
-#define LED_ERROR_GPIO_Port GPIOA
 #define BUTTON_LED_Pin LL_GPIO_PIN_4
 #define BUTTON_LED_GPIO_Port GPIOA
 #define BUTTON_LED_EXTI_IRQn EXTI4_15_IRQn
+#define LED_ERROR_Pin LL_GPIO_PIN_6
+#define LED_ERROR_GPIO_Port GPIOA
 #define LED_STATUS_Pin LL_GPIO_PIN_7
 #define LED_STATUS_GPIO_Port GPIOA
-#define nRF24_CSN_Pin LL_GPIO_PIN_0
-#define nRF24_CSN_GPIO_Port GPIOB
-#define nRF24_CE_Pin LL_GPIO_PIN_1
-#define nRF24_CE_GPIO_Port GPIOB
 #define I2C_SCL_Pin LL_GPIO_PIN_9
 #define I2C_SCL_GPIO_Port GPIOA
 #define I2C_SDA_Pin LL_GPIO_PIN_10
 #define I2C_SDA_GPIO_Port GPIOA
-#define nRF24_IRQ_Pin LL_GPIO_PIN_12
+#define nRF24_IRQ_Pin LL_GPIO_PIN_15
 #define nRF24_IRQ_GPIO_Port GPIOA
 #define nRF24_IRQ_EXTI_IRQn EXTI4_15_IRQn
 #define SPI_SCK_Pin LL_GPIO_PIN_3
@@ -112,6 +109,10 @@ void SystemClock_Config(void);
 #define SPI_MISO_GPIO_Port GPIOB
 #define SPI_MOSI_Pin LL_GPIO_PIN_5
 #define SPI_MOSI_GPIO_Port GPIOB
+#define nRF24_CE_Pin LL_GPIO_PIN_6
+#define nRF24_CE_GPIO_Port GPIOB
+#define nRF24_CSN_Pin LL_GPIO_PIN_7
+#define nRF24_CSN_GPIO_Port GPIOB
 #ifndef NVIC_PRIORITYGROUP_0
 #define NVIC_PRIORITYGROUP_0         ((uint32_t)0x00000007) /*!< 0 bit  for pre-emption priority,
                                                                  4 bits for subpriority */

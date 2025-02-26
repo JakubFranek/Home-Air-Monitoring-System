@@ -24,6 +24,7 @@
 #include "rtc.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -106,6 +107,7 @@ int main(void)
   MX_RTC_Init();
   MX_ADC_Init();
   MX_TIM22_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   app_setup();		// see app.h/c
   /* USER CODE END 2 */
@@ -186,6 +188,7 @@ void SystemClock_Config(void)
   LL_Init1msTick(8000000);
 
   LL_SetSystemCoreClock(8000000);
+  LL_RCC_SetUSARTClockSource(LL_RCC_USART2_CLKSOURCE_PCLK1);
   LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_PCLK1);
 }
 

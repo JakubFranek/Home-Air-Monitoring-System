@@ -8,8 +8,10 @@
 #include "gpio_custom.h"
 #include "crc_custom.h"
 #include "adc_custom.h"
+#include "usart.h"
 
-#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 /* ---------------- Macros --------------------*/
 #define NRF24_CHECK_ERROR_RETURN(expr, error)  \
@@ -78,6 +80,7 @@
 
 #define PHASE1_LENGTH SHT4X_MEAS_HIGH_PREC_PERIOD_US - NRF24L01P_POWER_UP_DELAY_US
 #define PHASE2_LENGTH NRF24L01P_POWER_UP_DELAY_US
+#define NRF24_IRQ_WAIT_TIME 5000
 
 /* ---------------- Enums --------------------*/
 typedef enum AppState
@@ -96,7 +99,8 @@ typedef enum AppEvent
 	EVENT_PHASE1_DONE = 1,
 	EVENT_PHASE2_DONE = 2,
 	EVENT_RADIO_IRQ = 3,
-	EVENT_RTC_WAKEUP = 4
+	EVENT_RTC_WAKEUP = 4,
+	EVENT_NRF24_IRQ_TIMEOUT = 5
 } AppEvent;
 
 typedef enum AppError
@@ -165,20 +169,26 @@ static Nrf24l01pDevice nrf24_device = {
 		.address_p5 = NRF24L01P_REG_RX_ADDR_P5_RSTVAL,
 		.data_length = {8},
 	}};
-static uint8_t tx_payload[NRF24_DATA_LENGTH] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+static uint8_t tx_payload[NRF24_DATA_LENGTH] = {0};
 
-volatile static AppEvent event = EVENT_NONE; // changes value during ISRs
-static AppState state = STATE_IDLE;
-static AppError app_status = ERROR_NONE;
-volatile static bool leds_on = false;
-volatile static bool button_pending = false;
+// The following variables are initialized in the "initialize_state_variables" function
+volatile static AppEvent event;
+static AppState state;
+static AppError app_status;
+volatile static uint8_t leds_on;
+volatile static uint8_t button_pending;
+
+static char msg[128] = {'0'};
 
 /* ---------------- Prototypes --------------------*/
 AppState dispatch_states(AppState state, volatile AppEvent *event);
 void irs_phase1_done(void);
 void irs_phase2_done(void);
+void irq_timeout(void);
 void irs_check_led_button(void);
 void build_payload(uint8_t *payload);
+void initialize_state_variables(void);
+void UART2_Transmit(char* string);
 
 /**
  * @brief Application setup function
@@ -188,6 +198,8 @@ void build_payload(uint8_t *payload);
  */
 void app_setup(void)
 {
+	initialize_state_variables();
+
 	LL_I2C_Enable(I2C1);
 	LL_SPI_Enable(SPI1);
 
@@ -209,6 +221,9 @@ void app_setup(void)
 
 	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_init_ptx(&nrf24_device), ERROR_SETUP);
 	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources), ERROR_SETUP);
+
+	sprintf(msg, "app_setup: state = %d, app_status = %d, event = %d, leds_on = %d, button_pending = %d\r\n", state, app_status, event, leds_on, button_pending);
+	UART2_Transmit(msg);
 }
 
 /**
@@ -219,9 +234,12 @@ void app_setup(void)
  */
 void app_loop(void)
 {
+	sprintf(msg, "app_loop: state = %d, app_status = %d, event = %d, leds_on = %d, button_pending = %d\r\n", state, app_status, event, leds_on, button_pending);
+	UART2_Transmit(msg);
+
 	state = dispatch_states(state, &event);
 
-	if (leds_on && app_status != ERROR_NONE)
+	if (leds_on && (app_status != ERROR_NONE))
 		LL_GPIO_SetOutputPin(LED_ERROR_GPIO_Port, LED_ERROR_Pin);
 	else
 		LL_GPIO_ResetOutputPin(LED_ERROR_GPIO_Port, LED_ERROR_Pin);
@@ -284,12 +302,19 @@ AppState handle_state_phase2(volatile AppEvent *event)
 	TIMx_delay_us(TIM2, NRF24L01P_PTX_MIN_CE_PULSE_US);
 	nrf24l01p_set_ce(0);
 
+	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, NRF24_IRQ_WAIT_TIME, &irq_timeout), ERROR_PHASE2);
+
 	return STATE_AWAITING_ACK;
 }
 
 AppState handle_state_awaiting_ack(volatile AppEvent *event)
 {
-	if (*event != EVENT_RADIO_IRQ)
+	/*if (*event == EVENT_NRF24_IRQ_TIMEOUT)
+	{
+		NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device), ERROR_AWAITING_ACK);
+		return STATE_ERROR;
+	}
+	else */if (*event != EVENT_RADIO_IRQ)
 	{
 		LL_PWR_DisableUltraLowPower();
 		LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_MAIN);
@@ -303,11 +328,10 @@ AppState handle_state_awaiting_ack(volatile AppEvent *event)
 
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources), ERROR_AWAITING_ACK);
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_flush_tx_fifo(&nrf24_device), ERROR_AWAITING_ACK);
+	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device), ERROR_AWAITING_ACK);
 
 	if (!nrf24_irq_sources.tx_ds)
 		return STATE_ERROR;
-
-	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device), ERROR_AWAITING_ACK);
 
 	app_status = ERROR_NONE; // clear error
 
@@ -318,9 +342,12 @@ AppState handle_state_sleep(volatile AppEvent *event)
 {
 	if (!button_pending)
 	{
+		sprintf(msg, "Going to sleep\r\n");
+				UART2_Transmit(msg);
+
 		// for some reason turning SPI MISO hi-Z really lowers the IDD
 		set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL & ~LED_STATUS_Pin & ~LED_ERROR_Pin & ~BUTTON_LED_Pin);
-		set_pins_to_analog_mode(GPIOB, LL_GPIO_PIN_ALL);
+		set_pins_to_analog_mode(GPIOB, LL_GPIO_PIN_ALL & ~nRF24_CE_Pin & ~nRF24_CSN_Pin & ~SPI_SCK_Pin & ~SPI_MOSI_Pin);
 		set_pins_to_analog_mode(GPIOC, LL_GPIO_PIN_ALL);
 
 		LL_PWR_EnableUltraLowPower();
@@ -339,10 +366,19 @@ AppState handle_state_sleep(volatile AppEvent *event)
 		reinitialize_gpio();
 		MX_I2C1_Init();
 		MX_SPI1_Init();
+
+
+		MX_USART2_UART_Init();
+
+		sprintf(msg, "Woke up\r\n");
+		UART2_Transmit(msg);
 	}
 
 	if (*event == EVENT_RTC_WAKEUP)
 	{
+		sprintf(msg, "RTC wake up\r\n");
+		UART2_Transmit(msg);
+
 		*event = EVENT_NONE; // clear event flag
 		return STATE_IDLE;
 	}
@@ -386,7 +422,7 @@ void GPIO_EXTI15_IRQ_callback(void)
 void GPIO_EXTI4_IRQ_callback(void)
 {
 	TIMx_schedule_interrupt(TIM22, 20000, &irs_check_led_button);
-	button_pending = true;
+	button_pending = 1;
 }
 
 void RTC_WAKEUP_IRQ_callback(void)
@@ -410,11 +446,19 @@ void irs_phase2_done(void)
 	event = EVENT_PHASE2_DONE;
 }
 
+void irq_timeout(void)
+{
+	//event = EVENT_NRF24_IRQ_TIMEOUT;
+}
+
 void irs_check_led_button(void)
 {
 	if ((LL_GPIO_ReadInputPort(BUTTON_LED_GPIO_Port) & BUTTON_LED_Pin) == 0)	// button is still pressed
 	{
 		leds_on = !leds_on;
+
+		sprintf(msg, "Button pressed, leds_on = %d\r\n", leds_on);
+		UART2_Transmit(msg);
 
 		if (leds_on)
 		{
@@ -427,7 +471,7 @@ void irs_check_led_button(void)
 		}
 	}
 
-	button_pending = false;
+	button_pending = 0;
 }
 
 void build_payload(uint8_t *payload)
@@ -447,4 +491,23 @@ void build_payload(uint8_t *payload)
 	payload[7] = (humidity & 0x00FF);
 	payload[8] = (vdda_mv & 0xFF00) >> 8;
 	payload[9] = (vdda_mv & 0x00FF);
+}
+
+// The function below initializes important state variables
+// Initialization in declaration did not work for some unknown reason
+void initialize_state_variables(void)
+{
+	event = EVENT_NONE;
+	state = STATE_IDLE;
+	app_status = ERROR_NONE;
+	leds_on = 0;
+	button_pending = 0;
+}
+
+void UART2_Transmit(char *string) {
+    while (*string) {
+        while (!LL_USART_IsActiveFlag_TXE(USART2));  // Wait until TXE (Transmit Empty) is set
+        LL_USART_TransmitData8(USART2, *string++);   // Send character
+    }
+    while (!LL_USART_IsActiveFlag_TC(USART2));  // Wait for last transmission to complete
 }
