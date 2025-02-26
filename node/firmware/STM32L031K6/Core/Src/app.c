@@ -10,6 +10,7 @@
 #include "adc_custom.h"
 #include "usart.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -150,6 +151,9 @@ static Nrf24l01pDevice nrf24_device = {
 		.address_width = 5,
 		.data_rate = NRF24L01P_1MBPS,
 		.crc_length = NRF24L01P_CRC_1BYTE,
+		.enable_irq_tx_ds = true,
+		.enable_irq_max_rt = true,
+		.enable_irq_rx_dr = true
 	},
 	.tx_config = {
 		.output_power = NRF24L01P_0DBM,
@@ -174,8 +178,8 @@ static uint8_t tx_payload[NRF24_DATA_LENGTH] = {0};
 volatile static AppEvent event;
 static AppState state;
 static AppError app_status;
-volatile static uint8_t leds_on;
-volatile static uint8_t button_pending;
+volatile static bool leds_on;
+volatile static bool button_pending;
 
 static char msg[128] = {'0'};
 
@@ -421,7 +425,7 @@ void GPIO_EXTI15_IRQ_callback(void)
 void GPIO_EXTI4_IRQ_callback(void)
 {
 	TIMx_schedule_interrupt(TIM22, 20000, &irs_check_led_button);
-	button_pending = 1;
+	button_pending = true;
 }
 
 void RTC_WAKEUP_IRQ_callback(void)
@@ -470,7 +474,7 @@ void irs_check_led_button(void)
 		}
 	}
 
-	button_pending = 0;
+	button_pending = false;
 }
 
 void build_payload(uint8_t *payload)
