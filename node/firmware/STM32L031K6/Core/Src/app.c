@@ -157,8 +157,8 @@ static Nrf24l01pDevice nrf24_device = {
 	},
 	.tx_config = {
 		.output_power = NRF24L01P_0DBM,
-		.auto_retransmit_count = 3,
-		.auto_retransmit_delay_250us = 1,
+		.auto_retransmit_count = 15,
+		.auto_retransmit_delay_250us = NRF24_AUTO_RETRANSMIT_DELAY,	// defined in app.h, different for each node
 		.address = NRF24L01P_REG_TX_ADDR_RSTVAL,
 	},
 	.rx_config = {
