@@ -53,8 +53,8 @@ This is a task list for the HAMS project.
 ## To do
   
 - [ ] Create documentation
-    - [ ] Document node software incl. flowchart
-    - [ ] Document hub software incl. FreeRTOS tasks and flowchart
+    - [x] Document node software incl. flowchart
+    - [x] Document hub software incl. FreeRTOS tasks and flowchart
     - [ ] Take photos of assembled nodes and hub incl. display interface
 
 ## Backlog
