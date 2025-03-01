@@ -158,7 +158,7 @@ static Nrf24l01pDevice nrf24_device = {
 	.tx_config = {
 		.output_power = NRF24L01P_0DBM,
 		.auto_retransmit_count = 15,
-		.auto_retransmit_delay_250us = NRF24_AUTO_RETRANSMIT_DELAY,	// defined in app.h, different for each node
+		.auto_retransmit_delay_250us = NRF24_AUTO_RETRANSMIT_DELAY, // defined in app.h, different for each node
 		.address = NRF24L01P_REG_TX_ADDR_RSTVAL,
 	},
 	.rx_config = {
@@ -178,10 +178,10 @@ static uint8_t tx_payload[NRF24_DATA_LENGTH] = {0};
 volatile static AppEvent event;
 static AppState state;
 static AppError app_status;
-volatile static bool leds_on;
+volatile static bool debug_mode;
 volatile static bool button_pending;
 
-static char msg[128] = {'0'};
+static char string_buffer[256] = {'0'};
 
 /* ---------------- Prototypes --------------------*/
 AppState dispatch_states(AppState state, volatile AppEvent *event);
@@ -191,7 +191,8 @@ void irq_timeout(void);
 void irs_check_led_button(void);
 void build_payload(uint8_t *payload);
 void initialize_state_variables(void);
-void UART2_Transmit(char* string);
+void UART2_Transmit(char *string);
+void log_UART(const char* tag, const char* message);
 
 /**
  * @brief Application setup function
@@ -207,7 +208,6 @@ void app_setup(void)
 	LL_SPI_Enable(SPI1);
 
 	CHECK_ERROR_SET_STATE(ADC_setup(), ERROR_SETUP);
-
 	/* --- RTC wake up timer setup --- */
 	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_20);			// Enable interrupt for EXTI line 20 (RTC)
 	LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_20); // Trigger on rising edge for line 20 (RTC)
@@ -225,8 +225,7 @@ void app_setup(void)
 	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_init_ptx(&nrf24_device), ERROR_SETUP);
 	NRF24_CHECK_ERROR_SET_STATE(nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources), ERROR_SETUP);
 
-	sprintf(msg, "app_setup: state = %d, app_status = %d, event = %d, leds_on = %d, button_pending = %d\r\n", state, app_status, event, leds_on, button_pending);
-	UART2_Transmit(msg);
+	log_UART("app_setup", "");
 }
 
 /**
@@ -237,16 +236,14 @@ void app_setup(void)
  */
 void app_loop(void)
 {
-	sprintf(msg, "app_loop: state = %d, app_status = %d, event = %d, leds_on = %d, button_pending = %d\r\n", state, app_status, event, leds_on, button_pending);
-	UART2_Transmit(msg);
+	log_UART("app_loop", "");
 
 	state = dispatch_states(state, &event);
 
-	if (leds_on && (app_status != ERROR_NONE))
+	if (debug_mode && (app_status != ERROR_NONE))
 		LL_GPIO_SetOutputPin(LED_ERROR_GPIO_Port, LED_ERROR_Pin);
 	else
 		LL_GPIO_ResetOutputPin(LED_ERROR_GPIO_Port, LED_ERROR_Pin);
-
 }
 
 AppState handle_state_idle(volatile AppEvent *event)
@@ -317,7 +314,8 @@ AppState handle_state_awaiting_ack(volatile AppEvent *event)
 		NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device), ERROR_AWAITING_ACK);
 		return STATE_ERROR;
 	}
-	else */if (*event != EVENT_RADIO_IRQ)
+	else */
+	if (*event != EVENT_RADIO_IRQ)
 	{
 		LL_PWR_DisableUltraLowPower();
 		LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_MAIN);
@@ -345,8 +343,7 @@ AppState handle_state_sleep(volatile AppEvent *event)
 {
 	if (!button_pending)
 	{
-		sprintf(msg, "Going to sleep\r\n");
-				UART2_Transmit(msg);
+		log_UART("handle_state_sleep", "entering sleep");
 
 		// for some reason turning SPI MISO hi-Z really lowers the IDD
 		set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL & ~LED_STATUS_Pin & ~LED_ERROR_Pin & ~BUTTON_LED_Pin);
@@ -370,17 +367,12 @@ AppState handle_state_sleep(volatile AppEvent *event)
 		MX_I2C1_Init();
 		MX_SPI1_Init();
 
-
 		MX_USART2_UART_Init();
-
-		sprintf(msg, "Woke up\r\n");
-		UART2_Transmit(msg);
 	}
 
 	if (*event == EVENT_RTC_WAKEUP)
 	{
-		sprintf(msg, "RTC wake up\r\n");
-		UART2_Transmit(msg);
+		log_UART("handle_state_sleep", "woke up due to RTC");
 
 		*event = EVENT_NONE; // clear event flag
 		return STATE_IDLE;
@@ -451,19 +443,16 @@ void irs_phase2_done(void)
 
 void irq_timeout(void)
 {
-	//event = EVENT_NRF24_IRQ_TIMEOUT;
+	// event = EVENT_NRF24_IRQ_TIMEOUT;
 }
 
 void irs_check_led_button(void)
 {
-	if ((LL_GPIO_ReadInputPort(BUTTON_LED_GPIO_Port) & BUTTON_LED_Pin) == 0)	// button is still pressed
+	if ((LL_GPIO_ReadInputPort(BUTTON_LED_GPIO_Port) & BUTTON_LED_Pin) == 0) // button is still pressed
 	{
-		leds_on = !leds_on;
+		debug_mode = !debug_mode;
 
-		sprintf(msg, "Button pressed, leds_on = %d\r\n", leds_on);
-		UART2_Transmit(msg);
-
-		if (leds_on)
+		if (debug_mode)
 		{
 			LL_GPIO_SetOutputPin(LED_STATUS_GPIO_Port, LED_STATUS_Pin);
 		}
@@ -503,14 +492,28 @@ void initialize_state_variables(void)
 	event = EVENT_NONE;
 	state = STATE_IDLE;
 	app_status = ERROR_NONE;
-	leds_on = 0;
+	debug_mode = 0;
 	button_pending = 0;
 }
 
-void UART2_Transmit(char *string) {
-    while (*string) {
-        while (!LL_USART_IsActiveFlag_TXE(USART2));  // Wait until TXE (Transmit Empty) is set
-        LL_USART_TransmitData8(USART2, *string++);   // Send character
-    }
-    while (!LL_USART_IsActiveFlag_TC(USART2));  // Wait for last transmission to complete
+void UART2_Transmit(char *string)
+{
+	while (*string)
+	{
+		while (!LL_USART_IsActiveFlag_TXE(USART2))
+			;									   // Wait until TXE (Transmit Empty) is set
+		LL_USART_TransmitData8(USART2, *string++); // Send character
+	}
+	while (!LL_USART_IsActiveFlag_TC(USART2))
+		; // Wait for last transmission to complete
+}
+
+void log_UART(const char* tag, const char* message)
+{
+	if (debug_mode)
+	{
+		snprintf(string_buffer, sizeof(string_buffer), "[%s]%s: state = %d, app_status = %d, nrf24_status = %d, sht4x_status = %d, event = %d\r\n",
+				tag, message, state, app_status, nrf24_status, sht4x_status, event);
+		UART2_Transmit(string_buffer);
+	}
 }

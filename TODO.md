@@ -53,9 +53,11 @@ This is a task list for the HAMS project.
 
 - [ ] Node firmware
     - [ ] Handle fault where nRF24 does not activate IRQ after transmitting
-    - [ ] Update SHT4x and nRF24 drivers (reuse better hub versions)
+    - [ ] Update SHT4x drivers (reuse better hub versions)
+    - [x] Update nRF24 drivers (reuse better hub versions)
     - [ ] Add comments / function documentation to app.c and important code elsewhere
-    - [ ] Send UART debug messages only in "debug mode" (when LEDs are on)
+    - [x] Add define for automatic retransmit delay based on NODE_ID
+    - [x] Send UART debug logs only when in debug mode
 
 ## To do
   
