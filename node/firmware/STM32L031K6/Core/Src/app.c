@@ -126,7 +126,7 @@ static Sht4xData sht4x_data = {
 	.temperature = 0xFFFFFFFF,
 };
 static Sht4xDevice sht4x = {
-	.i2c_address = SHT4X_I2C_ADDR_A,
+	.i2c_address = (SHT4X_I2C_ADDR_A << 1),
 	.i2c_write = &I2C1_transmit,
 	.i2c_read = &I2C1_receive,
 	.calculate_crc = &calculate_CRC8,
@@ -192,7 +192,7 @@ void irs_check_led_button(void);
 void build_payload(uint8_t *payload);
 void initialize_state_variables(void);
 void UART2_Transmit(char *string);
-void log_UART(const char* tag, const char* message);
+void log_UART(const char *tag, const char *message);
 
 /**
  * @brief Application setup function
@@ -246,14 +246,41 @@ void app_loop(void)
 		LL_GPIO_ResetOutputPin(LED_ERROR_GPIO_Port, LED_ERROR_Pin);
 }
 
+/**
+ * @brief Handles the `STATE_IDLE` application state
+ *
+ * In this state, a measurement is started on the SHT4x sensor, and a timer
+ * is set to interrupt in `PHASE1_LENGTH` milliseconds. The ADC is also
+ * configured to measure the VDDA voltage.
+ *
+ * @param event Pointer to an `AppEvent` variable which indicates the event that
+ * caused the state transition
+ *
+ * @retval `STATE_PHASE1` on success
+ * @retval `STATE_ERROR` if an error occurs
+ */
 AppState handle_state_idle(volatile AppEvent *event)
 {
-	SHT4X_CHECK_ERROR_RETURN(sht4x_send_command(&sht4x, SHT4X_I2C_CMD_MEAS_HIGH_PREC), ERROR_IDLE);
+	SHT4X_CHECK_ERROR_RETURN(sht4x_start_measurement(&sht4x, SHT4X_I2C_CMD_MEAS_HIGH_PREC), ERROR_IDLE);
 	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, PHASE1_LENGTH, &irs_phase1_done), ERROR_IDLE);
 	CHECK_ERROR_RETURN(ADC_measure_vdda(&vdda_mv), ERROR_IDLE);
 	return STATE_PHASE1;
 }
 
+/**
+ * @brief Handles the `STATE_PHASE1` application state
+ *
+ * In this state, the MCU is put into sleep mode until the `PHASE1_LENGTH`
+ * timer expires. When the timer expires, the state transitions to
+ * `STATE_PHASE2` and the nRF24L01+ is powered up.
+ *
+ * @param event Pointer to an `AppEvent` variable which indicates the event that
+ * caused the state transition
+ *
+ * @retval `STATE_PHASE1` if the timer has not expired
+ * @retval `STATE_PHASE2` if the timer has expired and the nRF24L01P is powered up
+ * @retval `STATE_ERROR` if an error occurs
+ */
 AppState handle_state_phase1(volatile AppEvent *event)
 {
 	if (*event != EVENT_PHASE1_DONE)
@@ -274,6 +301,26 @@ AppState handle_state_phase1(volatile AppEvent *event)
 	return STATE_PHASE2;
 }
 
+/**
+ * @brief Handles the `STATE_PHASE2` application state
+ *
+ * In this state, the MCU is put into sleep mode until the `PHASE2_LENGTH`
+ * timer expires. When the timer expires, the state transitions to
+ * `STATE_AWAITING_ACK` and the VDDA voltage is measured. The SHT4x sensor
+ * measurement result is read and stored in `sht4x_data`. The measurement
+ * result is formatted and stored in `tx_payload`. The nRF24L01+ transmit FIFO
+ * is flushed. The `tx_payload` is written to the transmit FIFO and the `CE` pin
+ * is pulsed for at least 10 us to start the transmission. A timeout is set to
+ * interrupt in `NRF24_IRQ_WAIT_TIME` ms if nRF24L01+ IRQ does not activate.
+ *
+ * @param event Pointer to an `AppEvent` variable which indicates the event that
+ * caused the state transition
+ *
+ * @retval `STATE_PHASE2` if the timer has not expired
+ * @retval `STATE_AWAITING_ACK` if the `PHASE2_LENGTH` timer has expired and the
+ * nRF24L01P is powered up and transmitting
+ * @retval `STATE_ERROR` if an error occurs
+ */
 AppState handle_state_phase2(volatile AppEvent *event)
 {
 	if (*event != EVENT_PHASE2_DONE)
@@ -288,7 +335,7 @@ AppState handle_state_phase2(volatile AppEvent *event)
 
 	*event = EVENT_NONE; // clear event flag
 
-	SHT4X_CHECK_ERROR_RETURN(sht4x_read_and_check_measurement(&sht4x, &sht4x_data), ERROR_PHASE2);
+	SHT4X_CHECK_ERROR_RETURN(sht4x_read_measurement(&sht4x, &sht4x_data), ERROR_PHASE2);
 
 	build_payload(tx_payload);
 
@@ -302,20 +349,39 @@ AppState handle_state_phase2(volatile AppEvent *event)
 	TIMx_delay_us(TIM2, NRF24L01P_PTX_MIN_CE_PULSE_US);
 	nrf24l01p_set_ce(0);
 
-	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, NRF24_IRQ_WAIT_TIME, &irq_timeout), ERROR_PHASE2);
+	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, NRF24_IRQ_WAIT_TIME * (1 + 9 * debug_mode), &irq_timeout), ERROR_PHASE2);
 
 	return STATE_AWAITING_ACK;
 }
 
+/**
+ * @brief Handles the `STATE_AWAITING_ACK` application state
+ *
+ * In this state, the MCU is put into sleep mode until the nRF24L01+ IRQ pin
+ * is asserted. If the IRQ is caused by a transmission success event, the
+ * `STATE_AWAITING_ACK` state is exited and the `STATE_SLEEP` state is entered.
+ * If the IRQ is caused by a transmission failure event or the `NRF24_IRQ_WAIT_TIME`
+ * timer expires, the `STATE_AWAITING_ACK` state is exited and the `STATE_ERROR`
+ * state is entered.
+ *
+ * @param event Pointer to an `AppEvent` variable which indicates the event that
+ * caused the state transition
+ *
+ * @retval `STATE_AWAITING_ACK` if the nRF24L01+ IRQ pin is not asserted yet and the
+ * `NRF24_IRQ_WAIT_TIME` timer has not expired yet
+ * @retval `STATE_ERROR` if the nRF24L01+ IRQ is caused by a transmission failure
+ * or the `NRF24_IRQ_WAIT_TIME` timer expires
+ * @retval `STATE_SLEEP` if the nRF24L01+ IRQ is caused by a transmission success
+ * event
+ */
 AppState handle_state_awaiting_ack(volatile AppEvent *event)
 {
-	/*if (*event == EVENT_NRF24_IRQ_TIMEOUT)
+	if (*event == EVENT_NRF24_IRQ_TIMEOUT)
 	{
 		NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device), ERROR_AWAITING_ACK);
 		return STATE_ERROR;
 	}
-	else */
-	if (*event != EVENT_RADIO_IRQ)
+	else if (*event != EVENT_RADIO_IRQ)
 	{
 		LL_PWR_DisableUltraLowPower();
 		LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_MAIN);
@@ -324,6 +390,8 @@ AppState handle_state_awaiting_ack(volatile AppEvent *event)
 		/* --- Sleep mode --- */
 		return STATE_AWAITING_ACK;
 	}
+
+	TIMx_disable_scheduled_interrupt(TIM21); // Disable scheduled nRF24_IRQ timeout
 
 	*event = EVENT_NONE; // clear event flag
 
@@ -339,13 +407,31 @@ AppState handle_state_awaiting_ack(volatile AppEvent *event)
 	return STATE_SLEEP;
 }
 
+/**
+ * @brief Handles the `STATE_SLEEP` application state
+ *
+ * In this state, the system enters a low-power stop mode (if button handling is
+ * not pending).
+ * It configures GPIO pins to analog mode to reduce IDD and sets the power mode
+ * to ultra-low power. The system is put into "stop mode" until an event such as
+ * an RTC wakeup or a button press occur. Upon waking up, the system clock is
+ * reconfigured and peripherals are reinitialized. If the wakeup event is caused
+ * by an RTC alarm, the state transitions to `STATE_IDLE`.
+ *
+ * @param event Pointer to an `AppEvent` variable which indicates the event that
+ * caused the state transition
+ *
+ * @retval `STATE_IDLE` if the wakeup event is due to an RTC alarm
+ * @retval `STATE_SLEEP` otherwise
+ */
+
 AppState handle_state_sleep(volatile AppEvent *event)
 {
 	if (!button_pending)
 	{
 		log_UART("handle_state_sleep", "entering sleep");
 
-		// for some reason turning SPI MISO hi-Z really lowers the IDD
+		// turning SPI MISO hi-Z lowers the IDD
 		set_pins_to_analog_mode(GPIOA, LL_GPIO_PIN_ALL & ~LED_STATUS_Pin & ~LED_ERROR_Pin & ~BUTTON_LED_Pin);
 		set_pins_to_analog_mode(GPIOB, LL_GPIO_PIN_ALL & ~nRF24_CE_Pin & ~nRF24_CSN_Pin & ~SPI_SCK_Pin & ~SPI_MOSI_Pin);
 		set_pins_to_analog_mode(GPIOC, LL_GPIO_PIN_ALL);
@@ -381,9 +467,20 @@ AppState handle_state_sleep(volatile AppEvent *event)
 	return STATE_SLEEP;
 }
 
+/**
+ * @brief Handles the `STATE_ERROR` application state
+ *
+ * An empty dummy state. Error handling is currently handled in debug mode via UART logs and error LED.
+ *
+ * @param event Pointer to an `AppEvent` variable which indicates the event that
+ * caused the state transition
+ *
+ * @retval `STATE_SLEEP` after error handling
+ */
+
 AppState handle_state_error(volatile AppEvent *event)
 {
-	// TODO: error handling
+	// Error handling is currently handled in debug mode via UART logs and error LED
 	return STATE_SLEEP;
 }
 
@@ -443,7 +540,7 @@ void irs_phase2_done(void)
 
 void irq_timeout(void)
 {
-	// event = EVENT_NRF24_IRQ_TIMEOUT;
+	event = EVENT_NRF24_IRQ_TIMEOUT;
 }
 
 void irs_check_led_button(void)
@@ -508,12 +605,12 @@ void UART2_Transmit(char *string)
 		; // Wait for last transmission to complete
 }
 
-void log_UART(const char* tag, const char* message)
+void log_UART(const char *tag, const char *message)
 {
 	if (debug_mode)
 	{
 		snprintf(string_buffer, sizeof(string_buffer), "[%s]%s: state = %d, app_status = %d, nrf24_status = %d, sht4x_status = %d, event = %d\r\n",
-				tag, message, state, app_status, nrf24_status, sht4x_status, event);
+				 tag, message, state, app_status, nrf24_status, sht4x_status, event);
 		UART2_Transmit(string_buffer);
 	}
 }

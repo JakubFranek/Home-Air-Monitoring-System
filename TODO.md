@@ -25,13 +25,11 @@ This is a task list for the HAMS project.
     - [x] Order PCBs
     - [x] Order components
     - [ ] Node 3D enclosure design
-        - [ ] interior enclosure
-            - [x] design
-            - [x] test print
-            - [ ] final print (6x)
-    - [ ] Node assembly
-        - [ ] 5x interior nodes
-        - [ ] 1x exterior node
+        - [x] design
+        - [x] test print
+        - [ ] final print (6x)
+    - [x] Node PCB assembly
+    - [ ] Node PCB + enclosure assembly
     - [ ] Flash nodes
     - [ ] Test nodes
     - [ ] Cover exterior nodes in protective plastic coating
@@ -51,13 +49,6 @@ This is a task list for the HAMS project.
     - [x] Test hub PCB
     - [ ] Assemble hub enclosure
 
-- [ ] Node firmware
-    - [ ] Handle fault where nRF24 does not activate IRQ after transmitting
-    - [ ] Update SHT4x drivers (reuse better hub versions)
-    - [x] Update nRF24 drivers (reuse better hub versions)
-    - [ ] Add comments / function documentation to app.c and important code elsewhere
-    - [x] Add define for automatic retransmit delay based on NODE_ID
-    - [x] Send UART debug logs only when in debug mode
 
 ## To do
   
@@ -131,3 +122,11 @@ This is a task list for the HAMS project.
         - [x] Implement debug display view based on GPIO button toggle
         - [x] Clean up code
         - [x] Show sensor status codes in debug mode
+  
+- [x] Node firmware
+    - [x] Handle fault where nRF24 does not activate IRQ after transmitting
+    - [x] Update SHT4x drivers (reuse better hub versions)
+    - [x] Update nRF24 drivers (reuse better hub versions)
+    - [x] Add comments / function documentation to app.c and important code elsewhere
+    - [x] Add define for automatic retransmit delay based on NODE_ID
+    - [x] Send UART debug logs only when in debug mode
