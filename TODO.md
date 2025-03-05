@@ -64,6 +64,7 @@ This is a task list for the HAMS project.
 - [ ] Node firmware: RX/TX node to increase maximum possible amount of nodes above 6
 - [ ] Node firmware: Support for SCD41 (possibly with MCU-driven ASC to minimize consumption)
 - [ ] Node firmware: Better error handling (nRF24 transmission of error codes even if FSM steps fail before nRF24 transmit step)
+- [ ] Hub or node firmware: Software calibration
 
 ## Done
 

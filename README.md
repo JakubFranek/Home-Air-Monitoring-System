@@ -21,7 +21,7 @@ The system consists of a **central hub** and **six wireless sensor nodes** to me
    - Connects to the internet for weather updates and time synchronization via SNTP.
    - Displays real-time measurements on a 7.5" 800x480 e-ink screen with a 1 minute refresh rate.
    - Contains sensors for all previously listed quantities.
-   - Aesthetically pleasing 3D-printed enclosure with 
+   - Screen-sized 3D-printed enclosure (estimated 175 mm x 92.65 mm x 120 mm).
 
 - **Sensor Nodes**
    - **STM32-based** and battery-powered, optimized for low power consumption and long battery life.
