@@ -29,33 +29,22 @@ This is a task list for the HAMS project.
         - [x] test print
         - [ ] final print (6x)
     - [x] Node PCB assembly
-    - [ ] Node PCB + enclosure assembly
     - [ ] Flash nodes
     - [ ] Test nodes
     - [ ] Cover exterior nodes in protective plastic coating
 
-- [ ] Hub hardware
-    - [x] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (ESPink hacked to provide 5 Volt power out of VIN pin)
-    - [x] Hub sensor board schematic
-        - [x] Add SPI & I2C debug headers
-    - [x] Order PCBs
-    - [x] Order components
-    - [ ] Hub 3D enclosure
-        - [x] determine layout of ESPink + sensors + fan + power connector board
-        - [x] determine debug display button location
-        - [x] design
-        - [ ] print
-    - [x] Assemble hub PCB
-    - [x] Test hub PCB
-    - [ ] Assemble hub enclosure
-
-
-## To do
-  
 - [ ] Create documentation
     - [x] Document node software incl. flowchart
     - [x] Document hub software incl. FreeRTOS tasks and flowchart
     - [ ] Take photos of assembled nodes and hub incl. display interface
+
+
+## To do
+  
+- [ ] Hub firmware
+    - [ ] Turn SPS30 off after measurements to limit fan noise
+    - [ ] Remove T 24h min and PM size
+    - [ ] Remove "Sever" node, add "Detsky pokoj" node
 
 ## Backlog
 
@@ -131,3 +120,18 @@ This is a task list for the HAMS project.
     - [x] Add comments / function documentation to app.c and important code elsewhere
     - [x] Add define for automatic retransmit delay based on NODE_ID
     - [x] Send UART debug logs only when in debug mode
+
+- [x] Hub hardware
+    - [x] Decide which connector to use to provide 5 Volt power to ESPink, SCD41, SPS30 and fan (ESPink hacked to provide 5 Volt power out of VIN pin)
+    - [x] Hub sensor board schematic
+        - [x] Add SPI & I2C debug headers
+    - [x] Order PCBs
+    - [x] Order components
+    - [x] Hub 3D enclosure
+        - [x] determine layout of ESPink + sensors + fan + power connector board
+        - [x] determine debug display button location
+        - [x] design
+        - [x] print
+    - [x] Assemble hub PCB
+    - [x] Test hub PCB
+    - [x] Assemble hub enclosure
