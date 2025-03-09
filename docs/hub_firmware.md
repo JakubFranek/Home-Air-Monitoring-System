@@ -18,4 +18,6 @@ TODO: add debug display photo here
 
 The application code flow is visualized in a simplified flowchart below.
 
+Please note not all sensors take a reading every main loop cycle. For example SCD41 (CO₂ sensor) takes a reading once every 5 cycles / minutes.
+
 ![HAMS hub FW flowchart](images/HAMS_hub_FW_flowchart.png)

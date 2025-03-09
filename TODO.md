@@ -29,6 +29,7 @@ This is a task list for the HAMS project.
         - [x] test print
         - [ ] final print (6x)
     - [x] Node PCB assembly
+    - [ ] Fix battery holder crimping
     - [ ] Flash nodes
     - [ ] Test nodes
     - [ ] Cover exterior nodes in protective plastic coating
@@ -36,24 +37,29 @@ This is a task list for the HAMS project.
 - [ ] Create documentation
     - [x] Document node software incl. flowchart
     - [x] Document hub software incl. FreeRTOS tasks and flowchart
-    - [ ] Take photos of assembled nodes and hub incl. display interface
+    - [ ] Photos
+        - [x] Assembled node
+        - [ ] Assembled hub
+        - [ ] Hub display
+        - [ ] Hub debug display
 
+- [ ] Hub firmware
+    - [ ] Turn SPS30 off after measurements to limit fan noise
+    - [x] Remove T 24h min and PM size from the display
+    - [x] Remove "Sever" node, add "Detsky pokoj" node
 
 ## To do
   
-- [ ] Hub firmware
-    - [ ] Turn SPS30 off after measurements to limit fan noise
-    - [ ] Remove T 24h min and PM size
-    - [ ] Remove "Sever" node, add "Detsky pokoj" node
+- [ ] Test SCD41 CO2 measurement in open air (expected cca 400 ppm)
 
 ## Backlog
 
 - [ ] Hub firmware: Upload data from hub to Google Sheets or elsewhere online
 - [ ] Hub firmware: Replace Adafruit_GFX with C-based graphical library to remove C++ altogether
-- [ ] Node firmware: RX/TX node to increase maximum possible amount of nodes above 6
 - [ ] Node firmware: Support for SCD41 (possibly with MCU-driven ASC to minimize consumption)
 - [ ] Node firmware: Better error handling (nRF24 transmission of error codes even if FSM steps fail before nRF24 transmit step)
-- [ ] Hub or node firmware: Software calibration
+- [ ] Node firmware: Change radio data rate to 250 kbps to increase range
+- [ ] Hub firmware: Software calibration of SHT4x measurements
 
 ## Done
 
