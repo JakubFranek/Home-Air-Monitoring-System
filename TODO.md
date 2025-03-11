@@ -1,6 +1,13 @@
-# TODO
+# Task list <!-- omit from toc -->
 
 This is a task list for the HAMS project.
+
+## Contents <!-- omit from toc -->
+- [Work in progress](#work-in-progress)
+- [To do](#to-do)
+- [Backlog](#backlog)
+- [Done](#done)
+
 
 ## Work in progress
 
@@ -24,12 +31,12 @@ This is a task list for the HAMS project.
     - [x] Node PCB layout
     - [x] Order PCBs
     - [x] Order components
-    - [ ] Node 3D enclosure design
+    - [x] Node 3D enclosure design
         - [x] design
         - [x] test print
-        - [ ] final print (6x)
+        - [x] final print (6x)
     - [x] Node PCB assembly
-    - [ ] Fix battery holder crimping
+    - [x] Fix battery holder crimping
     - [ ] Flash nodes
     - [ ] Test nodes
     - [ ] Cover exterior nodes in protective plastic coating
@@ -42,6 +49,10 @@ This is a task list for the HAMS project.
         - [ ] Assembled hub
         - [ ] Hub display
         - [ ] Hub debug display
+        - [ ] New calibration setup with batteries
+    - [ ] Add HAMS node current measurements
+    - [ ] Add enclosure dimension to hardware docs
+  
 
 - [ ] Hub firmware
     - [ ] Turn SPS30 off after measurements to limit fan noise
@@ -51,6 +62,8 @@ This is a task list for the HAMS project.
 ## To do
   
 - [ ] Test SCD41 CO2 measurement in open air (expected cca 400 ppm)
+  
+- [ ] Hub firmware: SCD41 force ASC via long debug button press
 
 ## Backlog
 
@@ -60,6 +73,7 @@ This is a task list for the HAMS project.
 - [ ] Node firmware: Better error handling (nRF24 transmission of error codes even if FSM steps fail before nRF24 transmit step)
 - [ ] Node firmware: Change radio data rate to 250 kbps to increase range
 - [ ] Hub firmware: Software calibration of SHT4x measurements
+- [ ] Hub firmware: Add pressure correction to SCD41 measurements
 
 ## Done
 
