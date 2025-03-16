@@ -344,10 +344,7 @@ AppState handle_state_phase2(volatile AppEvent *event)
 	// TX data can be written any time, nRF24L01+ will send it when ready
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_write_tx_fifo(&nrf24_device, tx_payload, NRF24_DATA_LENGTH), ERROR_PHASE2);
 
-	// min 10 us CE pulse according to nRF24 datasheet
-	nrf24l01p_set_ce(1);
-	TIMx_delay_us(TIM2, NRF24L01P_PTX_MIN_CE_PULSE_US);
-	nrf24l01p_set_ce(0);
+	nrf24l01p_set_ce(1); // nRF24 CE pin is deactivated in the next state after IRQ or timeout (nRF24 clones need long CE pulse)
 
 	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, NRF24_IRQ_WAIT_TIME * (1 + 9 * debug_mode), &irq_timeout), ERROR_PHASE2);
 
@@ -378,6 +375,7 @@ AppState handle_state_awaiting_ack(volatile AppEvent *event)
 {
 	if (*event == EVENT_NRF24_IRQ_TIMEOUT)
 	{
+		nrf24l01p_set_ce(0);
 		NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device), ERROR_AWAITING_ACK);
 		return STATE_ERROR;
 	}
@@ -392,6 +390,7 @@ AppState handle_state_awaiting_ack(volatile AppEvent *event)
 	}
 
 	TIMx_disable_scheduled_interrupt(TIM21); // Disable scheduled nRF24_IRQ timeout
+	nrf24l01p_set_ce(0);
 
 	*event = EVENT_NONE; // clear event flag
 
