@@ -1,4 +1,4 @@
-# HAMS node firmware
+# HAMS node
 
 HAMS node firmware for STM32L031K6 MCU is written in C and uses LL (low-layer) library as provided by ST Microelectronics, using no OS.
 

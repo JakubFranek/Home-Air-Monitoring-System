@@ -46,10 +46,11 @@ This is a task list for the HAMS project.
     - [x] Document hub software incl. FreeRTOS tasks and flowchart
     - [ ] Photos
         - [x] Assembled node
-        - [x] Assembled hub
-        - [x] Hub display
-        - [x] Hub debug display
+        - [ ] Assembled hub
+        - [ ] Hub display
+        - [ ] Hub debug display
         - [ ] New calibration setup with batteries
+        - [ ] Hub + nodes photo
         - [x] Logic waveforms
     - [x] Add HAMS node current measurements
     - [x] Add enclosure dimension to hardware docs
@@ -156,3 +157,6 @@ This is a task list for the HAMS project.
     - [x] Remove "Sever" node, add "Detsky pokoj" node
     - [x] Add pressure correction to SCD41 measurements
     - [x] SCD41 force FRC via long debug button press 
+
+- [x] Firmware: reprogram hub and nodes to 250 kbps data rate to increase range
+- [x] Hub firmware: fix pressure units

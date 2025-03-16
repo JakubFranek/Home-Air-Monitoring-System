@@ -4,7 +4,7 @@
 
 ## Overview
 
-The system consists of a **central hub** and **six wireless sensor nodes** to measure:
+The system consists of a [**central hub**](./docs/hub.md) and [**six wireless sensor nodes**](./docs/node.md) to measure:
 
 - Temperature
 - Relative Humidity
