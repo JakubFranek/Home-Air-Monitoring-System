@@ -37,8 +37,8 @@ This is a task list for the HAMS project.
         - [x] final print (6x)
     - [x] Node PCB assembly
     - [x] Fix battery holder crimping
-    - [ ] Flash nodes
-    - [ ] Test nodes
+    - [x] Flash nodes
+    - [x] Test nodes
     - [ ] Cover exterior nodes in protective plastic coating
 
 - [ ] Create documentation
@@ -46,24 +46,17 @@ This is a task list for the HAMS project.
     - [x] Document hub software incl. FreeRTOS tasks and flowchart
     - [ ] Photos
         - [x] Assembled node
-        - [ ] Assembled hub
-        - [ ] Hub display
-        - [ ] Hub debug display
+        - [x] Assembled hub
+        - [x] Hub display
+        - [x] Hub debug display
         - [ ] New calibration setup with batteries
+        - [ ] Logic waveforms
     - [ ] Add HAMS node current measurements
-    - [ ] Add enclosure dimension to hardware docs
-  
-
-- [ ] Hub firmware
-    - [ ] Turn SPS30 off after measurements to limit fan noise
-    - [x] Remove T 24h min and PM size from the display
-    - [x] Remove "Sever" node, add "Detsky pokoj" node
+    - [x] Add enclosure dimension to hardware docs
+    - [x] Document hub debug button
+    - [ ] New calibration data
 
 ## To do
-  
-- [ ] Test SCD41 CO2 measurement in open air (expected cca 400 ppm)
-  
-- [ ] Hub firmware: SCD41 force ASC via long debug button press
 
 ## Backlog
 
@@ -73,7 +66,7 @@ This is a task list for the HAMS project.
 - [ ] Node firmware: Better error handling (nRF24 transmission of error codes even if FSM steps fail before nRF24 transmit step)
 - [ ] Node firmware: Change radio data rate to 250 kbps to increase range
 - [ ] Hub firmware: Software calibration of SHT4x measurements
-- [ ] Hub firmware: Add pressure correction to SCD41 measurements
+- [ ] Hub firmware: Turn SPS30 off after measurements to limit fan noise
 
 ## Done
 
@@ -155,3 +148,11 @@ This is a task list for the HAMS project.
     - [x] Assemble hub PCB
     - [x] Test hub PCB
     - [x] Assemble hub enclosure
+
+- [x] Test SCD41 CO2 measurement in open air (expected cca 400 ppm, got cca 1400 ppm - calibration is off... try to force ASC)
+
+- [x] Hub firmware    
+    - [x] Remove T 24h min from the display
+    - [x] Remove "Sever" node, add "Detsky pokoj" node
+    - [x] Add pressure correction to SCD41 measurements
+    - [x] SCD41 force FRC via long debug button press 

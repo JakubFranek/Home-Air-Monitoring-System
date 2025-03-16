@@ -19,6 +19,42 @@ The application code structure is an event-driven Finite State Machine (FSM). Th
 
 ## Logic analyzer waveforms
 
-Typical period between sleep mode exit and entrance is less than 15 ms.
+Typical period between stop mode exit and entrance is less than 15 ms.
 
 ![HAMS node logic analyzer waveforms](images/HAMS_node_SPI_I2C.png)
+
+## Batteries and power consumption
+
+The nodes are powered via CR2032 batteries, with a nominal voltage of 3 Volt and nominal capacity of 210 mAh.
+
+Typical current draw in stop mode has been measured to be 1.8 to 2.5 uA.
+
+To calculate average power consumption, let us make the following conservative assumptions:
+- the MCU draws 5 mA when not in stop mode
+- the nRF24 module draws 15 mA when transmitting
+- transmitting takes up to 2 ms
+- total wake time is 15 ms
+
+Under the above assumptions, the average power consumption is 3.74 uA and the battery life is 6.4 years.
+
+## Hardware
+
+Case dimensions are: 81 mm (L) x 58 mm (W) x 30 mm (H). Printed by Prusa MK4S 3D-printer, using Prusament PLA Pristine White filament.
+
+### PCB front
+![HAMS node PCB front](images/HAMS_node_board_front.png)
+
+### PCB back
+![HAMS node PCB back](images/HAMS_node_board_back.jpg)
+
+### Disassembled
+![HAMS node disassembled](images/HAMS_node_disassembled.JPG)
+
+### Assembled box internals
+![HAMS node box internals](images/HAMS_node_box_internals.JPG)
+
+### Assembled box front
+![HAMS node box front](images/HAMS_node_box_front.JPG)
+
+### Assembled box bottom
+![HAMS node box bottom](images/HAMS_node_box_bottom.JPG)
