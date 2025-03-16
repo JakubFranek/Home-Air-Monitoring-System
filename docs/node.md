@@ -60,7 +60,7 @@ Case dimensions are: 81 mm (L) x 58 mm (W) x 30 mm (H). Printed by Prusa MK4S 3D
 ![HAMS node PCB front](images/HAMS_node_board_front.png)
 
 ### PCB back
-![HAMS node PCB back](images/HAMS_node_board_back.jpg)
+![HAMS node PCB back](images/HAMS_node_board_back.JPG)
 
 ### Disassembled
 ![HAMS node disassembled](images/HAMS_node_disassembled.JPG)
