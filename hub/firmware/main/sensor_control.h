@@ -22,6 +22,8 @@ extern "C"
         int32_t co2_measurements;
         int8_t co2_status;
         int32_t co2_errors;
+        int16_t co2_frc_correction;
+        bool co2_scheduled_correction;
 
         int32_t voc_index;
         int32_t nox_index;
@@ -53,6 +55,7 @@ extern "C"
     int8_t setup_sensors(bool debug_print, printf_like_t debug_print_fn);
     int8_t measure_sensors(bool debug_print, printf_like_t debug_print_fn);
     int8_t get_sensor_data(HubSensorData *data);
+    int8_t schedule_co2_correction(void);
 
 #endif /* __SENSOR_CONTROL_H__ */
 

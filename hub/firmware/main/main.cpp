@@ -39,7 +39,8 @@ static int8_t status_code;
 static SemaphoreHandle_t hams_data_mutex;
 static HamsData hams_data;
 
-static bool debug_mode = false;
+static volatile bool debug_mode = false;
+static volatile bool co2_schedule_calibration = false;
 
 static TaskHandle_t task_handle_display_update;
 static TaskHandle_t task_handle_nrf24_receive;
@@ -108,7 +109,7 @@ void app_main(void)
     give_hams_data_mutex();
 
     xTaskCreatePinnedToCore(task_display_update, "display_update", 4096, NULL, 1, &task_handle_display_update, APP_CPU_NUM);
-    xTaskCreatePinnedToCore(task_poll_button, "poll_button", 1024, NULL, 1, &task_handle_poll_button, APP_CPU_NUM);
+    xTaskCreatePinnedToCore(task_poll_button, "poll_button", 4096, NULL, 1, &task_handle_poll_button, APP_CPU_NUM);
 
     vTaskDelay(MAIN_LOOP_PERIOD_S * 1000 / portTICK_PERIOD_MS); // Wait to maintain interval between measurement/update cycles
 
@@ -135,6 +136,11 @@ void app_main(void)
 
         vTaskDelay(FAN_TOGGLE_PERIOD_S * 1000 / portTICK_PERIOD_MS); // Wait for 5 seconds after turning off the fan for sensors to stabilize
 
+        if (co2_schedule_calibration)
+        {
+            schedule_co2_correction();
+            co2_schedule_calibration = false;
+        }
         measure_sensors(false, NULL); // Measure sensors without printing to the display
 
         take_hams_data_mutex();
@@ -166,6 +172,7 @@ static void task_display_update(void *pvParameters)
 
         if ((notification == NOTIFY_DISPLAY_UPDATE) && !debug_mode)
         {
+            ESP_LOGI(TAG, "NOTIFY_DISPLAY_UPDATE");
             take_hams_data_mutex();
 
             update_display(&hams_data);
@@ -174,6 +181,7 @@ static void task_display_update(void *pvParameters)
         }
         else if (notification == NOTIFY_ENTER_DEBUG_MODE && debug_mode)
         {
+            ESP_LOGI(TAG, "NOTIFY_ENTER_DEBUG_MODE");
             take_hams_data_mutex();
 
             update_display_data();
@@ -183,6 +191,7 @@ static void task_display_update(void *pvParameters)
         }
         else if (notification == NOTIFY_EXIT_DEBUG_MODE && !debug_mode)
         {
+            ESP_LOGI(TAG, "NOTIFY_EXIT_DEBUG_MODE");
             take_hams_data_mutex();
 
             clear_screen();
@@ -203,26 +212,45 @@ static void task_display_update(void *pvParameters)
 static void task_poll_button(void *pvParameters)
 {
     bool button_history[3] = {false, false, false};
-    TickType_t xLastWakeTime;
+    bool button_pressed = false;
+    TickType_t t_loop = 0, t_button_press = 0, t_button_release = 0;
     uint32_t notification;
 
     while (true)
     {
-        xLastWakeTime = xTaskGetTickCount();
+        t_loop = xTaskGetTickCount();
 
         button_history[0] = button_history[1];
         button_history[1] = button_history[2];
-        button_history[2] = gpio_get_level(BUTTON_DEBUG_PIN);
+        button_history[2] = !gpio_get_level(BUTTON_DEBUG_PIN);
 
-        // If the button has been pressed for the last two polls, toggle debug mode
         if (button_history[0] == false && button_history[1] == true && button_history[2] == true)
         {
-            debug_mode = !debug_mode;
-            notification = (debug_mode) ? NOTIFY_ENTER_DEBUG_MODE : NOTIFY_EXIT_DEBUG_MODE;
-            xTaskNotify(task_handle_display_update, notification, eSetValueWithOverwrite);
+            t_button_press = xTaskGetTickCount();
+            button_pressed = true;
+            ESP_LOGI(TAG, "Debug button pressed, ticks = %ld", t_button_press);
+        }
+        else if (button_pressed && button_history[0] == true && button_history[1] == false && button_history[2] == false)
+        {
+            t_button_release = xTaskGetTickCount();
+            button_pressed = false;
+            ESP_LOGI(TAG, "Debug button released, ticks = %ld", t_button_release);
+
+            if ((t_button_release - t_button_press) < 2000 / portTICK_PERIOD_MS)
+            {
+                ESP_LOGI(TAG, "Debug button short press (%ld ticks), toggling debug mode", t_button_release - t_button_press);
+                debug_mode = !debug_mode;
+                notification = (debug_mode) ? NOTIFY_ENTER_DEBUG_MODE : NOTIFY_EXIT_DEBUG_MODE;
+                xTaskNotify(task_handle_display_update, notification, eSetValueWithOverwrite);
+            }
+            else
+            {
+                ESP_LOGI(TAG, "Debug button long press (%ld ticks), scheduling SCD41 calibration", t_button_release - t_button_press);
+                co2_schedule_calibration = true;
+            }
         }
 
-        xTaskDelayUntil(&xLastWakeTime, 100 / portTICK_PERIOD_MS); // Poll at 10 Hz
+        xTaskDelayUntil(&t_loop, 100 / portTICK_PERIOD_MS); // Poll at 10 Hz
     }
 }
 

@@ -16,6 +16,7 @@
 #include "sensor_control.h"
 
 #define CO2_MEASUREMENT_MODULO CO2_MEASUREMENT_PERIOD_S / MAIN_LOOP_PERIOD_S
+#define PM_MEASUREMENT_MODULO PM_MEASUREMENT_PERIOD_S / MAIN_LOOP_PERIOD_S
 
 static const char *TAG = "sensor_control";
 
@@ -324,6 +325,8 @@ static int8_t setup_scd4x(void)
 {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &scd4x_config, &scd4x_device_handle));
 
+    sensor_hub_data.co2_scheduled_correction = false;
+
     scd4x_status = scd4x_get_serial_number(&scd4x_device, &scd4x_serial_number);
     ESP_LOGI(TAG, "[SCD4x] Read Serial Number, serial number = %lld, status = %d", scd4x_serial_number, scd4x_status);
     RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
@@ -339,6 +342,18 @@ static int8_t setup_scd4x(void)
 
 static int8_t measure_scd4x(void)
 {
+    if (sensor_hub_data.co2_scheduled_correction == true)
+    {
+        scd4x_status = scd4x_perform_forced_recalibration(&scd4x_device, 425, &sensor_hub_data.co2_frc_correction);
+        ESP_LOGI(TAG, "[SCD4x] Perform Forced Recalibration, correction = %ls, status = %d\n", sensor_hub_data.co2_frc_correction, scd4x_status);
+        RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
+        sensor_hub_data.co2_scheduled_correction = false;
+    }
+
+    scd4x_status = scd4x_set_ambient_pressure(&scd4x_device, sensor_hub_data.pressure_hPa);
+    ESP_LOGI(TAG, "[SCD4x] Set Ambient Pressure, status = %d", scd4x_status);
+    RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
+
     scd4x_status = scd41_measure_single_shot(&scd4x_device);
     ESP_LOGI(TAG, "[SCD4x] Measure Single Shot, status = %d", scd4x_status);
     RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
@@ -559,6 +574,19 @@ int8_t get_sensor_data(HubSensorData *data)
 }
 
 /**
+ * @brief Schedule a forced CO2 recalibration for the next measurement.
+ *
+ * Call this function to schedule a forced CO2 recalibration for the next measurement.
+ *
+ * @return 0 on success
+ */
+int8_t schedule_co2_correction(void)
+{
+    sensor_hub_data.co2_scheduled_correction = true;
+    return 0;
+}
+
+/**
  * @brief Set up all hub sensors
  *
  * This function sets up all sensors by calling their respective setup functions.
@@ -633,9 +661,13 @@ int8_t measure_sensors(bool debug_print, printf_like_t debug_print_fn)
     IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking BME280 measurement... ", status));
     status = measure_bme280();
     return_status |= status;
-    IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking SPS30 measurement... ", status));
-    status = measure_sps30();
-    return_status |= status;
+
+    if (count % PM_MEASUREMENT_MODULO == 0)
+    {
+        IF_TRUE(debug_print, debug_print_fn("done (%d).\nMaking SPS30 measurement... ", status));
+        status = measure_sps30();
+        return_status |= status;
+    }
 
     if (count % CO2_MEASUREMENT_MODULO == 0)
     {
@@ -648,5 +680,5 @@ int8_t measure_sensors(bool debug_print, printf_like_t debug_print_fn)
 
     count++;
 
-    return status;
+    return return_status;
 }

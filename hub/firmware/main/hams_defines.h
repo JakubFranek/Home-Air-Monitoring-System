@@ -2,6 +2,7 @@
 #define WEATHER_UPDATE_PERIOD_S 60 * 60 // 1 hour
 #define MAIN_LOOP_PERIOD_S 60           // 1 minute
 #define CO2_MEASUREMENT_PERIOD_S 5 * 60 // 5 minutes
+#define PM_MEASUREMENT_PERIOD_S 1 * 60  // 1 minute
 #define FAN_TOGGLE_PERIOD_S 5           // 5 seconds
 
 #define HUB_MAX_SECONDS_SINCE_LAST_UPDATE 3 * MAIN_LOOP_PERIOD_S

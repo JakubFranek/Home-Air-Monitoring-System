@@ -87,7 +87,7 @@ void setup_display(void)
     display.initialize();
     display.clear_screen();
     full_update_count++;
-    display.setRotation(2);
+    display.setRotation(0);
     display.setTextColor(EPD_BLACK);
 }
 
@@ -448,17 +448,20 @@ void update_display(HamsData *data)
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "/1");
 
-    if (data->nodes[NODE_TEMPERATURE_24H_MIN].timestamp_temperature_24h_min.tv_sec != 0)
+    if (NODE_TEMPERATURE_24H_MIN != -1)
     {
-        sprintf(string_buffer, "%.2f", data->nodes[NODE_TEMPERATURE_24H_MIN].temperature_24h_min);
+        if (data->nodes[NODE_TEMPERATURE_24H_MIN].timestamp_temperature_24h_min.tv_sec != 0)
+        {
+            sprintf(string_buffer, "%.2f", data->nodes[NODE_TEMPERATURE_24H_MIN].temperature_24h_min);
+        }
+        else
+        {
+            sprintf(string_buffer, "--");
+        }
+        display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "T 24h min:");
+        display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
+        display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "*C");
     }
-    else
-    {
-        sprintf(string_buffer, "--");
-    }
-    display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "T 24h min:");
-    display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-    display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "*C");
 
     if (data->hub_sensors.pm_status != 0 || data->hub_sensors.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
@@ -777,8 +780,8 @@ void show_debug_info(HamsData *data)
     display.print(string_buffer);
 
     get_timestamp_string(&data->hub_sensors.co2_timestamp, timestamp_buffer_1);
-    sprintf(string_buffer, "SCD41: last measurement = %s, measurements = %ld, errors = %ld\n",
-            timestamp_buffer_1, data->hub_sensors.co2_measurements, data->hub_sensors.co2_errors);
+    sprintf(string_buffer, "SCD41: last measurement = %s, measurements = %ld, errors = %ld, correction = %d ppm\n",
+            timestamp_buffer_1, data->hub_sensors.co2_measurements, data->hub_sensors.co2_errors, data->hub_sensors.co2_frc_correction);
     display.print(string_buffer);
 
     display.print("\n");
@@ -787,11 +790,9 @@ void show_debug_info(HamsData *data)
     for (int i = 0; i < NODE_COUNT; i++)
     {
         get_timestamp_string(&data->nodes[i].timestamp, timestamp_buffer_1);
-        get_timestamp_string(&data->nodes[i].timestamp_temperature_24h_min, timestamp_buffer_2);
-        sprintf(string_buffer, "Node %d [%s]: last RX = %s, RX count = %ld, vdda = %.3f V,\n"
-                               "     status (app/sht4x/nrf24) = %d/%d/%d, T 24h min. timestamp = %s\n",
+        sprintf(string_buffer, "Node %d [%s]: last = %s, count = %ld, vdd = %.3f V, status (app/SHT/nRF) = %d/%d/%d\n",
                 i + 1, NODE_NAMES[i], timestamp_buffer_1, data->nodes[i].rx_count, data->nodes[i].vdda_v,
-                data->nodes[i].app_status, data->nodes[i].sht4x_status, data->nodes[i].nrf24_status, timestamp_buffer_2);
+                data->nodes[i].app_status, data->nodes[i].sht4x_status, data->nodes[i].nrf24_status);
         display.print(string_buffer);
     }
 

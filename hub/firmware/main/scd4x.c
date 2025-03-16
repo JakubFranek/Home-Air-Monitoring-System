@@ -384,7 +384,7 @@ Scd4xStatus scd4x_perform_forced_recalibration(Scd4xDevice *device, uint16_t tar
     SCD4X_CHECK_STATUS(scd4x_calculate_checksum(device, tx_data, &tx_data[2]));
 
     if (device->i2c_write(SCD4X_I2C_ADDRESS, (uint8_t[]){SCD4X_CMD_PERFORM_FORCED_RECALIBRATION, tx_data[0], tx_data[1], tx_data[2]},
-                          SCD4X_I2C_CMD_LENGTH) != 0)
+                          SCD4X_I2C_CMD_LENGTH + SCD4X_SETTING_LENGTH) != 0)
         return SCD4X_I2C_ERROR;
 
     device->delay_ms(400);
@@ -427,7 +427,7 @@ Scd4xStatus scd4x_set_automatic_self_calibration_enabled(Scd4xDevice *device, bo
     SCD4X_CHECK_STATUS(scd4x_calculate_checksum(device, tx_data, &tx_data[2]));
 
     if (device->i2c_write(SCD4X_I2C_ADDRESS, (uint8_t[]){SCD4X_CMD_GET_AUTOMATIC_SELF_CALIBRATION_ENABLED, tx_data[0], tx_data[1], tx_data[2]},
-                          SCD4X_I2C_CMD_LENGTH) != 0)
+                          SCD4X_I2C_CMD_LENGTH + SCD4X_SETTING_LENGTH) != 0)
         return SCD4X_I2C_ERROR;
 
     return SCD4X_SUCCESS;
@@ -492,7 +492,7 @@ Scd4xStatus scd4x_set_automatic_self_calibration_target(Scd4xDevice *device, uin
     SCD4X_CHECK_STATUS(scd4x_calculate_checksum(device, tx_data, &tx_data[2]));
 
     if (device->i2c_write(SCD4X_I2C_ADDRESS, (uint8_t[]){SCD4X_CMD_SET_AUTOMATIC_SELF_CALIBRATION_TARGET, tx_data[0], tx_data[1], tx_data[2]},
-                          SCD4X_I2C_CMD_LENGTH) != 0)
+                          SCD4X_I2C_CMD_LENGTH + SCD4X_SETTING_LENGTH) != 0)
         return SCD4X_I2C_ERROR;
 
     return SCD4X_SUCCESS;
@@ -872,7 +872,7 @@ Scd4xStatus scd41_set_automatic_self_calibration_initial_period(Scd4xDevice *dev
     SCD4X_CHECK_STATUS(scd4x_calculate_checksum(device, tx_data, &tx_data[2]));
 
     if (device->i2c_write(SCD4X_I2C_ADDRESS, (uint8_t[]){SCD4X_CMD_SET_AUTOMATIC_SELF_CALIBRATION_INITIAL_PERIOD, tx_data[0], tx_data[1], tx_data[2]},
-                          SCD4X_I2C_CMD_LENGTH) != 0)
+                          SCD4X_I2C_CMD_LENGTH + SCD4X_SETTING_LENGTH) != 0)
         return SCD4X_I2C_ERROR;
 
     return SCD4X_SUCCESS;
@@ -934,7 +934,7 @@ Scd4xStatus scd41_set_automatic_self_calibration_standard_period(Scd4xDevice *de
     SCD4X_CHECK_STATUS(scd4x_calculate_checksum(device, tx_data, &tx_data[2]));
 
     if (device->i2c_write(SCD4X_I2C_ADDRESS, (uint8_t[]){SCD4X_CMD_SET_AUTOMATIC_SELF_CALIBRATION_STANDARD_PERIOD, tx_data[0], tx_data[1], tx_data[2]},
-                          SCD4X_I2C_CMD_LENGTH) != 0)
+                          SCD4X_I2C_CMD_LENGTH + SCD4X_SETTING_LENGTH) != 0)
         return SCD4X_I2C_ERROR;
 
     return SCD4X_SUCCESS;

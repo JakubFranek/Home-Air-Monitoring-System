@@ -50,8 +50,8 @@ This is a task list for the HAMS project.
         - [x] Hub display
         - [x] Hub debug display
         - [ ] New calibration setup with batteries
-        - [ ] Logic waveforms
-    - [ ] Add HAMS node current measurements
+        - [x] Logic waveforms
+    - [x] Add HAMS node current measurements
     - [x] Add enclosure dimension to hardware docs
     - [x] Document hub debug button
     - [ ] New calibration data
