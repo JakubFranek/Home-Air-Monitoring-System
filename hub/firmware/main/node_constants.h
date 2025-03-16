@@ -14,7 +14,7 @@
 #define NODE2_NAME "Pracovna"
 #define NODE2_ADDRESS 0xC3
 
-#define NODE3_NAME "Detsky pok."
+#define NODE3_NAME "Detsky pokoj"
 #define NODE3_ADDRESS 0xC4
 
 #define NODE4_NAME "Koupelna"

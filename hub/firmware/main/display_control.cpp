@@ -374,7 +374,7 @@ void update_display(HamsData *data)
         {
             sprintf(string_buffer, "%s*", NODE_NAMES[i]);
         }
-        display.draw_aligned_text(&FreeSans12pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC0_HEIGHT + (2 + i) * DISPLAY_TEXT_12PT_YOFFSET, 130, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, string_buffer);
+        display.draw_aligned_text(&FreeSans12pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC0_HEIGHT + (2 + i) * DISPLAY_TEXT_12PT_YOFFSET, 135, DISPLAY_TEXT_12PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, string_buffer);
 
         if (is_up_to_date)
         {
@@ -790,8 +790,8 @@ void show_debug_info(HamsData *data)
     for (int i = 0; i < NODE_COUNT; i++)
     {
         get_timestamp_string(&data->nodes[i].timestamp, timestamp_buffer_1);
-        sprintf(string_buffer, "Node %d [%s]: last = %s, count = %ld, vdd = %.3f V, status (app/SHT/nRF) = %d/%d/%d\n",
-                i + 1, NODE_NAMES[i], timestamp_buffer_1, data->nodes[i].rx_count, data->nodes[i].vdda_v,
+        sprintf(string_buffer, "Node %d [%s]: last = %s, count = %ld, vdd = %.3f V, app/SHT/nRF = %d/%d/%d\n",
+                i, NODE_NAMES[i], timestamp_buffer_1, data->nodes[i].rx_count, data->nodes[i].vdda_v,
                 data->nodes[i].app_status, data->nodes[i].sht4x_status, data->nodes[i].nrf24_status);
         display.print(string_buffer);
     }

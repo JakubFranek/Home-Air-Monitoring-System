@@ -310,10 +310,10 @@ static int8_t measure_bme280(void)
 
     bme280_status = bme280_read_measurement(&bme280_device, &bme280_data);
     ESP_LOGI(TAG, "[BME280] Read Data, Temperature = %.2f °C, Rel. humidity = %.2f %%, Pressure = %.1f hPa, status = %d",
-             bme280_data.temperature / 100.0, bme280_data.humidity / 1000.0, bme280_data.pressure / 10.0, bme280_status);
+             bme280_data.temperature / 100.0, bme280_data.humidity / 1000.0, bme280_data.pressure / 1000.0, bme280_status);
     RETURN_IF_NOT_ZERO((int8_t)bme280_status, sensor_hub_data.pressure_status, sensor_hub_data.pressure_errors);
 
-    sensor_hub_data.pressure_hPa = bme280_data.pressure / 10.0;
+    sensor_hub_data.pressure_hPa = bme280_data.pressure / 1000.0;
     gettimeofday(&current_time, NULL);
     sensor_hub_data.pressure_timestamp = current_time;
     sensor_hub_data.pressure_measurements++;
@@ -345,7 +345,7 @@ static int8_t measure_scd4x(void)
     if (sensor_hub_data.co2_scheduled_correction == true)
     {
         scd4x_status = scd4x_perform_forced_recalibration(&scd4x_device, 425, &sensor_hub_data.co2_frc_correction);
-        ESP_LOGI(TAG, "[SCD4x] Perform Forced Recalibration, correction = %ls, status = %d\n", sensor_hub_data.co2_frc_correction, scd4x_status);
+        ESP_LOGI(TAG, "[SCD4x] Perform Forced Recalibration, correction = %d, status = %d\n", sensor_hub_data.co2_frc_correction, scd4x_status);
         RETURN_IF_NOT_ZERO((int8_t)scd4x_status, sensor_hub_data.co2_status, sensor_hub_data.co2_errors);
         sensor_hub_data.co2_scheduled_correction = false;
     }

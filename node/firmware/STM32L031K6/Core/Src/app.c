@@ -81,7 +81,7 @@
 
 #define PHASE1_LENGTH SHT4X_MEAS_HIGH_PREC_PERIOD_US - NRF24L01P_POWER_UP_DELAY_US
 #define PHASE2_LENGTH NRF24L01P_POWER_UP_DELAY_US
-#define NRF24_IRQ_WAIT_TIME 5000
+#define NRF24_IRQ_WAIT_TIME 50000
 
 /* ---------------- Enums --------------------*/
 typedef enum AppState
@@ -149,7 +149,7 @@ static Nrf24l01pDevice nrf24_device = {
 	.config = {
 		.channel_MHz = 2500,
 		.address_width = 5,
-		.data_rate = NRF24L01P_1MBPS,
+		.data_rate = NRF24L01P_250KBPS,
 		.crc_length = NRF24L01P_CRC_1BYTE,
 		.enable_irq_tx_ds = true,
 		.enable_irq_max_rt = true,
