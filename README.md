@@ -2,6 +2,8 @@
 
 **Home Air Monitoring System (HAMS)** is my personal hardware & embedded software development project designed to monitor indoor and outdoor air quality in my home.
 
+![HAMS hub and nodes](./docs/images/HAMS_hub_nodes_small.JPG)
+
 ## Overview
 
 The system consists of a [**central hub**](./docs/hub.md) and [**six wireless sensor nodes**](./docs/node.md) to measure:
@@ -51,6 +53,12 @@ The system consists of a [**central hub**](./docs/hub.md) and [**six wireless se
    - Temperature, relative humidity and atmospheric pressure sensor from Adafruit.
    - Used in the central hub (for atmospheric pressure only).
    - Atmospheric pressure accuracy: ±1 hPa
+
+## Documentation
+
+- [Hub](./docs/hub.md)
+- [Nodes](./docs/node.md)
+- [SHT4x calibration](./docs/sht4x_calibration.md)
 
 ## Repository Structure
 
