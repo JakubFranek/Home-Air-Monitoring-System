@@ -10,42 +10,21 @@ This is a task list for the HAMS project.
 
 
 ## Work in progress
-  
-- [ ] Node hardware
-    - [x] Node schematic
-        - [x] QFP32 breakout board test (test programmability with ST-LINK V3 MINIE)
-        - [x] decide whether to use LDO or not (decided to not use LDO, will be created as a separate board if needed)
-        - [x] decide whether to support USB power supply as well (decided not to use USB, will be created as a separate board if needed)
-        - [x] choose batteries & protection (CR2032 & LiFePO4)
-        - [x] bring out SPI, I2C & SWD nodes for programming & debug
-        - [x] bring out unused GPIO just in case
-        - [x] implement supply current measurement jumpers
-        - [x] draw schematic in KiCAD
-        - [x] double check all connections
-    - [x] Node PCB layout
-    - [x] Order PCBs
-    - [x] Order components
-    - [x] Node 3D enclosure design
-        - [x] design
-        - [x] test print
-        - [x] final print (6x)
-    - [x] Node PCB assembly
-    - [x] Fix battery holder crimping
-    - [x] Flash nodes
-    - [x] Test nodes
-    - [ ] Cover exterior nodes in protective plastic coating
 
 ## To do
 
 ## Backlog
 
-- [ ] Hub firmware: Upload data from hub to Google Sheets or elsewhere online
-- [ ] Hub firmware: Replace Adafruit_GFX with C-based graphical library to remove C++ altogether
-- [ ] Node firmware: Support for SCD41 (possibly with MCU-driven ASC to minimize consumption)
-- [ ] Node firmware: Better error handling (nRF24 transmission of error codes even if FSM steps fail before nRF24 transmit step)
-- [ ] Node firmware: Change radio data rate to 250 kbps to increase range
-- [ ] Hub firmware: Software calibration of SHT4x measurements
-- [ ] Hub firmware: Turn SPS30 off after measurements to limit fan noise
+- [ ] Hub firmware
+    - [ ] Upload data from hub to Google Sheets or elsewhere online
+    - [ ] Replace Adafruit_GFX with C-based graphical library to remove C++ altogether
+    - [ ] Software calibration of SHT4x measurements
+    - [ ] Turn SPS30 off after measurements to limit fan noise
+- [ ] Node firmware
+    - [ ] Support for SCD41 (possibly with MCU-driven ASC to minimize consumption)
+    - [ ] Better error handling (nRF24 transmission of error codes even if FSM steps fail before nRF24 transmit step)
+    - [ ] Change radio data rate to 250 kbps to increase range
+- [ ] Recalibrate SHT4x sensors
 
 ## Done
 
@@ -158,3 +137,27 @@ This is a task list for the HAMS project.
     - [x] Burn-in SHT40 sensors to remove VOC contaminants
     - [x] [Create a calibration program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_calibration)
     - [x] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
+
+- [x] Node hardware
+    - [x] Node schematic
+        - [x] QFP32 breakout board test (test programmability with ST-LINK V3 MINIE)
+        - [x] decide whether to use LDO or not (decided to not use LDO, will be created as a separate board if needed)
+        - [x] decide whether to support USB power supply as well (decided not to use USB, will be created as a separate board if needed)
+        - [x] choose batteries & protection (CR2032 & LiFePO4)
+        - [x] bring out SPI, I2C & SWD nodes for programming & debug
+        - [x] bring out unused GPIO just in case
+        - [x] implement supply current measurement jumpers
+        - [x] draw schematic in KiCAD
+        - [x] double check all connections
+    - [x] Node PCB layout
+    - [x] Order PCBs
+    - [x] Order components
+    - [x] Node 3D enclosure design
+        - [x] design
+        - [x] test print
+        - [x] final print (6x)
+    - [x] Node PCB assembly
+    - [x] Fix battery holder crimping
+    - [x] Flash nodes
+    - [x] Test nodes
+    - [x] Cover exterior nodes in protective plastic coating
