@@ -23,7 +23,6 @@ This is a task list for the HAMS project.
 - [ ] Node firmware
     - [ ] Support for SCD41 (possibly with MCU-driven ASC to minimize consumption)
     - [ ] Better error handling (nRF24 transmission of error codes even if FSM steps fail before nRF24 transmit step)
-    - [ ] Change radio data rate to 250 kbps to increase range
 - [ ] Recalibrate SHT4x sensors
 
 ## Done
@@ -161,3 +160,6 @@ This is a task list for the HAMS project.
     - [x] Flash nodes
     - [x] Test nodes
     - [x] Cover exterior nodes in protective plastic coating
+
+
+- [x] Firmware: Change radio data rate to 250 kbps to increase range
