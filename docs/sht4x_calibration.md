@@ -22,7 +22,7 @@ To verify accuracy, the sensors were placed in a transparent airtight box and dr
 
 The results are shown below.
 
-![Sensor measurements, NaCl](images/sensor_calibration_NaCl.png)
+![Sensor measurements, NaCl](images/sensor_calibration_nacl.png)
 
 ![Sensor measurements, MgCl2](images/sensor_calibration_mgcl2.png)
 
