@@ -41,7 +41,7 @@ Case dimensions are: 175 mm (W) x 92.85 mm (L) x 118 mm (H). Printed by Prusa MK
 ![HAMS hub side front](images/HAMS_hub_side_front.JPG)
 
 ### Side shot 2
-![HAMS hub side back](images/HAMS_hub_side_back.JPG)
+![HAMS hub side back](images/HAMS_hub_back.JPG)
 
 ### Internals
 ![HAMS hub internals](images/HAMS_hub_box_internals.png)
