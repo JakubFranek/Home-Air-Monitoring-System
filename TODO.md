@@ -10,12 +10,6 @@ This is a task list for the HAMS project.
 
 
 ## Work in progress
-
-- [ ] SHT40 sensor burn-in and calibration    
-    - [x] [Create a burn-in program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_burn_in)
-    - [x] Burn-in SHT40 sensors to remove VOC contaminants
-    - [x] [Create a calibration program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_calibration)
-    - [ ] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
   
 - [ ] Node hardware
     - [x] Node schematic
@@ -40,22 +34,6 @@ This is a task list for the HAMS project.
     - [x] Flash nodes
     - [x] Test nodes
     - [ ] Cover exterior nodes in protective plastic coating
-
-- [ ] Create documentation
-    - [x] Document node software incl. flowchart
-    - [x] Document hub software incl. FreeRTOS tasks and flowchart
-    - [ ] Photos
-        - [x] Assembled node
-        - [ ] Assembled hub
-        - [ ] Hub display
-        - [ ] Hub debug display
-        - [ ] New calibration setup with batteries
-        - [ ] Hub + nodes photo
-        - [x] Logic waveforms
-    - [x] Add HAMS node current measurements
-    - [x] Add enclosure dimension to hardware docs
-    - [x] Document hub debug button
-    - [ ] New calibration data
 
 ## To do
 
@@ -160,3 +138,23 @@ This is a task list for the HAMS project.
 
 - [x] Firmware: reprogram hub and nodes to 250 kbps data rate to increase range
 - [x] Hub firmware: fix pressure units
+
+- [x] Create documentation
+    - [x] Document node software incl. flowchart
+    - [x] Document hub software incl. FreeRTOS tasks and flowchart
+    - [x] Photos
+        - [x] Assembled node
+        - [x] Assembled hub
+        - [x] Hub display
+        - [x] Hub debug display
+        - [x] Hub + nodes photo
+        - [x] Logic waveforms
+    - [x] Add HAMS node current measurements
+    - [x] Add enclosure dimension to hardware docs
+    - [x] Document hub debug button
+
+- [x] SHT40 sensor burn-in and calibration    
+    - [x] [Create a burn-in program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_burn_in)
+    - [x] Burn-in SHT40 sensors to remove VOC contaminants
+    - [x] [Create a calibration program](https://github.com/JakubFranek/Home-Air-Monitoring-System/tree/master/utilities/sht_sensor_calibration)
+    - [x] Calibrate SHT40 sensor humidity measurements using NaCl and MgCl salt solutions
