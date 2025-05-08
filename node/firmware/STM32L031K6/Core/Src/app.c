@@ -79,9 +79,10 @@
 		}                               \
 	} while (0)
 
-#define PHASE1_LENGTH SHT4X_MEAS_HIGH_PREC_PERIOD_US - NRF24L01P_POWER_UP_DELAY_US
-#define PHASE2_LENGTH NRF24L01P_POWER_UP_DELAY_US
-#define NRF24_IRQ_WAIT_TIME 50000
+// All us delays are divided by 10 because TIM21 runs at 100 kHz / 10 us period
+#define PHASE1_LENGTH (SHT4X_MEAS_HIGH_PREC_PERIOD_US - NRF24L01P_POWER_UP_DELAY_US) / 10
+#define PHASE2_LENGTH NRF24L01P_POWER_UP_DELAY_US / 10
+#define NRF24_IRQ_WAIT_TIME 75000 / 10
 
 /* ---------------- Enums --------------------*/
 typedef enum AppState
@@ -296,6 +297,7 @@ AppState handle_state_phase1(volatile AppEvent *event)
 	*event = EVENT_NONE; // clear event flag
 
 	NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_up(&nrf24_device), ERROR_PHASE1);
+	NRF24_CHECK_ERROR_RETURN(nrf24l01p_get_and_clear_irq_flags(&nrf24_device, &nrf24_irq_sources), ERROR_PHASE1);
 	CHECK_ERROR_RETURN(TIMx_schedule_interrupt(TIM21, PHASE2_LENGTH, &irs_phase2_done), ERROR_PHASE1);
 
 	return STATE_PHASE2;
@@ -377,6 +379,7 @@ AppState handle_state_awaiting_ack(volatile AppEvent *event)
 	{
 		nrf24l01p_set_ce(0);
 		NRF24_CHECK_ERROR_RETURN(nrf24l01p_power_down(&nrf24_device), ERROR_AWAITING_ACK);
+		app_status = ERROR_AWAITING_ACK;
 		return STATE_ERROR;
 	}
 	else if (*event != EVENT_RADIO_IRQ)
