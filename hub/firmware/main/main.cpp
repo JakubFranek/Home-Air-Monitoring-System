@@ -79,7 +79,6 @@ void app_main(void)
     print_line("done (%d).\nInitializing timezone... ", status_code);
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
     tzset();
-    gettimeofday(&hams_data.debug.start_time, NULL);
     print_line("done.\n");
 
     print_line("Requesting data from svatkyapi.cz... ");
@@ -97,6 +96,8 @@ void app_main(void)
 
     setup_sensors(true, &print_line);
     measure_sensors(true, &print_line);
+
+    gettimeofday(&hams_data.debug.start_time, NULL);
 
     print_line("Clearing screen and entering main loop...\n");
 
@@ -269,6 +270,7 @@ static void update_display_data(void)
 
     // If any of the function calls returns any number other than zero, the status will be set to that number
 
+    status = update_node_diagnostics() || status;
     status = (get_wifi_ap_record(&hams_data.debug) || status);
     status = (get_sensor_data(&hams_data.hub_sensors) || status);
     status = (get_node_data(hams_data.nodes) || status);

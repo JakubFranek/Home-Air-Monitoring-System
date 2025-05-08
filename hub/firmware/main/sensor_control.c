@@ -222,7 +222,7 @@ static int8_t measure_sht4x(void)
              sht4x_data.temperature / 1000.0, sht4x_data.humidity / 1000.0, sht4x_status);
     RETURN_IF_NOT_ZERO((int8_t)sht4x_status, sensor_hub_data.temperature_humidity_status, sensor_hub_data.temperature_humidity_errors);
 
-    sensor_hub_data.temperature = sht4x_data.temperature / 1000.0;
+    sensor_hub_data.temperature = sht4x_data.temperature / 1000.0 + TEMPERATURE_CORRECTION_FACTOR;
     sensor_hub_data.humidity = sht4x_data.humidity / 1000.0;
     sensor_hub_data.temperature_humidity_status = sht4x_status;
     gettimeofday(&current_time, NULL);

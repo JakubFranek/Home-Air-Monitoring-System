@@ -293,15 +293,14 @@ static int8_t decode_payload(uint8_t *payload)
         struct timeval current_timeval;
         gettimeofday(&current_timeval, NULL);
 
-        if (data->timestamp_temperature_24h_min.tv_sec == 0 ||                                  // If it's the first time
-            data->temperature_celsius < data->temperature_24h_min ||                            // Or if the temperature is lower
-            current_timeval.tv_sec > data->timestamp_temperature_24h_min.tv_sec + 24 * 60 * 60) // Or if it's been 24 hours
-        {
-            data->temperature_24h_min = data->temperature_celsius;
-            data->timestamp_temperature_24h_min = current_timeval;
-        }
         data->timestamp = current_timeval;
         data->rx_count++;
+
+        if (data->rx_missed_window_active == 1)
+        {
+            data->rx_missed_window_active = 0;
+            data->rx_current_missed_window = 0;
+        }
 
         // Release mutex
         xSemaphoreGive(node_data_set_mutex);
@@ -342,4 +341,38 @@ int8_t get_node_data(NodeData target_array[NODE_COUNT])
     }
 
     return -1; // If we couldn't acquire the mutex (shouldn't happen with portMAX_DELAY)
+}
+
+int8_t update_node_diagnostics(void)
+{
+    // Get current time
+    struct timeval current_timeval;
+    gettimeofday(&current_timeval, NULL);
+
+    if (xSemaphoreTake(node_data_set_mutex, portMAX_DELAY) == pdTRUE) // Attempt to acquire the mutex
+    {
+        for (int i = 0; i < NODE_COUNT; i++)
+        {
+            NodeData *data = &node_data_set[i];
+
+            if (current_timeval.tv_sec > data->timestamp.tv_sec + (1 + RX_PERIOD_TOLERANCE_PCT / 100) * RX_PERIOD_S)
+            {
+                data->rx_missed_count++;
+                if (data->rx_missed_window_active == 0)
+                {
+                    data->rx_missed_windows++;
+                    data->rx_missed_window_active = 1;
+                }
+                data->rx_current_missed_window++;
+                if (data->rx_current_missed_window > data->rx_max_missed_window)
+                {
+                    data->rx_max_missed_window = data->rx_current_missed_window;
+                }
+            }
+        }
+        xSemaphoreGive(node_data_set_mutex); // Release the mutex
+        return 0;
+    }
+
+    return -1;
 }

@@ -448,21 +448,6 @@ void update_display(HamsData *data)
     display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
     display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 3 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "/1");
 
-    if (NODE_TEMPERATURE_24H_MIN != -1)
-    {
-        if (data->nodes[NODE_TEMPERATURE_24H_MIN].timestamp_temperature_24h_min.tv_sec != 0)
-        {
-            sprintf(string_buffer, "%.2f", data->nodes[NODE_TEMPERATURE_24H_MIN].temperature_24h_min);
-        }
-        else
-        {
-            sprintf(string_buffer, "--");
-        }
-        display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 190, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "T 24h min:");
-        display.draw_aligned_text(&FreeSans10pt7b, (GDEY075T7_WIDTH / 2) + 5, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 144, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_RIGHT, string_buffer);
-        display.draw_aligned_text(&FreeSans10pt7b, 559, DISPLAY_VSEC2_TEXT_YPOS + 4 * DISPLAY_TEXT_10PT_YOFFSET, 37, DISPLAY_TEXT_10PT_YOFFSET, SHOW_DEBUG_RECTS, SHOW_DEBUG_RECTS, TEXT_ALIGNMENT_LEFT, "*C");
-    }
-
     if (data->hub_sensors.pm_status != 0 || data->hub_sensors.pm_timestamp.tv_sec + HUB_MAX_SECONDS_SINCE_LAST_UPDATE < current_time.tv_sec)
     {
         sprintf(string_buffer, "-- ug/m^3");
@@ -790,9 +775,12 @@ void show_debug_info(HamsData *data)
     for (int i = 0; i < NODE_COUNT; i++)
     {
         get_timestamp_string(&data->nodes[i].timestamp, timestamp_buffer_1);
-        sprintf(string_buffer, "Node %d [%s]: last = %s, count = %ld, vdd = %.3f V, app/SHT/nRF = %d/%d/%d\n",
+        sprintf(string_buffer, "Node %d [%s]: last = %s, count = %ld, vdd = %.3f V, app/SHT/nRF = %d/%d/%d\n"
+                               "    miss = %ld, miss_wndws = %ld, max_miss_wndw = %ld, current_miss_wndw = %ld, ok = %.2f%%, \n",
                 i, NODE_NAMES[i], timestamp_buffer_1, data->nodes[i].rx_count, data->nodes[i].vdda_v,
-                data->nodes[i].app_status, data->nodes[i].sht4x_status, data->nodes[i].nrf24_status);
+                data->nodes[i].app_status, data->nodes[i].sht4x_status, data->nodes[i].nrf24_status,
+                data->nodes[i].rx_missed_count, data->nodes[i].rx_missed_windows, data->nodes[i].rx_max_missed_window, data->nodes[i].rx_current_missed_window,
+                (float)data->nodes[i].rx_count / (data->nodes[i].rx_count + data->nodes[i].rx_missed_count) * 100.0);
         display.print(string_buffer);
     }
 

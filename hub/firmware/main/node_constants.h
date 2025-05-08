@@ -3,7 +3,6 @@
 
 #define NODE_COUNT 6
 #define NODE_MAX_SECONDS_SINCE_LAST_UPDATE 3 * 60
-#define NODE_TEMPERATURE_24H_MIN -1 // Index of the node whose 24h min. temperature will be shown
 
 #define NODE0_NAME "Kuchyn"
 #define NODE0_ADDRESS 0xE7E7E7E7E7

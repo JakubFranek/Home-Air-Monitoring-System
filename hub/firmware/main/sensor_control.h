@@ -9,6 +9,8 @@ extern "C"
 #include <time.h>
 #include <sys/time.h>
 
+#define TEMPERATURE_CORRECTION_FACTOR -0.6 // °C, this is approximately difference between temperature outside and inside the box
+
     typedef struct HubSensorData
     {
         float pressure_hPa;
