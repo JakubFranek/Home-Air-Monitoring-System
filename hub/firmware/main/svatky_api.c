@@ -15,6 +15,7 @@
 #include "esp_tls.h"
 #include "esp_http_client.h"
 #include "cJSON.h"
+#include "esp_crt_bundle.h"
 
 #include "svatky_api.h"
 #include "cjson_parsing.h"
@@ -28,9 +29,6 @@
         ESP_LOGE(TAG, "cJSON hard error"); \
         return -4;                         \
     }
-
-extern const char svatkyapicz_cert_pem_start[] asm("_binary_svatkyapicz_cert_pem_start");
-extern const char svatkyapicz_cert_pem_end[] asm("_binary_svatkyapicz_cert_pem_end");
 
 static const char *TAG = "svatky_api";
 
@@ -219,7 +217,7 @@ int8_t request_calendar_data(CalendarData *data)
     esp_http_client_config_t config = {
         .url = url_buffer,
         .event_handler = _http_event_handler,
-        .cert_pem = svatkyapicz_cert_pem_start,
+        .crt_bundle_attach = esp_crt_bundle_attach,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_err_t err = esp_http_client_perform(client);

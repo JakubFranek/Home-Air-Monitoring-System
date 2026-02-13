@@ -15,6 +15,7 @@
 #include "esp_tls.h"
 #include "esp_http_client.h"
 #include "cJSON.h"
+#include "esp_crt_bundle.h"
 
 #include "openweathermap_api.h"
 #include "secrets.h"
@@ -31,9 +32,6 @@
         ESP_LOGE(TAG, "cJSON hard error"); \
         return -4;                         \
     }
-
-extern const char openweathermaporg_cert_pem_start[] asm("_binary_openweathermaporg_cert_pem_start");
-extern const char openweathermaporg_cert_pem_end[] asm("_binary_openweathermaporg_cert_pem_end");
 
 static const char *TAG = "openweathermap_api";
 
@@ -204,7 +202,7 @@ int8_t request_weather_data(WeatherData *data)
     esp_http_client_config_t config = {
         .url = url,
         .event_handler = _http_event_handler,
-        .cert_pem = openweathermaporg_cert_pem_start,
+        .crt_bundle_attach = esp_crt_bundle_attach,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_err_t err = esp_http_client_perform(client);

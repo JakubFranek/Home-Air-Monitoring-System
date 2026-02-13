@@ -3,4 +3,4 @@ idf_component_register(SRCS "node_constants.c" "wifi_station_control.c" "svatky_
                         "radio_control.c" "nrf24l01p.c"
                         "sntp_control.c" "display_control.cpp" "cjson_parsing.c" "main.cpp"
                     INCLUDE_DIRS "."
-                    EMBED_TXTFILES "svatkyapicz_cert.pem" "openweathermaporg_cert.pem")
+                    REQUIRES esp_http_client mbedtls esp-tls Adafruit-GFX CalEPD json nvs_flash esp_netif esp_wifi)

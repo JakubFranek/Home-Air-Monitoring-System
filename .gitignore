@@ -76,3 +76,4 @@ fp-info-cache
 
 # Other file formats
 *.rar
+.clangd
