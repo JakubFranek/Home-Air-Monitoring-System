@@ -212,7 +212,7 @@ int8_t request_calendar_data(CalendarData *data)
         return 0; // No need to request if the data is from today
     }
 
-    ESP_LOGI(TAG, "Requesting svatkyapi data...");
+    ESP_LOGI(TAG, "Requesting calendar data...");
 
     char url_buffer[64] = {0};
     sprintf(url_buffer, "https://svatky.steelants.cz/api/%d-%d-%d", time_info.tm_year + 1900, time_info.tm_mon + 1, time_info.tm_mday);

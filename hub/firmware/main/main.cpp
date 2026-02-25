@@ -81,7 +81,7 @@ void app_main(void)
     tzset();
     print_line("done.\n");
 
-    print_line("Requesting data from svatkyapi.cz... ");
+    print_line("Requesting calendar data... ");
     status_code = request_calendar_data(&hams_data.calendar);
     print_line("done (%d).\nRequesting data from openweathermap.org... ", status_code);
     status_code = request_weather_data(&hams_data.weather);
