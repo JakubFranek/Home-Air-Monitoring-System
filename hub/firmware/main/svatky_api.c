@@ -128,6 +128,10 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
         if (output_buffer != NULL)
         {
             ESP_LOGD(TAG, "Accumulated Response = %.*s", output_len, output_buffer);
+            // Copy to received_data instead of just freeing
+            strncpy(received_data, output_buffer, MAX_HTTP_OUTPUT_BUFFER);
+            received_data[output_len] = '\0';
+            received_data_valid = true; // <-- add this
             free(output_buffer);
             output_buffer = NULL;
         }
@@ -164,8 +168,7 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
     case HTTP_EVENT_REDIRECT:
         ESP_LOGD(TAG, "HTTP_EVENT_REDIRECT");
-        esp_http_client_set_header(evt->client, "From", "user@example.com");
-        esp_http_client_set_header(evt->client, "Accept", "text/html");
+        esp_http_client_set_header(evt->client, "Accept", "application/json"); // keep JSON
         esp_http_client_set_redirection(evt->client);
         break;
     }
@@ -212,7 +215,9 @@ int8_t request_calendar_data(CalendarData *data)
     ESP_LOGI(TAG, "Requesting svatkyapi data...");
 
     char url_buffer[64] = {0};
-    sprintf(url_buffer, "https://svatkyapi.cz/api/day/%d-%d-%d", time_info.tm_year + 1900, time_info.tm_mon + 1, time_info.tm_mday);
+    sprintf(url_buffer, "https://svatky.steelants.cz/api/%d-%d-%d", time_info.tm_year + 1900, time_info.tm_mon + 1, time_info.tm_mday);
+
+    ESP_LOGI(TAG, "Requesting URL: %s", url_buffer);
 
     esp_http_client_config_t config = {
         .url = url_buffer,
@@ -220,7 +225,9 @@ int8_t request_calendar_data(CalendarData *data)
         .crt_bundle_attach = esp_crt_bundle_attach,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
+    esp_http_client_set_header(client, "Accept", "application/json");
     esp_err_t err = esp_http_client_perform(client);
+    ESP_LOGD(TAG, "Performing HTTP request, err = %s", esp_err_to_name(err));
 
     if (err == ESP_OK)
     {
@@ -240,7 +247,7 @@ int8_t request_calendar_data(CalendarData *data)
     TickType_t diff;
     while (!received_data_valid) // Wait for the data to be received.
     {
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
 
         diff = xTaskGetTickCount() - start_time;
         if (diff > REQUEST_TIMEOUT_MS / portTICK_PERIOD_MS) // Check for timeout
@@ -253,9 +260,9 @@ int8_t request_calendar_data(CalendarData *data)
     cJSON *json = cJSON_Parse(received_data); // Watch out, this contains dynamic memory allocation
     if (json != NULL)
     {
-        CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(json, "dayInWeek", data->day_in_week, SVATKY_MAX_STRING_LENGTH));
+        CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(json, "dow", data->day_in_week, SVATKY_MAX_STRING_LENGTH));
         CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(json, "name", data->name, SVATKY_MAX_STRING_LENGTH));
-        CJSON_CHECK_ERROR_RETURN(set_bool_from_cjson(json, "isHoliday", &data->is_holiday));
+        CJSON_CHECK_ERROR_RETURN(set_bool_from_cjson(json, "isPublicHoliday", &data->is_holiday));
         if (data->is_holiday)
         {
             CJSON_CHECK_ERROR_RETURN(set_string_from_cjson(json, "holidayName", data->holiday_name, SVATKY_MAX_STRING_LENGTH));
